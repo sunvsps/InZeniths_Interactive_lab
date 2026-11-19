@@ -1,0 +1,180 @@
+<title>Santa Box Village Concepts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Noto+Serif+Thai:wght@500;600&display=swap">
+<style>
+/* Layout: brief, then four scene cards (a phone-shaped live loop + beats + trade-offs), then what stays the same and a recommendation.
+   One deliberate look: the Santa Box palette, colours set once and not themed. */
+:root{
+  --ground:#FBF8F4; --card:#FFFFFF; --ink:#2A2420; --muted:#7C6E67; --line:#EADFD8;
+  --red:#B3202E; --green:#2F6B4F; --gold:#B08D57;
+  --f-head:'Noto Serif Thai',Georgia,serif; --f-body:'IBM Plex Sans Thai',system-ui,sans-serif; --f-brand:'Cormorant Garamond',Georgia,serif;
+  color-scheme:light;
+}
+html,body{background:var(--ground);color:var(--ink)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 56px;display:flex;flex-direction:column;gap:34px}
+header{display:flex;flex-direction:column;gap:10px;max-width:70ch}
+.brand{font-family:var(--f-brand);font-style:italic;font-size:22px;color:var(--red)}
+h1{font-family:var(--f-head);font-weight:600;font-size:clamp(26px,4.4vw,38px);line-height:1.25;margin:0;text-wrap:balance}
+h2{font-family:var(--f-head);font-weight:600;font-size:20px;line-height:1.35;margin:0;text-wrap:balance}
+h3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:600}
+p{margin:0}
+.lede{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.concept{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:18px;min-width:0}
+@media (max-width:520px){.concept{grid-template-columns:minmax(0,1fr)}}
+.concept.pick{border-color:var(--red);box-shadow:0 18px 40px -28px rgba(179,32,46,.55)}
+.info{display:flex;flex-direction:column;gap:12px;min-width:0}
+.tag{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag .letter{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:#fff;font-weight:600;font-size:14px}
+.tag .pickmark{font-size:12px;font-weight:600;color:var(--red);border:1px solid var(--red);border-radius:999px;padding:2px 10px}
+/* phone-shaped stage */
+.phone{position:relative;width:100%;max-width:200px;aspect-ratio:9/17.5;border-radius:24px;border:6px solid #1F1A17;overflow:hidden;background:#FBF8F4;justify-self:center}
+.phone svg{position:absolute;inset:0;width:100%;height:100%}
+.replay{position:absolute;right:8px;top:8px;border:1px solid var(--line);background:rgba(255,255,255,.88);border-radius:999px;padding:3px 10px;font:500 11px var(--f-body);color:var(--ink);cursor:pointer;z-index:2}
+.replay:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.beats{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px;font-size:14px}
+.beats li{display:grid;grid-template-columns:58px minmax(0,1fr);gap:8px}
+.beats time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+.pc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;font-size:13.5px}
+.pc ul{margin:0;padding-left:18px}
+.meta{display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.meta span{border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+.keep{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+.keep div{border-top:2px solid var(--gold);padding-top:10px;display:flex;flex-direction:column;gap:4px}
+.rec{background:var(--ink);color:#F6EFE9;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.rec h2{color:#fff}.rec p,.rec ol{color:#E3D7CF;max-width:72ch}.rec ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+
+/* ---- scene parts (SVG), animated per concept; loop 8 s ---- */
+.v *{transform-box:fill-box}
+.house,.tree,.shop,.globe,.popup,.night,.sleigh,.moon,.win{animation-duration:8s;animation-iteration-count:infinite;animation-fill-mode:both}
+.flake{animation:8s infinite both}
+/* A: the village rises behind the box, windows light, snow rises and hangs */
+.va .house,.va .shop{transform-origin:50% 100%;animation-name:a-rise;animation-delay:var(--d)}
+.va .tree{transform-origin:50% 100%;animation-name:a-pop;animation-delay:var(--d)}
+.va .win{animation-name:a-win;animation-delay:var(--d)}
+.va .flake{animation-name:rise-hang;animation-delay:var(--d)}
+@keyframes a-rise{0%,8%{transform:translateY(60px);opacity:0}22%{opacity:1}30%,100%{transform:none;opacity:1}}
+@keyframes a-pop{0%,14%{transform:scale(0)}28%{transform:scale(1.12)}34%,100%{transform:scale(1)}}
+@keyframes a-win{0%,30%{fill:#5A4A40}38%,100%{fill:#FFD27A}}
+/* snow: floats up from the open box, spreads out, then hovers in the air */
+@keyframes rise-hang{0%,10%{transform:translate(0,0) scale(.3);opacity:0}16%{opacity:1}40%{transform:translate(var(--x),var(--y)) scale(1);opacity:1}55%{transform:translate(var(--x),calc(var(--y) - 4px))}70%{transform:translate(calc(var(--x) + 3px),var(--y))}85%{transform:translate(var(--x),calc(var(--y) - 3px))}100%{transform:translate(var(--x),var(--y));opacity:1}}
+/* B: a paper pop-up village unfolds out of the box */
+.vb .popup{transform-origin:50% 100%;animation-name:b-unfold;animation-delay:var(--d)}
+.vb .flake{animation-name:rise-hang;animation-delay:var(--d)}
+@keyframes b-unfold{0%,10%{transform:scaleY(0);opacity:0}14%{opacity:1}30%{transform:scaleY(1.08)}36%,100%{transform:scaleY(1);opacity:1}}
+/* C: evening falls at the top, a village skyline glows, Santa crosses the moon */
+.vc .night{animation-name:c-night}
+.vc .house,.vc .shop,.vc .tree{animation-name:c-show;animation-delay:var(--d)}
+.vc .win{animation-name:a-win;animation-delay:var(--d)}
+.vc .moon{animation-name:c-moon}
+.vc .sleigh{animation-name:c-sleigh}
+.vc .flake{animation-name:c-drift;animation-delay:var(--d)}
+@keyframes c-night{0%,8%{opacity:0}30%,100%{opacity:1}}
+@keyframes c-show{0%,12%{opacity:0;transform:translateY(8px)}30%,100%{opacity:1;transform:none}}
+@keyframes c-moon{0%,16%{opacity:0;transform:translateY(10px)}34%,100%{opacity:1;transform:none}}
+@keyframes c-sleigh{0%,40%{transform:translateX(-140px);opacity:0}44%{opacity:1}72%{transform:translateX(200px);opacity:1}74%,100%{opacity:0;transform:translateX(200px)}}
+@keyframes c-drift{0%,20%{transform:translate(0,-30px);opacity:0}30%{opacity:1}60%{transform:translate(var(--x),calc(var(--y) * .4))}100%{transform:translate(calc(var(--x) + 6px),calc(var(--y) * .4 + 6px));opacity:1}}
+/* D: a glass dome closes over box and village: the scene becomes a snow globe */
+.vd .globe{animation-name:d-globe}
+.vd .house,.vd .tree,.vd .shop{transform-origin:50% 100%;animation-name:a-pop;animation-delay:var(--d)}
+.vd .win{animation-name:a-win;animation-delay:var(--d)}
+.vd .flake{animation-name:d-swirl;animation-delay:var(--d)}
+@keyframes d-globe{0%,8%{opacity:0;transform:scale(.6)}24%{opacity:1;transform:scale(1.04)}30%,100%{opacity:1;transform:scale(1)}}
+@keyframes d-swirl{0%,24%{transform:translate(0,0);opacity:0}30%{opacity:1}50%{transform:translate(calc(var(--x) * -1),calc(var(--y) * 1.2))}75%{transform:translate(var(--x),calc(var(--y) * .8))}100%{transform:translate(calc(var(--x) * .8),var(--y));opacity:1}}
+@media (prefers-reduced-motion:reduce){.v *{animation-duration:.01s!important;animation-iteration-count:1!important;animation-delay:0s!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="brand">Santa Box</span>
+    <h1>ฉากหลังกล่องเปิด: หมู่บ้านซานต้ากับหิมะลอยค้าง 4 แบบ</h1>
+    <p class="lede">ทุกแบบเริ่มต่อจากอนิเมชันเปิดกล่องแบบ A ที่ทำไว้แล้ว (โบว์คลาย ริบบิ้นหล่น ฝาพิงข้างกล่อง) พอฝาวางเสร็จ หมู่บ้านค่อยปรากฏ และหิมะลอยขึ้นจากกล่องแล้วค้างอยู่กลางอากาศตลอดหน้าการ์ดและของขวัญ ภาพในจอเป็น 2D จำลองการเคลื่อนไหว ของจริงทำเป็น 3D ในฉากเดิม</p>
+  </header>
+
+  <div class="grid" id="grid"></div>
+
+  <section style="display:flex;flex-direction:column;gap:14px" aria-labelledby="keepH">
+    <h2 id="keepH">ทุกแบบเหมือนกัน</h2>
+    <div class="keep">
+      <div><b>อนิเมชันเปิดกล่องเดิม</b><span>หมู่บ้านเริ่มหลังฝาวางพิงกล่อง (ประมาณวินาทีที่ 2) ไม่แทรกกลางจังหวะเปิด</span></div>
+      <div><b>หิมะลอยค้าง</b><span>เกล็ดหิมะขาวนวลลอยขึ้นจากกล่อง กระจายออก แล้วลอยโยกเบาๆ ค้างไว้ ไม่ตกจนหมด</span></div>
+      <div><b>อยู่หลังการ์ด</b><span>หมู่บ้านอยู่ไกลและจาง การ์ดกับข้อความอ่านง่ายเหมือนเดิม</span></div>
+      <div><b>เบาสำหรับมือถือ</b><span>บ้าน ต้นไม้ และหิมะสร้างด้วยโค้ดแบบ low-poly ไม่มีไฟล์ใหญ่ให้โหลดเพิ่ม</span></div>
+      <div><b>ลดการเคลื่อนไหวได้</b><span>คนที่ตั้งค่าลดการเคลื่อนไหว เห็นหมู่บ้านและหิมะแบบนิ่ง</span></div>
+    </div>
+  </section>
+
+  <section class="rec" aria-labelledby="recH">
+    <h2 id="recH">ผมแนะนำ: A หมู่บ้านโผล่ขึ้นหลังกล่อง</h2>
+    <p>แบบ A ต่อจากการเปิดกล่องได้เป็นธรรมชาติที่สุด กล่องยังเป็นพระเอกอยู่ตรงกลาง หมู่บ้านเป็นฉากหลังที่บอกว่า "กล่องนี้มาจากหมู่บ้านซานต้า" หิมะลอยค้างทำให้ทั้งฉากดูมีเวทมนตร์ตอนผู้รับอ่านการ์ด และยังเป็นโทนขาว-แดงเดิม การ์ดอ่านง่าย ทำบนฉาก 3D เดิมได้โดยเพิ่มบ้าน 5 หลัง ต้นสน และโรงงานของเล่นแบบ low-poly</p>
+    <ol>
+      <li>ฝาวางพิงกล่อง (เหมือนเดิม)</li>
+      <li>บ้านและโรงงานของเล่นโผล่ขึ้นจากพื้นด้านหลังทีละหลัง ต้นสนเด้งขึ้นตาม (1.8–3.0 วิ)</li>
+      <li>หน้าต่างบ้านติดไฟสีส้มอุ่นทีละบาน ควันลอยจากปล่องโรงงาน (2.6–3.4 วิ)</li>
+      <li>หิมะลอยขึ้นจากกล่อง กระจายทั่วจอ แล้วลอยค้างตลอดหน้าการ์ดและของขวัญ (2.0 วิ เป็นต้นไป)</li>
+    </ol>
+  </section>
+</div>
+
+<script>
+(function(){
+  const W=200,H=389;
+  // flakes: start at the box opening, each with a resting spot (x,y offsets)
+  const FL=Array.from({length:22},(_,i)=>{const a=i*2.39,r=30+(i*37)%70;return {x:Math.round(Math.cos(a)*r*1.1),y:Math.round(-40-((i*53)%150)),d:(i%7)*.12+.1,r:i%3?1.6:2.4}});
+  const flakes=(cx,cy)=>FL.map(f=>`<circle class="flake" cx="${cx}" cy="${cy}" r="${f.r}" fill="#FFFFFF" stroke="#E6E1DC" stroke-width=".4" style="--x:${f.x}px;--y:${f.y}px;--d:${f.d}s"/>`).join('');
+  const win=(x,y,d)=>`<rect class="win" x="${x}" y="${y}" width="5" height="6" rx="1" fill="#5A4A40" style="--d:${d}s"/>`;
+  function house(x,base,w,h,roof,d){return `<g class="house" style="--d:${d}s"><rect x="${x}" y="${base-h}" width="${w}" height="${h}" fill="${roof==='r'?'#F3EBDD':'#EFE6D6'}" stroke="#D9CBB6" stroke-width=".6"/>
+    <polygon points="${x-3},${base-h} ${x+w/2},${base-h-w*.55} ${x+w+3},${base-h}" fill="${roof==='r'?'#B3202E':'#2F6B4F'}"/>
+    <polygon points="${x-3},${base-h} ${x+w/2},${base-h-w*.55} ${x+w+3},${base-h} ${x+w/2},${base-h-w*.4}" fill="#FFFFFF" opacity=".85"/>
+    ${win(x+4,base-h+6,d+.6)}${win(x+w-9,base-h+6,d+.7)}<rect x="${x+w/2-3}" y="${base-9}" width="6" height="9" fill="#7A3B2A"/></g>`}
+  function tree(x,base,s,d){return `<g class="tree" style="--d:${d}s"><polygon points="${x},${base-26*s} ${x-10*s},${base-8*s} ${x+10*s},${base-8*s}" fill="#2F6B4F"/><polygon points="${x},${base-18*s} ${x-12*s},${base} ${x+12*s},${base}" fill="#275C43"/><polygon points="${x},${base-26*s} ${x-4*s},${base-19*s} ${x+4*s},${base-19*s}" fill="#FFFFFF" opacity=".85"/></g>`}
+  function shop(x,base,d){return `<g class="shop" style="--d:${d}s"><rect x="${x}" y="${base-30}" width="44" height="30" fill="#F6EDE0" stroke="#D9CBB6" stroke-width=".6"/><polygon points="${x-4},${base-30} ${x+22},${base-48} ${x+48},${base-30}" fill="#B3202E"/><rect x="${x+30}" y="${base-50}" width="6" height="12" fill="#8C6B4F"/>
+    <text x="${x+22}" y="${base-34}" font-size="5" text-anchor="middle" fill="#FFFFFF" font-family="sans-serif">TOYS</text>${win(x+6,base-22,d+.7)}${win(x+33,base-22,d+.8)}<rect x="${x+18}" y="${base-12}" width="8" height="12" fill="#7A3B2A"/></g>`}
+  const village=(base)=>tree(18,base,1,.2)+house(30,base,30,26,'r',.25)+shop(70,base,.35)+house(122,base,28,24,'g',.45)+tree(160,base,1.1,.4)+house(168,base,26,22,'r',.55)+tree(108,base-2,.8,.5);
+  // the opened box (front view), lid leaning on the left, ribbon tails on the ground
+  const box=`<ellipse cx="104" cy="262" rx="70" ry="7" fill="#2A2420" opacity=".08"/>
+    <polygon points="70,206 86,196 146,196 130,206" fill="#EFE3D2"/><ellipse cx="108" cy="201" rx="32" ry="10" fill="#FFE7B0" opacity=".8"/>
+    <rect x="70" y="206" width="60" height="54" fill="#A9232D"/><rect x="95" y="206" width="10" height="54" fill="#2F6B4F"/>
+    <polygon points="130,206 146,196 146,250 130,260" fill="#8E1D26"/>
+    <g transform="rotate(-14 56 230)"><rect x="40" y="190" width="18" height="70" rx="2" fill="#B3202E"/><rect x="40" y="218" width="18" height="10" fill="#2F6B4F"/></g>
+    <path d="M60 262 q12 -6 24 0 t22 0" fill="none" stroke="#2F6B4F" stroke-width="3" stroke-linecap="round"/><path d="M134 262 q12 -6 24 0" fill="none" stroke="#2F6B4F" stroke-width="3" stroke-linecap="round"/>`;
+  const card=`<rect x="16" y="290" width="168" height="62" rx="3" fill="#FFFFFF" stroke="#EADFD8"/><line x1="28" y1="306" x2="80" y2="306" stroke="#CDBFB6" stroke-width="2"/><line x1="28" y1="320" x2="170" y2="320" stroke="#3A2F2A" stroke-width="2.2"/><line x1="28" y1="332" x2="150" y2="332" stroke="#3A2F2A" stroke-width="2.2"/><rect x="16" y="360" width="168" height="18" rx="9" fill="#B3202E"/>`;
+  const head=`<text x="12" y="22" font-size="11" font-style="italic" fill="#B3202E" font-family="Georgia,serif">Santa Box</text>`;
+  const ground=`<path d="M0 214 Q100 196 200 214 L200 389 L0 389 Z" fill="#FBF8F4"/>`;
+  const S={
+    a:()=>`${head}<rect width="${W}" height="214" fill="#F6F1EA"/>${village(214)}${ground}${box}${flakes(108,200)}${card}`,
+    b:()=>`${head}<g class="popup" style="--d:.2s"><rect x="72" y="148" width="72" height="50" fill="#FFFDF8" stroke="#E2D6C6"/>${house(78,198,22,20,'r',.3)}${shop(102,198,.4)}${tree(140,198,.7,.5)}</g>${box}${flakes(108,180)}${card}`,
+    c:()=>`${head}<rect class="night" width="${W}" height="214" fill="url(#dusk)"/><circle class="moon" cx="150" cy="60" r="16" fill="#FFF4D6"/><g class="sleigh"><path d="M70 66 l10 0 l-3 4 l-12 0 z" fill="#2A2420"/><circle cx="88" cy="64" r="3" fill="#2A2420"/><path d="M90 64 l8 -4" stroke="#2A2420" stroke-width="1.5"/></g>${village(214).replace(/fill="#F3EBDD"|fill="#EFE6D6"|fill="#F6EDE0"/g,'fill="#3D3A52"')}${ground}${box}${flakes(108,120)}${card}`,
+    d:()=>`${head}<rect width="${W}" height="214" fill="#F6F1EA"/><g class="globe"><ellipse cx="104" cy="196" rx="94" ry="98" fill="#FFFFFF" fill-opacity=".18" stroke="#CFE0EA" stroke-width="2"/><path d="M40 140 q20 -50 70 -56" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" opacity=".7"/></g>${village(214)}${ground}${box}${flakes(108,190)}${card}`,
+  };
+  const C=[
+    {v:'a',pick:true,name:'หมู่บ้านโผล่ขึ้นหลังกล่อง',time:'+1.5 วิ หลังฝาวาง',feel:'อบอุ่น คลาสสิก',
+      beats:[['2.0 วิ','บ้านและโรงงานของเล่นโผล่ขึ้นจากพื้นด้านหลังทีละหลัง'],['2.4 วิ','ต้นสนเด้งขึ้นระหว่างบ้าน'],['2.8 วิ','หน้าต่างติดไฟสีส้มอุ่น ควันลอยจากปล่อง'],['2.0 วิ ~','หิมะลอยขึ้นจากกล่อง กระจาย แล้วค้างกลางอากาศ']],
+      pros:['ต่อจากการเปิดกล่องเป็นธรรมชาติ','กล่องยังเป็นพระเอก','โทนขาว-แดงเดิม การ์ดอ่านง่าย'],cons:['หมู่บ้านเล็ก รายละเอียดน้อยบนจอเล็ก']},
+    {v:'b',name:'หมู่บ้านป๊อปอัปออกจากกล่อง',time:'+1 วิ หลังฝาวาง',feel:'น่ารัก เหมือนการ์ดป๊อปอัป',
+      beats:[['2.0 วิ','ฉากกระดาษกางขึ้นจากช่องเปิดของกล่อง'],['2.3 วิ','บ้าน โรงงาน ต้นสน พับตั้งขึ้นเป็นชั้นๆ'],['2.0 วิ ~','หิมะลอยออกจากกล่องแล้วค้างรอบฉาก']],
+      pros:['เซอร์ไพรส์ "ในกล่องมีโลกเล็กๆ"','สวยในภาพแชร์'],cons:['บังของขวัญตอนลอยขึ้นจากกล่อง ต้องเก็บฉากก่อน','งานโมเดลกระดาษพับมากที่สุด']},
+    {v:'c',name:'ค่ำคืนคริสต์มาส',time:'+1 วิ หลังฝาวาง',feel:'ซึ้ง มีบรรยากาศ',
+      beats:[['2.0 วิ','ท้องฟ้าครึ่งบนค่อยๆ เป็นสีครามยามค่ำ'],['2.3 วิ','หมู่บ้านเป็นเงามืด หน้าต่างติดไฟทีละบาน ดวงจันทร์ขึ้น'],['3.5 วิ','ซานต้านั่งเลื่อนบินผ่านดวงจันทร์'],['2.0 วิ ~','หิมะปลิวลงช้าๆ แล้วลอยค้าง']],
+      pros:['บรรยากาศคริสต์มาสแรงที่สุด','เข้ากับข้อความซึ้งๆ'],cons:['เปลี่ยนโทนสีทั้งหน้า ต่างจากธีมขาว-แดง','ต้องดูแลให้ตัวหนังสือบนพื้นมืดอ่านง่าย']},
+    {v:'d',name:'กลายเป็นลูกโลกหิมะ',time:'+1 วิ หลังฝาวาง',feel:'มีเวทมนตร์',
+      beats:[['2.0 วิ','โดมแก้วกางครอบกล่องและหมู่บ้าน'],['2.3 วิ','บ้านและต้นสนเด้งขึ้นในโดม'],['2.4 วิ ~','หิมะหมุนวนในโดมแล้วลอยค้าง']],
+      pros:['คอนเซปต์ชัด จำง่าย','หิมะลอยค้างดูเป็นธรรมชาติ (อยู่ในลูกโลก)'],cons:['ซ้ำกับของขวัญ "ลูกโลกหิมะ"','โดมแก้วบนมือถือต้องระวังเรื่องความลื่น']},
+  ];
+  const grid=document.getElementById('grid');
+  C.forEach((c,i)=>{
+    const el=document.createElement('article');el.className='concept'+(c.pick?' pick':'');
+    el.innerHTML=`<div class="phone v v${c.v}"><button class="replay" type="button">เล่นใหม่</button><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${c.name}"><defs><linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1F2B45"/><stop offset=".75" stop-color="#4A4A6A"/><stop offset="1" stop-color="#F6F1EA"/></linearGradient></defs>${S[c.v]()}</svg></div>
+      <div class="info"><div class="tag"><span class="letter">${'ABCD'[i]}</span><h2>${c.name}</h2>${c.pick?'<span class="pickmark">แนะนำ</span>':''}</div>
+      <div class="meta"><span>${c.time}</span><span>${c.feel}</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><h3>ลำดับจังหวะ</h3><ol class="beats">${c.beats.map(([t,b])=>`<li><time>${t}</time><span>${b}</span></li>`).join('')}</ol></div>
+      <div class="pc"><div><h3>ข้อดี</h3><ul>${c.pros.map(x=>`<li>${x}</li>`).join('')}</ul></div><div><h3>ข้อเสีย</h3><ul>${c.cons.map(x=>`<li>${x}</li>`).join('')}</ul></div></div></div>`;
+    grid.append(el);
+    el.querySelector('.replay').onclick=()=>{const s=el.querySelector('svg');s.replaceWith(s.cloneNode(true))};
+  });
+})();
+</script>
