@@ -458,7 +458,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <div class="field"><label class="lbl" for="wTo">ชื่อผู้รับ</label><input type="text" id="wTo" maxlength="30"></div>
     <div class="field"><label class="lbl" for="wFrom">ชื่อของคุณ <em>ไม่บังคับ</em></label><input type="text" id="wFrom" maxlength="30" placeholder="ให้ผู้รับรู้ว่าใครส่งมา"></div>
     <div class="field"><label class="lbl" for="wEmail">อีเมลของคุณ <em id="emailHint"></em></label><input type="email" id="wEmail" placeholder="you@example.com" autocomplete="email"><p class="err" id="emailErr" hidden>ใส่อีเมลให้ถูกต้อง เพื่อรับใบเสร็จและกู้ลิงก์คืนได้</p></div>
-    <label class="check"><input type="checkbox" id="remind"><span><b>เตือนก่อนคริสต์มาสปีหน้า</b><small>อีเมลฟรีล่วงหน้า 7 วัน ขอเลิกรับได้ที่ support@inzeniths.com</small></span></label>
+    <!-- next-Christmas reminder: hidden for now (always off); the API still emails people who ticked it earlier -->
+    <label class="check" hidden><input type="checkbox" id="remind"><span><b>เตือนก่อนคริสต์มาสปีหน้า</b><small>อีเมลฟรีล่วงหน้า 7 วัน ขอเลิกรับได้ที่ support@inzeniths.com</small></span></label>
     <!-- shared Christmas tree page isn't built yet: option hidden (always off) until it is -->
     <label class="check" hidden><input type="checkbox" id="tree"><span><b>วางกล่องไว้ใต้ต้นคริสต์มาสรวม</b><small>โชว์แค่หน้าตากล่อง ไม่โชว์ชื่อ ข้อความ หรือเสียง</small></span></label>
     <div class="field"><label class="lbl" for="code">โค้ดส่วนลด <em>ไม่บังคับ</em></label><div class="codeRow"><input type="text" id="code" placeholder="ถ้ามี"><button class="btn ghost" id="codeBtn">ใช้โค้ด</button></div><p class="codeMsg" id="codeMsg" role="status" hidden></p></div>
