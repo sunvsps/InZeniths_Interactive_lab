@@ -33,6 +33,10 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
   padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));padding-block:14px}
 .logo{font-family:var(--f-lat);font-style:italic;font-weight:600;font-size:22px;letter-spacing:.01em;color:var(--accent)}
 .hdr-r{display:flex;gap:5px;align-items:center}
+/* "sample" tag: only on the page without a box id */
+.brand{display:flex;align-items:center;gap:8px;flex:none}
+.sample{font-size:11px;font-weight:500;line-height:1;padding:5px 9px;border-radius:999px;background:var(--accent);color:#fff;white-space:nowrap}
+@media (max-width:520px){.brand{flex-direction:column;align-items:flex-start;gap:2px}.sample{font-size:10px;padding:3px 7px}}
 .logo,.pill{white-space:nowrap}
 @media (max-width:400px){.hdr-r .pill{padding:6px 9px;font-size:11px}.lang button{padding:5px 7px}}
 /* TH | EN switch (i18n.js fills it) */
@@ -171,7 +175,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
   <canvas id="gl" aria-label="กล่องของขวัญสามมิติ"></canvas>
 
   <header class="hdr">
-    <span class="logo">Santa Box</span>
+    <span class="brand"><span class="logo">Santa Box</span><span class="sample" id="sampleTag">ตัวอย่าง</span></span>
     <div class="hdr-r">
       <div class="lang" data-lang-switch></div>
       <button class="pill" id="transitBtn">หน้ารอส่ง</button>
@@ -289,8 +293,9 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
     <h2>แชร์ไป IG · TikTok</h2>
     <img id="shotImg" alt="ภาพแชร์แนวตั้ง 9:16">
     <label class="check"><input type="checkbox" id="incMsg"> ใส่ข้อความในการ์ดด้วย</label>
-    <p class="sub">กดค้างที่รูปเพื่อบันทึก แล้วโพสต์ลงสตอรี่ ในเว็บจริงปุ่มแชร์จะเปิดเมนูแชร์ของมือถือ</p>
-    <button class="btn full" data-close>เสร็จแล้ว</button>
+    <p class="sub">กดบันทึกรูปลงเครื่อง แล้วโพสต์ลงสตอรี่ IG หรือ TikTok</p>
+    <button class="btn full" id="saveShot">บันทึกรูปลงเครื่อง</button>
+    <button class="btn ghost full" data-close>เสร็จแล้ว</button>
   </div>
 </div>
 
@@ -711,10 +716,35 @@ $('payBtn').onclick=async()=>{
 };
 
 /* 9:16 share image */
-function wrapText(g,text,maxW){
-  let segs;try{segs=[...new Intl.Segmenter('th',{granularity:'word'}).segment(text)].map(s=>s.segment)}catch(e){segs=Array.from(text)}
-  const lines=[];let cur='';segs.forEach(s=>{if(g.measureText(cur+s).width>maxW&&cur){lines.push(cur.trim());cur=s}else cur+=s});if(cur.trim())lines.push(cur.trim());return lines;
+function wrapText(g,text,maxW,keep){
+  const words=x=>{try{return [...new Intl.Segmenter('th',{granularity:'word'}).segment(x)].map(s=>s.segment)}catch(e){return Array.from(x)}};
+  // `keep` (a name) stays on one line when it fits
+  const i=keep?text.indexOf(keep):-1,segs=i<0||g.measureText(keep).width>maxW?words(text):[...words(text.slice(0,i)),keep,...words(text.slice(i+keep.length))];
+  const lines=[];let cur='';segs.forEach(s=>{if(g.measureText(cur+s).width>maxW&&cur.trim()){lines.push(cur.trim());cur=s.trimStart()}else cur+=s});if(cur.trim())lines.push(cur.trim());return lines;
 }
+/* shrink to fit one line, else break onto up to `max` lines; returns the extra height used below the first line */
+function drawFit(g,text,{font,size,min,maxW,max=2,x,y,lh=1.2,keep}){
+  const set=s=>g.font=font.replace('{s}',s),fits=l=>l.every(x=>g.measureText(x).width<=maxW);
+  let best=null;
+  for(let s=size;s>=Math.max(min,size*.75);s-=2){set(s);if(fits([text])){best={s,lines:[text]};break}}
+  if(!best)for(let s=size;s>=min;s-=2){set(s);const l=wrapText(g,text,maxW,keep);if(l.length<=max&&fits(l)){best={s,lines:l};break}}
+  if(!best){set(min);best={s:min,lines:wrapText(g,text,maxW,keep).slice(0,max)}}
+  set(best.s);best.lines.forEach((l,i)=>g.fillText(l,x,y+i*best.s*lh));
+  return (best.lines.length-1)*best.s*lh;
+}
+/* phones: iPhone's share menu has "Save Image" (to Photos); everything else downloads the file */
+let SHOT=null;
+function saveShot(canvas,name){
+  if(!canvas)return;
+  canvas.toBlob(async blob=>{
+    if(!blob)return toast(t('บันทึกรูปไม่สำเร็จ ลองกดค้างที่รูปแทน'));
+    const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+    const file=new File([blob],name,{type:'image/jpeg'});
+    if(ios&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]})}catch(e){}return}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  },'image/jpeg',.92);
+}
+$('saveShot').onclick=()=>saveShot(SHOT,'santa-box.jpg');
 async function makeShot(){
   try{await document.fonts.ready}catch(e){}
   const W=1080,H=1920,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
@@ -723,8 +753,8 @@ async function makeShot(){
   if(renderer){renderer.render(scene,camera);const src=renderer.domElement,s=(W*1.25)/src.width,dh=src.height*s;g.drawImage(src,(W-W*1.25)/2,(withMsg?900:1120)-dh*.42,W*1.25,dh)}
   g.fillStyle='#8C8176';g.textAlign='center';g.font='500 30px "IBM Plex Sans Thai"';
   g.save();g.letterSpacing='12px';g.fillText('A GIFT FOR',W/2+6,210);g.restore();
-  g.fillStyle='#2A2420';g.font='500 120px "Noto Serif Thai"';g.fillText(DATA.to,W/2,350);
-  g.fillStyle='#8C8176';g.font='400 40px "IBM Plex Sans Thai"';g.fillText(t('จาก {name}',{name:DATA.from}),W/2,425);
+  g.fillStyle='#2A2420';const dy=drawFit(g,String(DATA.to).trim(),{font:'500 {s}px "Noto Serif Thai"',size:120,min:64,maxW:W-140,x:W/2,y:350});
+  g.fillStyle='#8C8176';drawFit(g,t('จาก {name}',{name:DATA.from}).trim(),{font:'400 {s}px "IBM Plex Sans Thai"',size:40,min:30,maxW:W-160,max:1,x:W/2,y:425+dy});
   if(withMsg){
     g.save();g.translate(W/2,1440);g.rotate(-.012);g.shadowColor='rgba(60,40,20,.25)';g.shadowBlur=50;g.shadowOffsetY=24;g.fillStyle='#FBF7F0';g.fillRect(-420,-190,840,380);g.restore();
     g.strokeStyle='#E1D6C6';g.lineWidth=2;g.strokeRect(W/2-400,1440-170,800,340);
@@ -734,7 +764,7 @@ async function makeShot(){
   }
   g.fillStyle='#B3202E';g.font='italic 600 58px "Cormorant Garamond"';g.fillText('Santa Box',W/2,1760);
   g.fillStyle='#8C8176';g.font='400 30px "IBM Plex Sans Thai"';g.fillText(t('ห่อเสียงอวยพรใส่กล่อง ส่งให้คนที่คุณรัก'),W/2,1818);
-  $('shotImg').src=c.toDataURL('image/jpeg',.9);
+  SHOT=c;$('shotImg').src=c.toDataURL('image/jpeg',.9);
 }
 
 const GIFTS=[
@@ -827,7 +857,7 @@ if(window.I18N)I18N.onChange(()=>{if(!SLUG){applyGift();protoSample()}
 
 if(SLUG){
   // hide the prototype's demo controls, show nothing sample while loading
-  ['transitBtn','skipBtn'].forEach(id=>$(id).hidden=true);document.querySelector('.vnote').hidden=true;
+  ['transitBtn','skipBtn','sampleTag'].forEach(id=>$(id).hidden=true);document.querySelector('.vnote').hidden=true;
   ['s-land','s-transit'].forEach(id=>$(id).hidden=true);
   loadBox().then(async()=>{
     // back from paying to keep the box: wait for the payment to be confirmed

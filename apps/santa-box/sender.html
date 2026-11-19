@@ -365,8 +365,9 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <h2>ภาพทีเซอร์ 9:16</h2>
     <img id="shotImg" alt="ภาพทีเซอร์แนวตั้ง">
     <label class="check"><input type="checkbox" id="qrOn" checked><span><b>ใส่ QR ในรูป</b><small>คนที่เห็นสตอรี่สแกนมาห่อกล่องของตัวเองได้</small></span></label>
-    <p class="note" style="text-align:center">กดค้างที่รูปเพื่อบันทึก แล้วโพสต์ลงสตอรี่ IG หรือ TikTok ในเว็บจริงปุ่มแชร์จะเปิดเมนูแชร์ของมือถือ</p>
-    <button class="btn" data-close style="width:100%">เสร็จแล้ว</button>
+    <p class="note" style="text-align:center">กดบันทึกรูปลงเครื่อง แล้วโพสต์ลงสตอรี่ IG หรือ TikTok</p>
+    <button class="btn" id="saveShot" style="width:100%">บันทึกรูปลงเครื่อง</button>
+    <button class="btn ghost" data-close style="width:100%">เสร็จแล้ว</button>
   </div>
 </div>
 
@@ -694,7 +695,8 @@ function stepText(){const i=step,name=$('to').value.trim();
   const sm=document.querySelector('#plans .opt[data-p="0"] small');
   sm.textContent=t('ซานต้าใช้เวลาเดินทาง 25 ชม. · เปิดดูได้ 7 วัน · {voice}',{voice:S.recorded&&recT>15?t('เสียงจะเหลือ 15 วินาทีแรก (อัดไว้ {len})',{len:fmt(recT)}):t('เสียงอวยพร 15 วินาที')})}
 /** Thai puts no spaces around a name inside a sentence; English does (the template has them). */
-function I18N_SPACE(n){return window.I18N&&I18N.lang==='en'?' '+n+' ':n}
+// a space around the name in English, and in Thai when the name starts or ends in another script ("ให้ Earth แล้ว")
+function I18N_SPACE(n){return (window.I18N&&I18N.lang==='en')||/^[^฀-๿]|[^฀-๿]$/.test(n)?' '+n+' ':n}
 document.querySelectorAll('#steps button').forEach(b=>b.onclick=()=>go(+b.dataset.i));
 $('backBtn').onclick=()=>go(Math.max(0,step-1));
 $('nextBtn').onclick=()=>{if(step<4)go(step+1);else openWho()};
@@ -914,6 +916,36 @@ $('confirmBtn').onclick=()=>{const v=$('wEmail').value.trim(),ok=/^[^@\s]+@[^@\s
 document.querySelectorAll('.scrim').forEach(s=>s.addEventListener('click',e=>{if(e.target===s||e.target.hasAttribute('data-close'))s.hidden=true}));
 $('teaserBtn').onclick=async()=>{await makeTeaser();$('shareSheet').hidden=false};
 $('qrOn').onchange=makeTeaser;
+$('saveShot').onclick=()=>saveShot(SHOT,'santa-box.jpg');
+
+/* text on the share image: shrink to fit one line, else break onto up to `max` lines (Thai words via Intl.Segmenter) */
+function wrapText(g,text,maxW,keep){
+  const words=x=>{try{return [...new Intl.Segmenter('th',{granularity:'word'}).segment(x)].map(s=>s.segment)}catch(e){return Array.from(x)}};
+  // `keep` (a name) stays on one line when it fits
+  const i=keep?text.indexOf(keep):-1,segs=i<0||g.measureText(keep).width>maxW?words(text):[...words(text.slice(0,i)),keep,...words(text.slice(i+keep.length))];
+  const lines=[];let cur='';segs.forEach(s=>{if(g.measureText(cur+s).width>maxW&&cur.trim()){lines.push(cur.trim());cur=s.trimStart()}else cur+=s});if(cur.trim())lines.push(cur.trim());return lines;
+}
+function drawFit(g,text,{font,size,min,maxW,max=2,x,y,lh=1.2,keep}){
+  const set=s=>g.font=font.replace('{s}',s),fits=l=>l.every(x=>g.measureText(x).width<=maxW);
+  let best=null;
+  for(let s=size;s>=Math.max(min,size*.75);s-=2){set(s);if(fits([text])){best={s,lines:[text]};break}}
+  if(!best)for(let s=size;s>=min;s-=2){set(s);const l=wrapText(g,text,maxW,keep);if(l.length<=max&&fits(l)){best={s,lines:l};break}}
+  if(!best){set(min);best={s:min,lines:wrapText(g,text,maxW,keep).slice(0,max)}}
+  set(best.s);best.lines.forEach((l,i)=>g.fillText(l,x,y+i*best.s*lh));
+  return (best.lines.length-1)*best.s*lh; // extra height used below the first line
+}
+/* phones: iPhone's share menu has "Save Image" (to Photos); everything else downloads the file */
+let SHOT=null;
+function saveShot(canvas,name){
+  if(!canvas)return;
+  canvas.toBlob(async blob=>{
+    if(!blob)return toast(t('บันทึกรูปไม่สำเร็จ ลองกดค้างที่รูปแทน'));
+    const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+    const file=new File([blob],name,{type:'image/jpeg'});
+    if(ios&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]})}catch(e){}return}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  },'image/jpeg',.92);
+}
 
 async function makeTeaser(){
   try{await document.fonts.ready}catch(e){}
@@ -922,8 +954,12 @@ async function makeTeaser(){
   if(renderer){renderer.render(scene,camera);const src=renderer.domElement,dw=W*1.1,dh=src.height*dw/src.width;g.drawImage(src,(W-dw)/2,1000-dh/2,dw,dh)}
   const to=$('to').value||'คุณ';
   g.textAlign='center';g.fillStyle='#8C8176';g.font='500 30px "IBM Plex Sans Thai"';g.fillText('O N   I T S   W A Y',W/2,250);
-  g.fillStyle='#2A2420';g.font='500 92px "Noto Serif Thai"';g.fillText(t('ส่งกล่องให้{to}แล้ว',{to:I18N_SPACE(to)}).trim(),W/2,390);
-  g.fillStyle='#8C8176';g.font='400 40px "IBM Plex Sans Thai"';g.fillText(API&&SENT_LINE?SENT_LINE.replace(/^(ซานต้าออกเดินทางแล้ว|Santa is on his way) · /,''):S.plan==='0'?t('ซานต้ากำลังเดินทาง ถึงในอีก 25 ชม.'):t('จะเด้งถึง {when}',{when:thaiDate($('whenAt').value)}),W/2,470);
+  g.fillStyle='#2A2420';
+  const head=t('ส่งกล่องให้{to}แล้ว',{to:I18N_SPACE(to)}).replace(/\s+/g,' ').trim();
+  const dy=drawFit(g,head,{font:'500 {s}px "Noto Serif Thai"',size:92,min:60,maxW:W-140,x:W/2,y:390,keep:to.trim()});
+  g.fillStyle='#8C8176';
+  const sub=(API&&SENT_LINE?SENT_LINE.replace(/^(ซานต้าออกเดินทางแล้ว|Santa is on his way) · /,''):S.plan==='0'?t('ซานต้ากำลังเดินทาง ถึงในอีก 25 ชม.'):t('จะเด้งถึง {when}',{when:thaiDate($('whenAt').value)})).replace(/\s+/g,' ').trim();
+  drawFit(g,sub,{font:'400 {s}px "IBM Plex Sans Thai"',size:40,min:30,maxW:W-160,x:W/2,y:470+dy});
   let qr=null;
   if($('qrOn').checked&&window.QRCode){const d=document.createElement('div');new QRCode(d,{text:API?location.origin+'/santa-box/':'https://play.inzeniths.com/santa-box/',width:180,height:180,colorDark:'#2A2420',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.M});qr=d.querySelector('canvas')}
   if(qr){
@@ -934,7 +970,7 @@ async function makeTeaser(){
     g.fillStyle='#B3202E';g.font='italic 600 58px "Cormorant Garamond"';g.fillText('Santa Box',W/2,1760);
     g.fillStyle='#8C8176';g.font='400 30px "IBM Plex Sans Thai"';g.fillText(t('ห่อเสียงอวยพรใส่กล่อง ส่งให้คนที่คุณรัก'),W/2,1818);
   }
-  $('shotImg').src=c.toDataURL('image/jpeg',.9);
+  SHOT=c;$('shotImg').src=c.toDataURL('image/jpeg',.9);
 }
 
 go(0);
