@@ -129,8 +129,26 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .vmeta b{font-weight:500;color:var(--ink);font-size:12px}
 .vnote{font-size:10.5px;color:var(--muted);margin:8px 0 0}
 
-.meaning{font-family:var(--f-serif);font-size:15px;line-height:1.5;margin:4px 0 0;max-width:30ch;text-wrap:balance}
-.memo{width:132px;aspect-ratio:1;object-fit:cover;border:6px solid #fff;border-bottom-width:18px;border-radius:3px;box-shadow:0 8px 20px -10px rgba(60,40,20,.45);transform:rotate(-2.5deg)}
+.meaning{font-family:var(--f-serif);font-size:14px;line-height:1.5;margin:2px 0 0;max-width:32ch;text-wrap:balance}
+.keeps{display:flex;align-items:center;gap:12px;width:100%}
+.keeps .ticket{flex:1;min-width:0}
+.memo{flex:none;width:62px;padding:0;border:4px solid #fff;border-bottom-width:12px;border-radius:3px;background:#fff;box-shadow:0 6px 14px -8px rgba(60,40,20,.5);transform:rotate(-3deg);cursor:zoom-in}
+.memo img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.memo:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.zoomhint{font-size:11.5px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;margin-top:2px;padding:2px 6px;pointer-events:auto}
+/* photo pop-up */
+.scrim.lightbox{align-items:center;background:rgba(28,22,18,.78);padding:24px max(18px,env(safe-area-inset-left,0px))}
+.lightbox .polaroid{margin:0;background:#fff;padding:10px 10px 34px;border-radius:4px;box-shadow:0 30px 60px -20px rgba(0,0,0,.6);transform:rotate(-1.5deg);animation:pop .35s cubic-bezier(.2,1.3,.4,1) both;max-width:min(88vw,520px)}
+.lightbox img{display:block;max-width:100%;max-height:68vh;object-fit:contain}
+.lbx{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:max(14px,env(safe-area-inset-right,0px));width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.9);font-size:22px;line-height:1;color:var(--ink);cursor:pointer}
+@keyframes pop{from{opacity:0;transform:scale(.82) rotate(-1.5deg)}to{opacity:1;transform:scale(1) rotate(-1.5deg)}}
+/* gift close-up: page text steps aside, the canvas stays live underneath for drag and pinch */
+#giftView{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;pointer-events:none;
+  padding:70px max(22px,env(safe-area-inset-left,0px)) calc(34px + env(safe-area-inset-bottom,0px));animation:fadeUp .5s ease both}
+#giftView h2{font-family:var(--f-serif);font-weight:500;font-size:24px;margin:2px 0 0}
+#giftView .gv-bot{display:flex;flex-direction:column;align-items:center;gap:10px}
+#giftView .btn{pointer-events:auto;min-width:140px}
+@media (prefers-reduced-motion:reduce){.lightbox .polaroid,#giftView{animation:none}}
 .ticket{width:100%;display:flex;align-items:center;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 14px;text-align:left;
   -webkit-mask:radial-gradient(circle at 0 50%,transparent 8px,#000 8.5px) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent 8px,#000 8.5px) right/51% 100% no-repeat;
   mask:radial-gradient(circle at 0 50%,transparent 8px,#000 8.5px) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent 8px,#000 8.5px) right/51% 100% no-repeat}
@@ -267,10 +285,14 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
       <h1 class="title sm" id="giftName">ลูกแก้วสลักชื่อ</h1>
       <p class="sub" id="giftSub" data-no-i18n>สลักชื่อ “แม่ · Christmas 2026”</p>
       <p class="meaning" id="giftMeaning" data-no-i18n></p>
+      <button class="link zoomhint" id="zoomHint" type="button">แตะที่ของขวัญเพื่อดูใกล้ๆ</button>
     </div>
     <div class="bot">
-      <img class="memo" id="memoImg" alt="รูปความทรงจำจากผู้ส่ง" hidden>
-      <div class="ticket" id="ticket"><span class="k">IOU</span><div><small>คูปองสัญญา</small><p data-no-i18n>พาไปกินข้าวร้านโปรด 1 มื้อ</p></div></div>
+      <!-- keepsakes: a small photo you can open, beside the promise coupon -->
+      <div class="keeps">
+        <button class="memo" id="memoBtn" type="button" aria-label="ดูรูปความทรงจำ" hidden><img id="memoImg" alt="รูปความทรงจำจากผู้ส่ง"></button>
+        <div class="ticket" id="ticket"><span class="k">IOU</span><div><small>คูปองสัญญา</small><p data-no-i18n>พาไปกินข้าวร้านโปรด 1 มื้อ</p></div></div>
+      </div>
       <div class="row">
         <button class="btn ghost" id="shareBtn">แชร์รูปนี้</button>
         <button class="btn ghost" id="keepBtn">เก็บไว้</button>
@@ -316,6 +338,18 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
     <button class="btn full" id="saveShot">บันทึกรูปลงเครื่อง</button>
     <button class="btn ghost full" data-close>เสร็จแล้ว</button>
   </div>
+</div>
+
+<!-- photo pop-up: the memory photo, centred, tap anywhere to close -->
+<div class="scrim lightbox" id="photoBox" hidden>
+  <figure class="polaroid" data-close><img id="photoBig" alt="รูปความทรงจำจากผู้ส่ง" data-close></figure>
+  <button class="x lbx" type="button" data-close aria-label="ปิด">×</button>
+</div>
+
+<!-- gift close-up: the 3D gift in the middle of the screen; drag to turn, pinch or scroll to zoom -->
+<div id="giftView" hidden>
+  <div class="gv-top"><p class="eyebrow">Inside your box</p><h2 id="gvName"></h2></div>
+  <div class="gv-bot"><p class="caption">ลากเพื่อหมุน · บีบนิ้วหรือเลื่อนเพื่อซูม</p><button class="btn ghost" id="gvClose" type="button">ปิด</button></div>
 </div>
 
 <div class="scrim" id="keepSheet" hidden>
@@ -364,7 +398,9 @@ catch(e){const n=document.createElement('p');n.className='nogl';n.textContent='�
 const C=h=>new THREE.Color(h).convertSRGBToLinear();
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(32,1,.1,100);
-const A={untie:0,bowGone:0,ribbonDrop:0,lidOpen:0,glow:0,orn:0,cam:0,tails:0,card3:0};
+const A={untie:0,bowGone:0,ribbonDrop:0,lidOpen:0,glow:0,orn:0,cam:0,tails:0,card3:0,view:0};
+// gift close-up: the camera moves onto the gift; the viewer turns it (ry, rx) and zooms (1 = fits the screen, up to 2.8)
+const VIEW={on:false,ry:0,rx:0,zoom:1};
 // camera fit: the box is framed inside the empty band between this step's top text and bottom controls
 let F={top:80,bottom:600},FIT=null,cur=null;
 function fitView(){
@@ -624,7 +660,7 @@ if(renderer){
 function applyWay(){setDesign(DESIGN)}
 
 /* camera fit for any phone aspect */
-const target=new THREE.Vector3();let baseY=0,visH=6,dist=10;
+const target=new THREE.Vector3(),gvPos=new THREE.Vector3();let baseY=0,visH=6,dist=10;
 function resize(){
   const app=$('app'),w=app.clientWidth,h=app.clientHeight;if(!renderer)return;
   renderer.setSize(w,h,false);camera.aspect=w/h;
@@ -647,7 +683,9 @@ function frame(now){
   for(let i=tws.length-1;i>=0;i--){const w=tws[i];w.t+=dt;if(w.t<0)continue;if(w.from===null)w.from=A[w.k];const p=Math.min(1,w.t/w.dur);A[w.k]=w.from+(w.to-w.from)*w.ease(p);if(p>=1)tws.splice(i,1)}
   if(renderer){
     if(FIT){cur.d+=(FIT.d-cur.d)*.08;cur.ty+=(FIT.ty-cur.ty)*.08;dist=cur.d;target.set(0,cur.ty,0)}else target.set(0,baseY,0);
-    const pp=.34+pitch;camera.position.set(0,target.y+dist*Math.sin(pp),dist*Math.cos(pp));camera.lookAt(target);
+    let d=dist,pp=.34+pitch;
+    if(A.view>.001){orn.getWorldPosition(gvPos);target.lerp(gvPos,A.view);d+=(5.2/VIEW.zoom-d)*A.view;/* zoom 1: the whole gift fits with room around it */pp+=(.1-pp)*A.view}
+    camera.position.set(0,target.y+d*Math.sin(pp),d*Math.cos(pp));camera.lookAt(target);
     if(!spin){spinY+=spinV;spinV*=.94;pitch+=(0-pitch)*.04}
     root.rotation.y=spinY+(reduce||touched?0:Math.sin(T*.35)*.32)+A.untie*.25;
     root.position.y=reduce?0:Math.sin(T*1.1)*.03;
@@ -669,7 +707,7 @@ function frame(now){
     {const c=A.card3;card3.visible=c>.01&&c<.999;card3.position.set(0,.75+c*1.85,.05+c*.35);card3.rotation.set(-.18*c,-root.rotation.y*c,0);
       card3Mat.opacity=c<.8?1:Math.max(0,(1-c)/.2)}
     glowSprite.material.opacity=A.glow*.45;glowSprite.scale.setScalar(1+A.glow*1.7);inLight.intensity=A.glow*2.2;
-    orn.visible=A.orn>.005;orn.position.y=.7+A.orn*1.55;orn.scale.setScalar(.25+.75*A.orn);orn.rotation.y=-root.rotation.y+Math.sin(T*.6)*.35;orn.rotation.z=Math.sin(T*.9)*.06;
+    orn.visible=A.orn>.005;orn.position.y=.7+A.orn*1.55;orn.scale.setScalar(.25+.75*A.orn);orn.rotation.y=-root.rotation.y+Math.sin(T*.6)*.35*(1-A.view)+VIEW.ry*A.view;orn.rotation.x=VIEW.rx*A.view;orn.rotation.z=Math.sin(T*.9)*.06*(1-A.view);
     // sparkles
     const p=pts.geometry.attributes.position.array;
     ptsData.forEach((d,i)=>{
@@ -703,8 +741,32 @@ $('gl').addEventListener('pointerup',()=>{if(!drag)return;const m=drag.moved;dra
 
 // drag anywhere on the box (except while untying) to spin it all the way round and tilt the view
 let spin=null,spinY=0,spinV=0,pitch=0,touched=false;
-$('gl').addEventListener('pointerdown',e=>{if(step==='untie')return;spin={x:e.clientX,y:e.clientY,y0:spinY,p0:pitch};touched=true;$('spinHint').hidden=true;$('gl').setPointerCapture(e.pointerId)});
-$('gl').addEventListener('pointermove',e=>{if(!spin)return;const ny=spin.y0+(e.clientX-spin.x)*.012;spinV=Math.max(-.2,Math.min(.2,ny-spinY));spinY=ny;pitch=Math.min(.7,Math.max(-.25,spin.p0+(e.clientY-spin.y)*.006))});
+const PTR=new Map();let pinch=null,tapAt=null;
+$('gl').addEventListener('pointerdown',e=>{PTR.set(e.pointerId,{x:e.clientX,y:e.clientY});tapAt={x:e.clientX,y:e.clientY,t:performance.now()};
+  if(PTR.size===2&&VIEW.on){const [a,b]=[...PTR.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:VIEW.zoom};spin=null;return}
+  if(step==='untie')return;
+  spin=VIEW.on?{x:e.clientX,y:e.clientY,ry:VIEW.ry,rx:VIEW.rx,view:true}:{x:e.clientX,y:e.clientY,y0:spinY,p0:pitch};touched=true;$('spinHint').hidden=true;$('gl').setPointerCapture(e.pointerId)});
+$('gl').addEventListener('pointermove',e=>{if(!PTR.has(e.pointerId))return;PTR.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pinch&&PTR.size>=2){const [a,b]=[...PTR.values()];VIEW.zoom=Math.min(3.2,Math.max(1,pinch.z*Math.hypot(a.x-b.x,a.y-b.y)/pinch.d))}
+  else if(spin&&spin.view){VIEW.ry=spin.ry+(e.clientX-spin.x)*.012;VIEW.rx=Math.max(-.9,Math.min(.9,spin.rx+(e.clientY-spin.y)*.008))}});
+const endPtr=e=>{PTR.delete(e.pointerId);if(PTR.size<2)pinch=null;
+  // a short, still tap on the gift (gift step) opens the close-up
+  if(tapAt&&step==='gift'&&!VIEW.on&&performance.now()-tapAt.t<350&&Math.hypot(e.clientX-tapAt.x,e.clientY-tapAt.y)<8&&hitsGift(e))openView();tapAt=null};
+$('gl').addEventListener('pointerup',endPtr);$('gl').addEventListener('pointercancel',endPtr);
+$('gl').addEventListener('wheel',e=>{if(!VIEW.on)return;e.preventDefault();VIEW.zoom=Math.min(3.2,Math.max(1,VIEW.zoom*Math.exp(-e.deltaY*.0015)))},{passive:false});
+const ray=window.THREE?new THREE.Raycaster():null,ndc=window.THREE?new THREE.Vector2():null;
+function hitsGift(e){if(!ray||!orn||!orn.visible)return false;const r=$('gl').getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+  ray.setFromCamera(ndc,camera);if(ray.intersectObject(orn,true).length)return true;
+  // forgiving on small phones: also count a tap close to the gift's centre on screen
+  orn.getWorldPosition(gvPos);const p=gvPos.clone().project(camera),px=(p.x+1)/2*r.width,py=(1-p.y)/2*r.height;return Math.hypot(px-(e.clientX-r.left),py-(e.clientY-r.top))<70}
+function openView(){if(VIEW.on)return;VIEW.on=true;VIEW.ry=0;VIEW.rx=0;VIEW.zoom=1;$('gvName').textContent=$('giftName').textContent;
+  $('s-gift').hidden=true;$('giftView').hidden=false;tw('view',1,.7)}
+function closeView(){if(!VIEW.on)return;VIEW.on=false;$('giftView').hidden=true;$('s-gift').hidden=false;tw('view',0,.6)}
+$('gvClose').onclick=closeView;$('zoomHint').onclick=openView;
+addEventListener('keydown',e=>{if(e.key==='Escape'){closeView();$('photoBox').hidden=true}});
+// photo pop-up
+$('memoBtn').onclick=()=>{$('photoBig').src=$('memoImg').src;$('photoBox').hidden=false};
+$('gl').addEventListener('pointermove',e=>{if(!spin||spin.view)return;const ny=spin.y0+(e.clientX-spin.x)*.012;spinV=Math.max(-.2,Math.min(.2,ny-spinY));spinY=ny;pitch=Math.min(.7,Math.max(-.25,spin.p0+(e.clientY-spin.y)*.006))});
 addEventListener('pointerup',()=>{spin=null});addEventListener('pointercancel',()=>{spin=null});
 
 function untie(){
@@ -863,7 +925,7 @@ function showBox(v){
   if(d.id==='orn'){const e=P.gift.engraving||to;$('giftSub').textContent=t('สลักชื่อ “{text}”',{text:e});setEngrave(e);if(document.fonts)document.fonts.ready.then(()=>setEngrave(e))}
   if(typeof showGift==='function')showGift(d.id);
   $('ticket').hidden=!P.gift.coupon;if(P.gift.coupon)$('ticket').querySelector('p').textContent=P.gift.coupon;
-  $('memoImg').hidden=!v.photoUrl;if(v.photoUrl)$('memoImg').src=v.photoUrl;
+  $('memoBtn').hidden=!v.photoUrl;if(v.photoUrl)$('memoImg').src=v.photoUrl;
   $('voice').hidden=!v.voice;if(v.voice){const n=v.voice.playableSeconds||0;setText('#voice .vmeta span',`${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`)}
   SONG_ID=P.music;$('musicBtn').hidden=!SONGS[SONG_ID];if(SONGS[SONG_ID])$('musicBtn').querySelector('.nm').textContent=SONGS[SONG_ID].n;
   renderExpire();
