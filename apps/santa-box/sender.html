@@ -243,7 +243,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
       <div class="pane" id="p1" hidden>
         <h2 class="h">ออกแบบการ์ด</h2>
         <div class="field"><div class="lbl">กระดาษการ์ด</div><div class="cstyles" id="cardStyles" role="radiogroup" aria-label="กระดาษการ์ด"></div></div>
-        <div class="field"><div class="lbl">ลายมือ</div><div class="fonts" id="cardFonts" role="radiogroup" aria-label="แบบตัวอักษร"></div></div>
+        <div class="field"><div class="lbl">ตัวอักษร</div><div class="fonts" id="cardFonts" role="radiogroup" aria-label="แบบตัวอักษร"></div></div>
         <article class="wcard paper cs-0 cf-1" id="wcard">
           <label class="wto">ถึง <input type="text" id="to" maxlength="30" placeholder="ชื่อผู้รับ" aria-label="ชื่อผู้รับ"></label>
           <textarea id="msg" maxlength="280" placeholder="เขียนถึงเขาสักหน่อย..." aria-label="ข้อความในการ์ด"></textarea>
@@ -705,7 +705,7 @@ markDesign();updatePreviewLink();
 // card
 const msg=$('msg');const count=()=>$('msgCount').textContent=msg.value.length+'/280';msg.oninput=count;count();
 // card design: paper + handwriting, written in a focused full-size card
-const CARD_STYLES=['ครีม','หิมะ','แดงทอง','คราฟท์','เขียวสน'],CARD_FONTS=[['ตัวเชิง',"'Noto Serif Thai'"],['ลายมือหรู',"'Charm'"],['ลายมือน่ารัก',"'Mali'"]];
+const CARD_STYLES=['ครีม','หิมะ','แดงทอง','คราฟท์','เขียวสน'],CARD_FONTS=[['เรียบหรู',"'Noto Serif Thai'"],['ลายมือสวย',"'Charm'"],['ลายมือน่ารัก',"'Mali'"]];
 S.cs=0;S.cf=1;
 CARD_STYLES.forEach((n,i)=>{const b=document.createElement('button');b.className='cst';b.setAttribute('role','radio');b.innerHTML=`<i class="paper cs-${i}"></i>`;b.append(n);b.onclick=()=>{S.cs=i;markCard()};$('cardStyles').append(b)});
 CARD_FONTS.forEach(([n,ff],i)=>{const b=document.createElement('button');b.className='fnt';b.setAttribute('role','radio');b.style.fontFamily=ff;b.textContent=n;b.onclick=()=>{S.cf=i;markCard()};$('cardFonts').append(b)});
