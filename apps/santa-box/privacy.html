@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Santa Box · นโยบายความเป็นส่วนตัว</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600&family=IBM+Plex+Sans+Thai:wght@400;500&family=Noto+Serif+Thai:wght@500&display=swap">
+<style>
+:root{
+  --bg:#FBF8F4; --paper:#FFFFFF; --ink:#2A2420; --muted:#8A7B74; --line:#EEE2DC; --accent:#B3202E;
+  --f-lat:'Cormorant Garamond','Times New Roman',serif;
+  --f-serif:'Noto Serif Thai','Cormorant Garamond',serif;
+  --f-sans:'IBM Plex Sans Thai','Noto Sans Thai',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.7}
+.wrap{max-width:680px;margin:0 auto;padding:20px max(18px,env(safe-area-inset-left,0px)) 48px}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+.logo{font-family:var(--f-lat);font-style:italic;font-weight:600;font-size:22px;color:var(--accent);text-decoration:none}
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--paper);padding:2px}
+.lang button{border:0;background:none;font:500 11px/1 var(--f-sans);letter-spacing:.04em;padding:7px 10px;border-radius:999px;color:var(--muted);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:#fff}
+h1{font-family:var(--f-serif);font-weight:500;font-size:24px;line-height:1.35;margin:0 0 4px}
+.updated{color:var(--muted);font-size:13px;margin:0 0 20px}
+h2{font-family:var(--f-serif);font-weight:500;font-size:17px;margin:26px 0 6px}
+p,li{margin:0 0 8px}
+ul{padding-left:20px;margin:0 0 8px}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0 10px;background:var(--paper)}
+th,td{text-align:left;vertical-align:top;border:1px solid var(--line);padding:8px 10px}
+th{font-weight:500;background:#F6EFEA}
+a{color:var(--accent)}
+.box{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0}
+.back{display:inline-block;margin-top:28px;font-size:14px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hdr">
+    <a class="logo" href="/santa-box/">Santa Box</a>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-l="th">TH</button><button type="button" data-l="en">EN</button>
+    </div>
+  </header>
+
+  <!-- ================= ภาษาไทย ================= -->
+  <main lang="th" data-lang="th">
+    <h1>นโยบายความเป็นส่วนตัว</h1>
+    <p class="updated">Santa Box โดย IN ZENITHS · ปรับปรุงล่าสุด 20 พฤศจิกายน 2569</p>
+
+    <p>หน้านี้อธิบายว่า Santa Box (play.inzeniths.com/santa-box) เก็บข้อมูลอะไรของคุณ เอาไปใช้ทำอะไร เก็บไว้นานแค่ไหน และคุณขอดูหรือขอลบได้อย่างไร ตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA)</p>
+
+    <h2>1. ใครดูแลข้อมูลของคุณ</h2>
+    <p>ผู้ควบคุมข้อมูลส่วนบุคคลคือ <b>IN ZENITHS</b> ติดต่อเรื่องข้อมูลส่วนบุคคลได้ที่ <a href="mailto:support@inzeniths.com">support@inzeniths.com</a></p>
+
+    <h2>2. ข้อมูลที่เราเก็บ</h2>
+    <ul>
+      <li><b>สิ่งที่ผู้ส่งใส่ในกล่อง:</b> ชื่อผู้รับ ชื่อผู้ส่ง ข้อความในการ์ด ข้อความสลัก ข้อความคูปอง ข้อความเสียง รูปความทรงจำ และหน้าตากล่องที่เลือก</li>
+      <li><b>อีเมล</b> (ถ้าใส่): ใช้ส่งลิงก์กล่อง ใบยืนยันการชำระเงิน และอีเมลเตือนก่อนคริสต์มาส ถ้าคุณเลือกรับ</li>
+      <li><b>ข้อมูลการชำระเงิน:</b> แพ็กที่ซื้อ ยอดเงิน สถานะการชำระ และอีเมลผู้จ่าย เราไม่เห็นและไม่เก็บเลขบัญชีหรือข้อมูลพร้อมเพย์ของคุณ Stripe เป็นผู้รับชำระโดยตรง</li>
+      <li><b>ข้อมูลทางเทคนิค:</b> หมายเลข IP และข้อมูลเบราว์เซอร์ในบันทึกของเซิร์ฟเวอร์ ใช้เพื่อความปลอดภัยและกันการส่งสแปม</li>
+      <li><b>ในเครื่องของคุณ:</b> ภาษาที่เลือก และรหัสลับของกล่องที่คุณส่ง (เพื่อให้ชำระเงินหรือดูสถานะกล่องของตัวเองได้) เก็บไว้ในเบราว์เซอร์ของคุณเท่านั้น เราไม่ใช้คุกกี้โฆษณาหรือคุกกี้ติดตาม</li>
+    </ul>
+    <p>รูปและเสียงอาจมีหน้าหรือเสียงของคนอื่น เราใช้เพื่อส่งให้ผู้รับเท่านั้น ไม่นำไปจดจำใบหน้า จดจำเสียง หรือระบุตัวตน</p>
+
+    <h2>3. เราใช้ข้อมูลทำอะไร และใช้ฐานอะไร</h2>
+    <table>
+      <tr><th>เพื่อ</th><th>ฐานทางกฎหมาย</th></tr>
+      <tr><td>ห่อและส่งกล่องให้ผู้รับ เก็บรูป เสียง และข้อความไว้ให้ผู้รับเปิดดู</td><td>จำเป็นเพื่อให้บริการตามที่คุณขอ (สัญญา)</td></tr>
+      <tr><td>รับชำระเงิน ส่งใบยืนยัน และเก็บหลักฐานทางบัญชี</td><td>สัญญา และหน้าที่ตามกฎหมายบัญชีและภาษี</td></tr>
+      <tr><td>อีเมลเตือนก่อนคริสต์มาสปีหน้า</td><td>ความยินยอม (เฉพาะคนที่ติ๊ก "เตือนก่อนคริสต์มาสปีหน้า")</td></tr>
+      <tr><td>วางกล่องไว้ใต้ต้นคริสต์มาสรวม (โชว์แค่หน้าตากล่อง ไม่โชว์ชื่อ ข้อความ รูป หรือเสียง)</td><td>ความยินยอม (เฉพาะคนที่ติ๊ก)</td></tr>
+      <tr><td>ป้องกันการใช้งานผิดวัตถุประสงค์และดูแลความปลอดภัยของระบบ</td><td>ประโยชน์อันชอบธรรม</td></tr>
+    </table>
+    <p>เราไม่ขายข้อมูลของคุณ และไม่ใช้ข้อมูลในกล่องเพื่อการโฆษณา</p>
+
+    <h2>4. เก็บไว้นานแค่ไหน</h2>
+    <table>
+      <tr><th>ข้อมูล</th><th>ระยะเวลา</th></tr>
+      <tr><td>รูป เสียง ข้อความ และหน้าตากล่อง แบบฟรี</td><td>ลบอัตโนมัติ 7 วันหลังผู้รับเปิดกล่อง หรือ 7 วันหลังกล่องถึงถ้ายังไม่มีใครเปิด</td></tr>
+      <tr><td>แพ็กเก็บไว้ 1 ปี</td><td>ลบอัตโนมัติเมื่อครบ 1 ปี</td></tr>
+      <tr><td>แพ็กเก็บไว้ตลอดไป</td><td>เก็บไว้ตามที่คุณซื้อ จนกว่าคุณจะขอให้ลบ หรือเราหยุดให้บริการ (จะแจ้งล่วงหน้าทางอีเมลถ้ามี)</td></tr>
+      <tr><td>รูปหรือเสียงที่อัปโหลดแล้วไม่ได้ส่ง</td><td>ลบภายใน 1–2 วัน</td></tr>
+      <tr><td>ชื่อผู้ส่งและชื่อผู้รับ หลังกล่องหมดอายุ</td><td>เก็บไว้เพื่อให้ผู้รับกด "ส่งกล่องกลับ" ได้ ขอให้ลบได้ทุกเมื่อ</td></tr>
+      <tr><td>อีเมลของคนที่ขอรับการเตือน</td><td>จนกว่าจะขอเลิกรับ</td></tr>
+      <tr><td>ข้อมูลการชำระเงิน</td><td>ตามระยะเวลาที่กฎหมายบัญชีและภาษีกำหนด (โดยทั่วไป 5 ปี)</td></tr>
+    </table>
+
+    <h2>5. เราส่งข้อมูลให้ใครบ้าง</h2>
+    <p>เราใช้ผู้ให้บริการเหล่านี้ช่วยทำงาน แต่ละรายเห็นเฉพาะข้อมูลที่จำเป็นต่องานของเขา</p>
+    <ul>
+      <li><b>Cloudflare</b> (หน้าเว็บ และที่เก็บไฟล์รูปกับเสียง)</li>
+      <li><b>Railway</b> (เซิร์ฟเวอร์และฐานข้อมูล)</li>
+      <li><b>Stripe</b> (รับชำระเงิน)</li>
+      <li><b>Brevo</b> (ส่งอีเมล)</li>
+    </ul>
+    <p>ผู้ให้บริการบางรายเก็บข้อมูลบนเซิร์ฟเวอร์นอกประเทศไทย เช่น สหรัฐอเมริกาหรือสหภาพยุโรป เราเลือกผู้ให้บริการที่มีมาตรการคุ้มครองข้อมูลตามมาตรฐานสากล และส่งข้อมูลไปเท่าที่จำเป็นเพื่อให้บริการที่คุณขอ</p>
+    <p>ผู้รับจะเห็นสิ่งที่ผู้ส่งใส่ไว้ในกล่อง และใครก็ตามที่มีลิงก์กล่องก็เปิดดูได้ ส่งลิงก์ให้เฉพาะคนที่ตั้งใจจะให้</p>
+
+    <h2>6. ความรับผิดชอบของผู้ส่ง</h2>
+    <p>ใส่รูป เสียง และข้อความเฉพาะที่คุณมีสิทธิ์ใช้ ถ้ามีคนอื่นอยู่ในรูปหรือในเสียง ควรแน่ใจว่าเขาโอเคที่จะถูกส่งให้ผู้รับ ห้ามใส่เนื้อหาที่ผิดกฎหมาย ละเมิดผู้อื่น หรือเป็นข้อมูลอ่อนไหวของคนอื่น เช่น เลขบัตรประชาชน ข้อมูลสุขภาพ</p>
+
+    <h2>7. สิทธิ์ของคุณ</h2>
+    <p>คุณมีสิทธิ์ขอดู ขอสำเนา ขอแก้ไข ขอลบ ขอระงับ หรือคัดค้านการใช้ข้อมูลของคุณ ขอรับข้อมูลในรูปแบบที่ใช้ต่อได้ และถอนความยินยอมเมื่อใดก็ได้ (การถอนไม่กระทบสิ่งที่ทำไปแล้วก่อนหน้า) ถ้าคุณเป็นคนในรูปหรือในเสียงของกล่องใด ก็ขอให้ลบได้เช่นกัน</p>
+    <div class="box">
+      ส่งคำขอมาที่ <a href="mailto:support@inzeniths.com">support@inzeniths.com</a> พร้อมลิงก์กล่อง (ถ้ามี) เราจะตอบภายใน 30 วัน<br>
+      ถ้าเห็นว่าเราจัดการข้อมูลไม่ถูกต้อง ร้องเรียนได้ที่สำนักงานคณะกรรมการคุ้มครองข้อมูลส่วนบุคคล (สคส.)
+    </div>
+
+    <h2>8. เด็ก</h2>
+    <p>ถ้าคุณอายุต่ำกว่า 20 ปี ควรให้ผู้ปกครองรับทราบก่อนส่งกล่องหรือชำระเงิน</p>
+
+    <h2>9. การเปลี่ยนแปลงนโยบาย</h2>
+    <p>ถ้าเราปรับนโยบายนี้ จะแก้วันที่ด้านบน ถ้าเปลี่ยนเรื่องสำคัญจะแจ้งทางอีเมลให้คนที่ให้อีเมลไว้</p>
+
+    <a class="back" href="/santa-box/">← กลับไปห่อกล่อง</a>
+  </main>
+
+  <!-- ================= English ================= -->
+  <main lang="en" data-lang="en" hidden>
+    <h1>Privacy notice</h1>
+    <p class="updated">Santa Box by IN ZENITHS · Last updated 20 November 2026</p>
+
+    <p>This page explains what Santa Box (play.inzeniths.com/santa-box) keeps about you, what it's used for, how long it's kept, and how to see or delete it, under Thailand's Personal Data Protection Act B.E. 2562 (PDPA).</p>
+
+    <h2>1. Who looks after your data</h2>
+    <p>The data controller is <b>IN ZENITHS</b>. For anything about your personal data, email <a href="mailto:support@inzeniths.com">support@inzeniths.com</a>.</p>
+
+    <h2>2. What we keep</h2>
+    <ul>
+      <li><b>What the sender puts in the box:</b> recipient's name, sender's name, card message, engraving, promise coupon, voice message, memory photo and the box design.</li>
+      <li><b>Email</b> (if given): for the box link, payment receipt, and the Christmas reminder if you ask for it.</li>
+      <li><b>Payment details:</b> plan, amount, status and the payer's email. We never see or store your bank or PromptPay details; Stripe takes the payment directly.</li>
+      <li><b>Technical data:</b> IP address and browser details in server logs, for security and to stop spam.</li>
+      <li><b>On your device:</b> your language and the secret code for boxes you sent (so you can pay for or check them), kept only in your browser. We don't use advertising or tracking cookies.</li>
+    </ul>
+    <p>Photos and voice notes may include other people. We use them only to deliver the box, never for face or voice recognition or to identify anyone.</p>
+
+    <h2>3. What we use it for, and why we're allowed to</h2>
+    <table>
+      <tr><th>Purpose</th><th>Legal basis</th></tr>
+      <tr><td>Wrapping and delivering the box, and keeping the photo, voice and message for the recipient</td><td>Needed to provide the service you asked for (contract)</td></tr>
+      <tr><td>Taking payment, sending receipts and keeping accounting records</td><td>Contract, and legal duties under accounting and tax law</td></tr>
+      <tr><td>Next Christmas reminder email</td><td>Consent (only if you tick "Remind me before next Christmas")</td></tr>
+      <tr><td>Placing the box under the shared Christmas tree (box design only; no names, messages, photos or voice)</td><td>Consent (only if you tick it)</td></tr>
+      <tr><td>Preventing misuse and keeping the service secure</td><td>Legitimate interests</td></tr>
+    </table>
+    <p>We don't sell your data and don't use what's in your box for advertising.</p>
+
+    <h2>4. How long we keep it</h2>
+    <table>
+      <tr><th>Data</th><th>Kept for</th></tr>
+      <tr><td>Photo, voice, messages and design, free box</td><td>Deleted automatically 7 days after the recipient opens it, or 7 days after it arrives if nobody opens it</td></tr>
+      <tr><td>Keep-for-a-year plan</td><td>Deleted automatically after 1 year</td></tr>
+      <tr><td>Keep-forever plan</td><td>Kept as you paid for, until you ask us to delete it or we close the service (we'll email first where we can)</td></tr>
+      <tr><td>Photos or voice notes uploaded but never sent</td><td>Deleted within 1–2 days</td></tr>
+      <tr><td>Sender and recipient names after a box expires</td><td>Kept so the recipient can "send one back"; ask us to delete them any time</td></tr>
+      <tr><td>Email of people who asked for the reminder</td><td>Until you stop the reminders</td></tr>
+      <tr><td>Payment records</td><td>As long as accounting and tax law requires (usually 5 years)</td></tr>
+    </table>
+
+    <h2>5. Who we share it with</h2>
+    <p>These providers help run the service; each sees only what it needs for its job:</p>
+    <ul>
+      <li><b>Cloudflare</b> (web pages, and storage for photos and voice notes)</li>
+      <li><b>Railway</b> (server and database)</li>
+      <li><b>Stripe</b> (payments)</li>
+      <li><b>Brevo</b> (email)</li>
+    </ul>
+    <p>Some of them store data outside Thailand, for example in the United States or the European Union. We use providers with internationally recognised data protection safeguards and send only what's needed to provide the service you asked for.</p>
+    <p>The recipient sees what the sender put in the box, and anyone with the box link can open it. Only share the link with the person you mean it for.</p>
+
+    <h2>6. What the sender is responsible for</h2>
+    <p>Only add photos, voice and words you have the right to use. If other people appear in a photo or recording, make sure they're happy for it to go to the recipient. Don't add anything illegal, abusive, or other people's sensitive data such as ID numbers or health information.</p>
+
+    <h2>7. Your rights</h2>
+    <p>You can ask to see, get a copy of, correct, delete or restrict your data, object to how we use it, get it in a reusable format, and withdraw consent at any time (this doesn't affect what we did before). If you appear in a photo or voice note in a box, you can ask us to delete it too.</p>
+    <div class="box">
+      Email <a href="mailto:support@inzeniths.com">support@inzeniths.com</a> with the box link if you have it. We'll reply within 30 days.<br>
+      If you think we've handled your data wrongly, you can complain to Thailand's Personal Data Protection Committee (PDPC).
+    </div>
+
+    <h2>8. Children</h2>
+    <p>If you're under 20, please let a parent or guardian know before you send a box or pay.</p>
+
+    <h2>9. Changes</h2>
+    <p>If we change this notice we'll update the date at the top, and for important changes we'll email people who gave us their email.</p>
+
+    <a class="back" href="/santa-box/">← Back to wrapping</a>
+  </main>
+</div>
+<script>
+(function(){
+  // same language choice as the Santa Box pages: ?lang=, then the saved choice, then the phone's language
+  var l;try{l=new URLSearchParams(location.search).get('lang')||localStorage.getItem('santaLang')}catch(e){}
+  if(l!=='th'&&l!=='en')l=/^th/i.test(navigator.language||'')?'th':'en';
+  function set(v){l=v;document.documentElement.lang=v;
+    document.querySelectorAll('main[data-lang]').forEach(function(m){m.hidden=m.dataset.lang!==v});
+    document.querySelectorAll('.lang button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.l===v)});
+    document.title=v==='en'?'Santa Box · Privacy notice':'Santa Box · นโยบายความเป็นส่วนตัว';
+    try{localStorage.setItem('santaLang',v)}catch(e){}}
+  document.querySelectorAll('.lang button').forEach(function(b){b.onclick=function(){set(b.dataset.l)}});
+  set(l);
+})();
+</script>
+</body>
+</html>

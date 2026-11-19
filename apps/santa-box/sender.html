@@ -257,6 +257,8 @@ html.gv .panel,html.gv .spin-hint,html.gv .stage-tag{display:none}
 .summary b{font-family:var(--f-lat);font-size:26px;font-weight:600;flex:none}
 .err{color:var(--accent);font-size:12px;margin:0}
 .note.center{text-align:center}
+.note.legal a,.photoRights a{color:inherit;text-underline-offset:2px}
+.photoRights{margin:4px 0 0}
 .btn.full{width:100%;flex:none}
 a.btn{display:block;text-align:center;text-decoration:none}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;background:var(--ink);color:var(--paper);font-size:13px;padding:10px 16px;border-radius:12px;width:max-content;max-width:calc(100% - 32px);text-align:center;animation:fade .25s}
@@ -334,6 +336,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
           <div class="sub field" id="couponField"><input type="text" id="coupon" maxlength="80" placeholder="สัญญาว่าจะ… เช่น พาไปกินข้าวร้านโปรด 1 มื้อ" aria-label="ข้อความคูปอง"></div>
           <div class="opt" style="cursor:default"><span class="ic">◻</span><span class="tx"><b>รูปความทรงจำ</b><small>ไม่บังคับ ถ้าไม่ใส่รูป ผู้รับจะไม่เห็นช่องนี้</small></span></div>
           <div class="sub photo" id="photoField"><label for="photo">เลือกรูป</label><input class="sr" type="file" id="photo" accept="image/*"><button class="thumbBtn" id="thumbBtn" type="button" aria-label="ดูรูปที่เลือก" hidden><img id="thumb" alt=""></button><span class="note" id="photoNote">ยังไม่ได้เลือกรูป</span></div>
+          <p class="note photoRights">ใส่เฉพาะรูปที่คุณมีสิทธิ์ใช้ และคนในรูปโอเคที่จะส่งให้ผู้รับ</p>
         </div>
       </div>
 
@@ -390,7 +393,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <button class="btn ghost" id="backBtn">ย้อนกลับ</button>
         <button class="btn" id="nextBtn">ถัดไป</button>
       </div>
-      <p class="copy">© IN ZENITHS · มีปัญหาติดต่อ <a href="mailto:support@inzeniths.com">support@inzeniths.com</a></p>
+      <p class="copy">© IN ZENITHS · มีปัญหาติดต่อ <a href="mailto:support@inzeniths.com">support@inzeniths.com</a> · <a href="/santa-box/privacy">นโยบายความเป็นส่วนตัว</a></p>
     </div>
   </section>
 </div>
@@ -427,8 +430,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
   <div class="sheet">
     <h2>ภาพทีเซอร์ 9:16</h2>
     <img id="shotImg" alt="ภาพทีเซอร์แนวตั้ง">
-    <label class="check"><input type="checkbox" id="qrOn" checked><span><b>ใส่ QR ในรูป</b><small>คนที่เห็นสตอรี่สแกนมาห่อกล่องของตัวเองได้</small></span></label>
-    <p class="note" style="text-align:center">กดบันทึกรูปลงเครื่อง แล้วโพสต์ลงสตอรี่ IG หรือ TikTok</p>
+    <label class="check"><input type="checkbox" id="qrOn" checked><span><b>ใส่ QR ในรูป</b><small>คนที่เห็นรูปนี้สแกนมาห่อกล่องของตัวเองได้</small></span></label>
     <button class="btn" id="saveShot" style="width:100%">บันทึกรูปลงเครื่อง</button>
     <button class="btn ghost" data-close style="width:100%">เสร็จแล้ว</button>
   </div>
@@ -456,11 +458,12 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <div class="field"><label class="lbl" for="wTo">ชื่อผู้รับ</label><input type="text" id="wTo" maxlength="30"></div>
     <div class="field"><label class="lbl" for="wFrom">ชื่อของคุณ <em>ไม่บังคับ</em></label><input type="text" id="wFrom" maxlength="30" placeholder="ให้ผู้รับรู้ว่าใครส่งมา"></div>
     <div class="field"><label class="lbl" for="wEmail">อีเมลของคุณ <em id="emailHint"></em></label><input type="email" id="wEmail" placeholder="you@example.com" autocomplete="email"><p class="err" id="emailErr" hidden>ใส่อีเมลให้ถูกต้อง เพื่อรับใบเสร็จและกู้ลิงก์คืนได้</p></div>
-    <label class="check"><input type="checkbox" id="remind"><span><b>เตือนก่อนคริสต์มาสปีหน้า</b><small>อีเมลฟรีล่วงหน้า 7 วัน กดเลิกรับในอีเมลได้</small></span></label>
+    <label class="check"><input type="checkbox" id="remind"><span><b>เตือนก่อนคริสต์มาสปีหน้า</b><small>อีเมลฟรีล่วงหน้า 7 วัน ขอเลิกรับได้ที่ support@inzeniths.com</small></span></label>
     <label class="check"><input type="checkbox" id="tree"><span><b>วางกล่องไว้ใต้ต้นคริสต์มาสรวม</b><small>โชว์แค่หน้าตากล่อง ไม่โชว์ชื่อ ข้อความ หรือเสียง</small></span></label>
     <div class="field"><label class="lbl" for="code">โค้ดส่วนลด <em>ไม่บังคับ</em></label><div class="codeRow"><input type="text" id="code" placeholder="ถ้ามี"><button class="btn ghost" id="codeBtn">ใช้โค้ด</button></div><p class="codeMsg" id="codeMsg" role="status" hidden></p></div>
     <div class="summary"><span id="sumPlan"></span><b id="sumPrice"></b></div>
     <p class="note center">จ่ายครั้งเดียว ไม่ใช่รายเดือน ไม่ตัดเงินซ้ำ</p>
+    <p class="note center legal">การส่งกล่องถือว่าคุณรับทราบ <a href="/santa-box/privacy" target="_blank" rel="noopener">นโยบายความเป็นส่วนตัว</a></p>
     <button class="btn full" id="confirmBtn"></button>
   </div>
 </div>
