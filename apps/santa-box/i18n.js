@@ -14,6 +14,7 @@ window.I18N = (function () {
     // shared Christmas tree page
     'ต้นคริสต์มาสของทุกคน': 'Everyone\'s Christmas tree',
     'ใต้ต้นนี้มี {n} กล่อง': '{n} boxes under this tree',
+    'ใต้ต้นนี้มี 1 กล่อง': '1 box under this tree',
     'ยังไม่มีกล่องใต้ต้นนี้': 'No boxes under the tree yet',
     'โชว์แค่หน้าตากล่อง ไม่มีชื่อหรือข้อความ': 'Only the boxes\' looks are shown, never names or messages',
     'วางกล่องแรกใต้ต้นไม้ แล้วไฟบนต้นจะสว่างขึ้น': 'Place the first box and the tree lights up',

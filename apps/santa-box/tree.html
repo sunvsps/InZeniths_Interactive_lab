@@ -85,8 +85,8 @@ a{color:inherit}
   <p class="copy">© IN ZENITHS · <a href="/santa-box/privacy">นโยบายความเป็นส่วนตัว</a></p>
 </div>
 
-<script src="/santa-box/i18n.js?v=20261120"></script>
-<script src="/santa-box/santa-api.js?v=20261120"></script>
+<script src="/santa-box/i18n.js?v=20261120b"></script>
+<script src="/santa-box/santa-api.js?v=20261120b"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
@@ -111,7 +111,7 @@ const ribOf=v=>isHex(v)?{n:'สีที่เลือกเอง',c:v,r:.3,m:
 let TOTAL=null;
 function headline(){
   if(TOTAL==null)return;
-  $('headline').textContent=TOTAL?t('ใต้ต้นนี้มี {n} กล่อง',{n:TOTAL.toLocaleString('en-US')}):t('ยังไม่มีกล่องใต้ต้นนี้');
+  $('headline').textContent=TOTAL===1?t('ใต้ต้นนี้มี 1 กล่อง'):TOTAL?t('ใต้ต้นนี้มี {n} กล่อง',{n:TOTAL.toLocaleString('en-US')}):t('ยังไม่มีกล่องใต้ต้นนี้');
   $('subline').textContent=TOTAL?t('โชว์แค่หน้าตากล่อง ไม่มีชื่อหรือข้อความ'):t('วางกล่องแรกใต้ต้นไม้ แล้วไฟบนต้นจะสว่างขึ้น');
 }
 if(window.I18N)I18N.onChange(()=>{headline();if(PICK)showInfo(PICK.userData.design)});
