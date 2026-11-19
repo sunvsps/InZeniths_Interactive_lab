@@ -4,7 +4,7 @@ Christmas 2026 campaign: the sender wraps a 3D gift box (box design, card, voice
 
 | File | What it is | Published prototype |
 | --- | --- | --- |
-| `sender.html` | Sender: box design, card designer + voice, gift (lid comes off), music (lid closes and the bow pops), delivery and price, "send to whom" sheet, sent screen with copy link, teaser image and IN ZENITH promo | https://claude.ai/artifact/4gwBv5MKhhcHJg81ozmDUd |
+| `sender.html` | Sender: box design, card designer + voice, gift (lid comes off), music (lid closes and the bow pops), delivery and price, "send to whom" sheet, sent screen with copy link, teaser image and IN ZENITHS promo | https://claude.ai/artifact/4gwBv5MKhhcHJg81ozmDUd |
 | `recipient.html` | Recipient: waiting countdown, pull the ribbon, card + voice, gift with its meaning, share image, keep (25 / 125 baht), send one back | https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75 |
 | `archive/prototype-v1.html` | First cartoon-style version | https://claude.ai/artifact/WPDHTJTJiYn48pHnHxNQ74 |
 

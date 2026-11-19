@@ -2,7 +2,7 @@
   "name": "inzenith-interactive-api",
   "version": "0.1.0",
   "private": true,
-  "description": "One back end for every IN ZENITH interactive campaign (Santa Box first).",
+  "description": "One back end for every IN ZENITHS interactive campaign (Santa Box first).",
   "type": "module",
   "engines": {
     "node": ">=22"

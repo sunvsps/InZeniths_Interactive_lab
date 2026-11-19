@@ -1,4 +1,4 @@
-/* Santa Box ↔ IN ZENITH Interactive API (interactive/api).
+/* Santa Box ↔ IN ZENITHS Interactive API (interactive/api).
  * Where the API lives: <meta name="santa-api" content="https://api.inzeniths.com"> in each page.
  * Empty = prototype mode: the pages run on their own with sample data, as before.
  * For local testing add ?api=http://localhost:3100 to the page address once (remembered for the tab). */
