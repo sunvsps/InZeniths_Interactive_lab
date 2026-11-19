@@ -1,4 +1,4 @@
-# IN ZENITH Interactive API
+# IN ZENITHS Interactive API
 
 หลังบ้านตัวเดียวของทุกแคมเปญ interactive (ตอนนี้มี Santa Box) ใช้ stack เดียวกับระบบลงทะเบียนอีเวนต์
 

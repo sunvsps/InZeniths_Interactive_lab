@@ -1,4 +1,4 @@
-// One database for every IN ZENITH interactive campaign. A "gift" is one thing a sender makes and a recipient opens
+// One database for every IN ZENITHS interactive campaign. A "gift" is one thing a sender makes and a recipient opens
 // (a Santa Box today). Campaign-specific content lives in `payload`, checked by that campaign's own schema.
 
 generator client {
