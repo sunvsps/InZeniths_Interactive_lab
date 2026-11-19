@@ -50,9 +50,10 @@ const schema = z
     /** Stripe payment methods shown at checkout. */
     STRIPE_PAYMENT_METHODS: list('promptpay'),
 
-    /** console = print emails to the log; resend = send through Resend's HTTPS API. */
-    MAIL_DRIVER: z.enum(['console', 'resend']).default('console'),
+    /** console = print emails to the log; brevo / resend = send through their HTTPS API (Railway Hobby blocks SMTP). */
+    MAIL_DRIVER: z.enum(['console', 'brevo', 'resend']).default('console'),
     MAIL_FROM: z.string().default('Santa Box <no-reply@example.com>'),
+    BREVO_API_KEY: z.string().optional(),
     RESEND_API_KEY: z.string().optional(),
 
     /** Clean-up and reminder jobs inside this process. Run the API as one instance only. */
@@ -69,6 +70,7 @@ const schema = z
       ctx.addIssue({ code: 'custom', path: ['R2_ACCOUNT_ID'], message: 'R2_ACCOUNT_ID or R2_ENDPOINT is required when STORAGE_DRIVER=r2' });
     }
     need(env.PAYMENT_DRIVER === 'stripe', ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'], 'PAYMENT_DRIVER=stripe');
+    need(env.MAIL_DRIVER === 'brevo', ['BREVO_API_KEY'], 'MAIL_DRIVER=brevo');
     need(env.MAIL_DRIVER === 'resend', ['RESEND_API_KEY'], 'MAIL_DRIVER=resend');
     if (env.NODE_ENV === 'production') {
       if (env.PAYMENT_DRIVER === 'fake') ctx.addIssue({ code: 'custom', path: ['PAYMENT_DRIVER'], message: 'fake payments are not allowed in production' });

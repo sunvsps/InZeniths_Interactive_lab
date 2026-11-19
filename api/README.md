@@ -8,7 +8,7 @@
 | ฐานข้อมูล | PostgreSQL + Prisma |
 | ไฟล์เสียงและรูป | Cloudflare R2 (เบราว์เซอร์อัปโหลด/ดาวน์โหลดตรงผ่านลิงก์ที่เซ็นแล้ว) |
 | รับเงิน | Stripe Checkout (PromptPay) |
-| อีเมล | Resend |
+| อีเมล | Brevo (ส่งผ่าน HTTPS API เพราะ Railway Hobby ปิด SMTP; ฟรีวันละ 300 ฉบับ) |
 | งานตามเวลา | ในตัว API ทุก `JOB_INTERVAL_MINUTES` (ลบกล่องหมดอายุ, ลบไฟล์ที่ไม่ได้ใช้, เตือนก่อนคริสต์มาส) |
 | ทดสอบ | Vitest + Postgres จำลอง (ไม่ต้องมี Docker) |
 
@@ -64,7 +64,7 @@ npm test                # ทดสอบทั้งหมด
    | `SANTA_APP_URL` | `https://play.inzeniths.com/santa-box` (ลิงก์กล่องจะเป็น `/santa-box/b/<id>`) |
    | `STORAGE_DRIVER` | `r2` + `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` |
    | `PAYMENT_DRIVER` | `stripe` + `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
-   | `MAIL_DRIVER` | `resend` + `RESEND_API_KEY`, `MAIL_FROM` |
+   | `MAIL_DRIVER` | `brevo` + `BREVO_API_KEY`, `MAIL_FROM` (ยังไม่พร้อมใช้ `console` ไปก่อนได้: ระบบทำงานครบแต่ไม่ส่งอีเมลจริง) |
 
    ถ้าตั้งไม่ครบ API จะไม่ยอมเริ่มและบอกว่าขาดตัวไหน (ห้ามใช้จ่ายเงินปลอมหรือไฟล์ในหน่วยความจำบน production)
 5. Settings → Networking → **Custom Domain** `api.inzeniths.com` แล้วเพิ่ม CNAME ที่ Cloudflare DNS
@@ -75,7 +75,7 @@ npm test                # ทดสอบทั้งหมด
 
 - **R2**: Cloudflare → R2 → สร้าง bucket `santa-box` → Manage API Tokens (สิทธิ์ Object Read & Write เฉพาะ bucket นี้) → ตั้ง **CORS** ของ bucket ให้ `PUT` และ `GET` จาก `https://play.inzeniths.com` ได้ (header `Content-Type`)
 - **Stripe**: เปิด PromptPay ใน Payment methods → Developers → Webhooks → endpoint `https://api.inzeniths.com/v1/payments/webhook` เลือก event `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired` → คัดลอก signing secret เป็น `STRIPE_WEBHOOK_SECRET` (เริ่มด้วยคีย์ test ก่อน)
-- **Resend**: ยืนยันโดเมน `inzeniths.com` (เพิ่ม DNS record ที่ Cloudflare) แล้วตั้ง `MAIL_FROM=Santa Box <hello@inzeniths.com>`
+- **Brevo**: Settings → Senders, Domains → **Domains → Add a domain** `inzeniths.com` → เพิ่ม DNS record ที่ Brevo ให้ (TXT ยืนยัน, DKIM, DMARC) ใน Cloudflare แบบ DNS only → กด Verify → **SMTP & API → API Keys → Generate** วางใน `BREVO_API_KEY` → ตั้ง `MAIL_FROM=Santa Box <hello@inzeniths.com>` (ใช้บัญชีเดียวกับระบบลงทะเบียนอีเวนต์ได้ แต่โควตา 300 ฉบับ/วันใช้ร่วมกัน)
 
 ### สำรองข้อมูล
 Railway Postgres มี backup ในแผนเสียเงิน หรือใช้ `pg_dump "$DATABASE_URL"` เป็นระยะ แพ็กเกจ "ตลอดไป" สัญญากับลูกค้าไว้ จึงต้องสำรองฐานข้อมูลสม่ำเสมอ (ไฟล์อยู่ใน R2 แยกต่างหาก)
