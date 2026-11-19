@@ -29,12 +29,16 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 #app{position:relative;height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden}
 .stage{position:relative;flex:0 0 40%;min-height:240px}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
-.spin-hint{position:absolute;right:max(18px,env(safe-area-inset-right,0px));top:18px;z-index:5;font-size:11.5px;color:var(--muted);border:1px solid var(--line);background:rgba(255,255,255,.75);border-radius:999px;padding:5px 11px;pointer-events:none;transition:opacity .4s}
+.spin-hint{position:absolute;right:max(18px,env(safe-area-inset-right,0px));top:58px;z-index:5;font-size:11.5px;color:var(--muted);border:1px solid var(--line);background:rgba(255,255,255,.75);border-radius:999px;padding:5px 11px;pointer-events:none;transition:opacity .4s}
 .spin-hint.gone{opacity:0}
 
 .hdr{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));padding-block:14px}
 .logo{font-family:var(--f-lat);font-style:italic;font-weight:600;font-size:22px;color:var(--accent)}
+/* TH | EN switch (i18n.js fills it) */
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.8);padding:2px}
+.lang button{border:0;background:none;font:600 11px/1 inherit;letter-spacing:.04em;padding:6px 9px;border-radius:999px;color:var(--muted);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:#fff}
 .brand{display:flex;flex-direction:column;line-height:1.1}
 .counter{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .stage-tag{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);z-index:2}
@@ -217,8 +221,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
   <div class="stage">
     <canvas id="gl" aria-label="ตัวอย่างกล่องของขวัญสามมิติ"></canvas>
     <span class="spin-hint" id="spinHint">↻ ลากเพื่อหมุนดู 360°</span>
-    <header class="hdr"><div class="brand"><span class="logo">Santa Box</span><span class="counter">กล่องที่ 12,345</span></div></header>
-    <p class="stage-tag" id="stageTag">A gift for …</p>
+    <header class="hdr"><div class="brand"><span class="logo">Santa Box</span><span class="counter">กล่องที่ 12,345</span></div><div class="lang" data-lang-switch></div></header>
+    <p class="stage-tag" id="stageTag" data-no-i18n>A gift for …</p>
   </div>
 
   <section class="panel">
@@ -244,7 +248,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <h2 class="h">ออกแบบการ์ด</h2>
         <div class="field"><div class="lbl">กระดาษการ์ด</div><div class="cstyles" id="cardStyles" role="radiogroup" aria-label="กระดาษการ์ด"></div></div>
         <div class="field"><div class="lbl">ตัวอักษร</div><div class="fonts" id="cardFonts" role="radiogroup" aria-label="แบบตัวอักษร"></div></div>
-        <article class="wcard paper cs-0 cf-1" id="wcard">
+        <article class="wcard paper cs-0 cf-0" id="wcard">
           <label class="wto">ถึง <input type="text" id="to" maxlength="30" placeholder="ชื่อผู้รับ" aria-label="ชื่อผู้รับ"></label>
           <textarea id="msg" maxlength="280" placeholder="เขียนถึงเขาสักหน่อย..." aria-label="ข้อความในการ์ด"></textarea>
           <div class="wfoot"><em id="msgCount"></em><label class="wfrom">— <input type="text" id="from" maxlength="30" placeholder="ชื่อคุณ" aria-label="ชื่อผู้ส่ง"></label></div>
@@ -286,7 +290,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
 
       <!-- 5. delivery -->
       <div class="pane" id="p4" hidden>
-        <h2 class="h">ส่งกล่องให้ <span id="sendTo">คุณ</span></h2>
+        <h2 class="h">ส่งกล่องให้ <span id="sendTo" data-no-i18n>คุณ</span></h2>
         <div class="opts" id="plans" role="radiogroup">
           <button class="opt" role="radio" data-p="0" aria-checked="false"><span class="tx"><b>ส่งธรรมดา</b><small>ซานต้าใช้เวลาเดินทาง 25 ชม. · เปิดดูได้ 7 วัน</small></span><span class="price">ฟรี</span></button>
           <button class="opt" role="radio" data-p="25" aria-checked="true"><span class="tx"><b>ส่งด่วน · เก็บไว้ 1 ปี</b><small>ถึงทันทีหรือตามเวลาที่ตั้ง · เสียงอวยพร 1 นาที · เปิดฟังได้ถึงคริสต์มาสหน้า</small></span><span class="price">25<span>บาท</span></span></button>
@@ -305,7 +309,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
       <!-- 6. sent -->
       <div class="pane done" id="p5" hidden>
         <p class="eyebrow">Wrapped &amp; sent</p>
-        <h2 class="h">ส่งกล่องให้ <span id="doneTo">คุณ</span> แล้ว</h2>
+        <h2 class="h" id="doneH" data-no-i18n>ส่งกล่องให้คุณแล้ว</h2>
         <span class="status" id="doneStatus"><i></i>จะเด้งถึงแม่ 25 ธ.ค. เวลา 00:00</span>
         <div class="link"><code id="linkText">play.inzeniths.com/santa-box/b/x7k2p9</code><button id="copyBtn">คัดลอก</button></div>
         <p class="note">ลิงก์นี้เป็นตัวอย่าง ส่งให้ผู้รับทาง LINE หรือแชตไหนก็ได้</p>
@@ -369,7 +373,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
 <div class="scrim" id="cardEdit" hidden>
   <div class="sheet left editsheet">
     <div class="sheet-head"><h2>การ์ดข้อความ</h2><button class="x" data-close aria-label="ปิด">×</button></div>
-    <div class="wcard paper cs-0 cf-1" id="wcardBig"><textarea id="msgBig" maxlength="280" placeholder="เขียนถึงเขาสักหน่อย..." aria-label="ข้อความในการ์ด"></textarea>
+    <div class="wcard paper cs-0 cf-0" id="wcardBig"><textarea id="msgBig" maxlength="280" placeholder="เขียนถึงเขาสักหน่อย..." aria-label="ข้อความในการ์ด"></textarea>
       <div class="wfoot"><em id="msgBigCount"></em><button class="btn" id="msgDone" style="flex:none;padding:10px 24px">เสร็จ</button></div></div>
   </div>
 </div>
@@ -390,12 +394,15 @@ a.btn{display:block;text-align:center;text-decoration:none}
   </div>
 </div>
 
+<script src="i18n.js"></script>
 <script src="santa-api.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 (function(){
 const $=id=>document.getElementById(id);
+// Thai / English (i18n.js); falls back to Thai if the file is missing
+const t=(window.I18N&&I18N.t)||((s,v)=>s.replace(/\{(\w+)\}/g,(_,k)=>v&&v[k]!=null?v[k]:''));
 // real back end when santa-api.js is configured; otherwise the page is a self-contained prototype
 const API=window.SantaAPI&&SantaAPI.enabled?SantaAPI:null;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -672,15 +679,22 @@ function go(i){
   document.querySelectorAll('#steps button').forEach((b,k)=>{b.classList.toggle('done',k<i);if(k===i)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});
   $('steps').hidden=i>=4;
   $('backBtn').hidden=i===0||i===5;$('nav').hidden=i===5;
-  $('nextBtn').textContent=i<3?'ถัดไป · '+LABELS[i+1]:i===3?'ห่อเสร็จแล้ว':'ต่อไป · ส่งให้ใคร';
   if(i===2){A.hover=0;A.drop=0;tw('lift',1,.9);tw('bowIn',1,.3);tw('orn',1,.8,.5,eback)}   // lid off: put the gift in
   else if(prev===2&&i>2)wrapUp();                                         // close the lid and tie the bow
   else{tw('lift',0,.6);tw('orn',0,.4);tw('bowIn',1,.4)}
-  $('sendTo').textContent=$('doneTo').textContent=$('to').value||'คุณ';
-  $('stageTag').textContent=i===5?'On its way':'A gift for '+($('to').value||'…');
-  if(i===4){const sm=document.querySelector('#plans .opt[data-p="0"] small');sm.textContent='ซานต้าใช้เวลาเดินทาง 25 ชม. · เปิดดูได้ 7 วัน · '+(S.recorded&&recT>15?`เสียงจะเหลือ 15 วินาทีแรก (อัดไว้ ${fmt(recT)})`:'เสียงอวยพร 15 วินาที')}
+  stepText();
   if(i!==3)stopMusic();
 }
+/** Labels that depend on the step, the names or the language. */
+function stepText(){const i=step,name=$('to').value.trim();
+  $('nextBtn').textContent=i<3?t('ถัดไป · {step}',{step:t(LABELS[i+1])}):i===3?t('ห่อเสร็จแล้ว'):t('ต่อไป · ส่งให้ใคร');
+  $('sendTo').textContent=name||t('คุณ');
+  $('doneH').textContent=t('ส่งกล่องให้{to}แล้ว',{to:I18N_SPACE(name||t('คุณ'))});
+  $('stageTag').textContent=i===5?'On its way':'A gift for '+(name||'…');
+  const sm=document.querySelector('#plans .opt[data-p="0"] small');
+  sm.textContent=t('ซานต้าใช้เวลาเดินทาง 25 ชม. · เปิดดูได้ 7 วัน · {voice}',{voice:S.recorded&&recT>15?t('เสียงจะเหลือ 15 วินาทีแรก (อัดไว้ {len})',{len:fmt(recT)}):t('เสียงอวยพร 15 วินาที')})}
+/** Thai puts no spaces around a name inside a sentence; English does (the template has them). */
+function I18N_SPACE(n){return window.I18N&&I18N.lang==='en'?' '+n+' ':n}
 document.querySelectorAll('#steps button').forEach(b=>b.onclick=()=>go(+b.dataset.i));
 $('backBtn').onclick=()=>go(Math.max(0,step-1));
 $('nextBtn').onclick=()=>{if(step<4)go(step+1);else openWho()};
@@ -697,7 +711,7 @@ function markDesign(){[...$('boxTiles').children].forEach((b,i)=>b.setAttribute(
   [...$('accTiles').children].forEach((b,i)=>b.setAttribute('aria-pressed',DESIGN.acc.includes(ACCENTS[i].id)));
   $('boxName').textContent=BOX_COLORS[DESIGN.box].n;$('ribName').textContent=RIBBONS[DESIGN.rib].n;
   $('accName').textContent=DESIGN.acc.length?ACCENTS.filter(a=>DESIGN.acc.includes(a.id)).map(a=>a.n).join(' · '):'เลือกได้หลายอย่าง'}
-function designHash(){return `${S.gift}-b${DESIGN.box}-r${DESIGN.rib}-a${DESIGN.acc.join('')||'0'}-c${S.cs||0}${S.cf==null?1:S.cf}`}
+function designHash(){return `${S.gift}-b${DESIGN.box}-r${DESIGN.rib}-a${DESIGN.acc.join('')||'0'}-c${S.cs||0}${S.cf==null?0:S.cf}`}
 function updatePreviewLink(){const pl=document.getElementById('recvPreview');if(pl)pl.href=pl.href.split('#')[0]+'#'+designHash()}
 function designChanged(){setDesign(DESIGN);spinV=.1;markDesign();updatePreviewLink()}
 markDesign();updatePreviewLink();
@@ -705,8 +719,8 @@ markDesign();updatePreviewLink();
 // card
 const msg=$('msg');const count=()=>$('msgCount').textContent=msg.value.length+'/280';msg.oninput=count;count();
 // card design: paper + handwriting, written in a focused full-size card
-const CARD_STYLES=['ครีม','หิมะ','แดงทอง','คราฟท์','เขียวสน'],CARD_FONTS=[['เรียบหรู',"'Noto Serif Thai'"],['ลายมือสวย',"'Charm'"],['ลายมือน่ารัก',"'Mali'"]];
-S.cs=0;S.cf=1;
+const CARD_STYLES=['ครีม','หิมะ','แดงทอง','คราฟท์','เขียวสน'],CARD_FONTS=[['ลายมือเรียบหรู',"'Noto Serif Thai'"],['ลายมือสวย',"'Charm'"],['ลายมือน่ารัก',"'Mali'"]];
+S.cs=0;S.cf=0; // default card font: ลายมือเรียบหรู
 CARD_STYLES.forEach((n,i)=>{const b=document.createElement('button');b.className='cst';b.setAttribute('role','radio');b.innerHTML=`<i class="paper cs-${i}"></i>`;b.append(n);b.onclick=()=>{S.cs=i;markCard()};$('cardStyles').append(b)});
 CARD_FONTS.forEach(([n,ff],i)=>{const b=document.createElement('button');b.className='fnt';b.setAttribute('role','radio');b.style.fontFamily=ff;b.textContent=n;b.onclick=()=>{S.cf=i;markCard()};$('cardFonts').append(b)});
 function markCard(){[...$('cardStyles').children].forEach((b,i)=>b.setAttribute('aria-checked',i===S.cs));[...$('cardFonts').children].forEach((b,i)=>b.setAttribute('aria-checked',i===S.cf));
@@ -802,32 +816,34 @@ function markSongs(){document.querySelectorAll('#songs .opt').forEach(b=>b.setAt
 // delivery
 const PRESETS=[['เที่ยงคืนวันคริสต์มาส','2026-12-25T00:00'],['เช้าวันคริสต์มาส 08:00','2026-12-25T08:00'],['เที่ยงคืนวันปีใหม่','2027-01-01T00:00']];
 PRESETS.forEach(([n,v])=>{const b=document.createElement('button');b.className='chip';b.textContent=n;b.onclick=()=>{$('whenAt').value=v};$('presets').append(b)});
-function payLabel(){return S.plan==='0'?'ส่งฟรี':`ชำระ ${S.plan} บาท ด้วย PromptPay`}
+function payLabel(){return S.plan==='0'?t('ส่งฟรี'):t('ชำระ {n} บาท ด้วย PromptPay',{n:S.plan})}
 function markPlans(){document.querySelectorAll('#plans .opt').forEach(b=>b.setAttribute('aria-checked',b.dataset.p===S.plan));$('when').hidden=S.plan==='0';
   $('nowBtn').setAttribute('aria-pressed',!S.sched);$('schedBtn').setAttribute('aria-pressed',S.sched);$('presets').hidden=$('whenAt').hidden=!S.sched;}
 document.querySelectorAll('#plans .opt').forEach(b=>b.onclick=()=>{S.plan=b.dataset.p;markPlans()});
 $('nowBtn').onclick=()=>{S.sched=false;markPlans()};$('schedBtn').onclick=()=>{S.sched=true;markPlans()};markPlans();
 
-function thaiDate(v){const d=new Date(v);if(isNaN(d))return v;const M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];return `${d.getDate()} ${M[d.getMonth()]} เวลา ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
+function thaiDate(v){return window.I18N?I18N.date(v):v}
 function wrapUp(){
   // lid swings back over the box, then drops straight down with a small bounce
   A.hover=0;A.drop=0;tw('orn',0,.45);tw('lift',0,.5,.1);tw('hover',1,.45,.05);tw('drop',1,.75,.6,ebounce);
   A.bowIn=0;tw('bowIn',1,.7,1.35,eback);A.pulse=0;tw('pulse',1,.6,1.4);
   setTimeout(()=>{chime();emitting=true;spinV=.14;setTimeout(()=>{emitting=false},900)},1350);
 }
-let SENT_LINE='';
+let SENT_LINE='',SENT_FN=null; // SENT_FN redraws the status line in the current language
 function celebrate(){chime();A.pulse=0;tw('pulse',1,.7,.6);emitting=true;setTimeout(()=>emitting=false,1600);spinV=.18}
+function setStatus(fn){SENT_FN=fn;SENT_LINE=fn();$('doneStatus').lastChild.nodeValue=SENT_LINE}
 function showSent(link,status){
-  SENT_LINE=status;$('doneTo').textContent=$('to').value||'คุณ';$('doneStatus').lastChild.nodeValue=status;
+  setStatus(typeof status==='function'?status:()=>status);
   if(link){$('linkText').textContent=link.replace(/^https?:\/\//,'');$('linkText').dataset.full=link;
-    $('linkText').closest('.link').nextElementSibling.textContent='ส่งลิงก์นี้ให้ผู้รับทาง LINE หรือแชตไหนก็ได้'}
+    $('linkText').closest('.link').nextElementSibling.textContent=t('ส่งลิงก์นี้ให้ผู้รับทาง LINE หรือแชตไหนก็ได้')}
   go(5);celebrate();
 }
 function send(){
   if(API)return sendReal();
   const to=$('to').value||'คุณ';
   if(S.plan!=='0')toast('ตัวอย่าง: ข้ามหน้าชำระเงิน PromptPay');
-  showSent(null,S.plan==='0'?`ซานต้าออกเดินทางแล้ว · ถึง${to}ในอีก 25 ชม.`:S.sched?`จะเด้งถึง${to} ${thaiDate($('whenAt').value)}`:`ถึง${to}แล้วตอนนี้`);
+  const when=$('whenAt').value;
+  showSent(null,()=>S.plan==='0'?t('ซานต้าออกเดินทางแล้ว · ถึง{to}ในอีก 25 ชม.',{to:I18N_SPACE(to)}):S.sched?t('จะเด้งถึง{to} {when}',{to:I18N_SPACE(to),when:thaiDate(when)}):t('ถึง{to}แล้วตอนนี้',{to:I18N_SPACE(to)}));
 }
 /* ---- real sending (API) ---- */
 function photoBlob(){
@@ -848,17 +864,17 @@ async function sendReal(){
       created=await API.send({
         recipientName:to,senderName:from||undefined,senderEmail:email,
         voiceKey,voiceSeconds:voiceKey?Math.max(1,Math.min(60,recT)):undefined,photoKey,
-        remindNextYear:$('remind').checked,showUnderTree:$('tree').checked,
-        payload:{design:{box:DESIGN.box,ribbon:DESIGN.rib,accents:DESIGN.acc.slice(),paper:S.cs||0,font:S.cf==null?1:S.cf},
+        remindNextYear:$('remind').checked,showUnderTree:$('tree').checked,lang:window.I18N?I18N.lang:'th',
+        payload:{design:{box:DESIGN.box,ribbon:DESIGN.rib,accents:DESIGN.acc.slice(),paper:S.cs||0,font:S.cf==null?0:S.cf},
           card:{message:$('msg').value.trim()},
           gift:{item:S.gift,engraving:S.gift==='orn'?(engraveText()||undefined):undefined,coupon:S.coupon?($('coupon').value.trim()||null):null},
           music:S.song}});
       API.remember(created.slug,{token:created.senderToken,link:created.link,to,design:{box:DESIGN.box,rib:DESIGN.rib,acc:DESIGN.acc.slice()},gift:S.gift});
     }
-    if(S.plan==='0'){$('whoSheet').hidden=true;btn.disabled=false;btn.textContent=label;showSent(created.link,`ซานต้าออกเดินทางแล้ว · ถึง${to}ในอีก 25 ชม.`);created=null;return}
+    if(S.plan==='0'){$('whoSheet').hidden=true;btn.disabled=false;btn.textContent=label;showSent(created.link,()=>t('ซานต้าออกเดินทางแล้ว · ถึง{to}ในอีก 25 ชม.',{to:I18N_SPACE(to)}));created=null;return}
     btn.textContent='กำลังไปหน้าชำระเงิน…';
     const c=await API.checkout(created.slug,{plan:S.plan==='125'?'FOREVER':'YEAR',payer:'SENDER',email,
-      deliverAt:S.sched?new Date($('whenAt').value).toISOString():undefined,returnPath:location.pathname+'?sent='+created.slug},created.senderToken);
+      deliverAt:S.sched?new Date($('whenAt').value).toISOString():undefined,returnPath:location.pathname+'?sent='+created.slug,lang:window.I18N?I18N.lang:'th'},created.senderToken);
     location.href=c.checkoutUrl;
   }catch(e){toast(errText(e));btn.disabled=false;btn.textContent=label}
 }
@@ -871,23 +887,23 @@ async function resumeSent(){
   if(mine.gift){S.gift=mine.gift;if(typeof showGift==='function')showGift(S.gift)}
   $('to').value=mine.to||'';$('sendTo').textContent=mine.to||'คุณ';
   const to=mine.to||'คุณ',wasPaid=q.has('paid');
-  showSent(mine.link,wasPaid?'กำลังยืนยันการชำระเงิน…':`ยกเลิกการชำระเงินแล้ว · กล่องจะเดินทางแบบธรรมดา ถึง${to}ในอีก 25 ชม.`);
+  showSent(mine.link,()=>wasPaid?t('กำลังยืนยันการชำระเงิน…'):t('ยกเลิกการชำระเงินแล้ว · กล่องจะเดินทางแบบธรรมดา ถึง{to}ในอีก 25 ชม.',{to:I18N_SPACE(to)}));
   if(!wasPaid)return;
   for(let i=0;i<15;i++){
     try{const m=await API.manage(slug,mine.token);
       if(m.payments.some(p=>p.status==='PAID')){const d=new Date(m.deliverAt);
-        $('doneStatus').lastChild.nodeValue=SENT_LINE=d<=new Date()?`ถึง${to}แล้วตอนนี้`:`จะเด้งถึง${to} ${thaiDate(m.deliverAt)}`;return}}catch(e){}
+        setStatus(()=>d<=new Date()?t('ถึง{to}แล้วตอนนี้',{to:I18N_SPACE(to)}):t('จะเด้งถึง{to} {when}',{to:I18N_SPACE(to),when:thaiDate(m.deliverAt)}));return}}catch(e){}
     await new Promise(r=>setTimeout(r,2000));
   }
-  $('doneStatus').lastChild.nodeValue=SENT_LINE='ยังไม่ได้รับยืนยันการชำระเงิน ถ้าจ่ายแล้วจะได้อีเมลยืนยัน';
+  setStatus(()=>t('ยังไม่ได้รับยืนยันการชำระเงิน ถ้าจ่ายแล้วจะได้อีเมลยืนยัน'));
 }
 $('copyBtn').onclick=async()=>{const t=$('linkText').dataset.full||'https://'+$('linkText').textContent;try{await navigator.clipboard.writeText(t);$('copyBtn').textContent='คัดลอกแล้ว'}catch(e){const r=document.createRange();r.selectNodeContents($('linkText'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('copyBtn').textContent='เลือกข้อความแล้ว'}setTimeout(()=>$('copyBtn').textContent='คัดลอก',1800)};
 $('againBtn').onclick=()=>{go(0)};
 const PLAN_NAME={'0':'ส่งธรรมดา · ถึงใน 25 ชม.','25':'ส่งด่วน · เก็บไว้ 1 ปี','125':'ส่งด่วน · เก็บไว้ตลอดไป'};
 function emailHint(){const need=S.plan!=='0'||$('remind').checked;$('emailHint').textContent=need?'สำหรับใบเสร็จและกู้ลิงก์คืน':'ไม่บังคับ';return need}
-function openWho(){$('wTo').value=$('to').value;$('wFrom').value=$('from').value;$('sumPlan').textContent=PLAN_NAME[S.plan];$('sumPrice').textContent=S.plan==='0'?'ฟรี':S.plan+' บาท';
+function openWho(){$('wTo').value=$('to').value;$('wFrom').value=$('from').value;$('sumPlan').textContent=PLAN_NAME[S.plan];$('sumPrice').textContent=S.plan==='0'?t('ฟรี'):t('{n} บาท',{n:S.plan});
   $('confirmBtn').textContent=payLabel();$('emailErr').hidden=true;emailHint();$('whoSheet').hidden=false}
-$('wTo').oninput=()=>{$('to').value=$('wTo').value;$('sendTo').textContent=$('wTo').value||'คุณ';setEngrave(engraveText())};
+$('wTo').oninput=()=>{$('to').value=$('wTo').value;stepText();setEngrave(engraveText())};
 $('wFrom').oninput=()=>{$('from').value=$('wFrom').value};
 $('remind').onchange=emailHint;
 $('codeBtn').onclick=()=>toast($('code').value.trim()?'ตัวอย่าง: ยังไม่ได้เชื่อมระบบโค้ดส่วนลด':'ใส่โค้ดก่อนกดใช้');
@@ -906,25 +922,30 @@ async function makeTeaser(){
   if(renderer){renderer.render(scene,camera);const src=renderer.domElement,dw=W*1.1,dh=src.height*dw/src.width;g.drawImage(src,(W-dw)/2,1000-dh/2,dw,dh)}
   const to=$('to').value||'คุณ';
   g.textAlign='center';g.fillStyle='#8C8176';g.font='500 30px "IBM Plex Sans Thai"';g.fillText('O N   I T S   W A Y',W/2,250);
-  g.fillStyle='#2A2420';g.font='500 92px "Noto Serif Thai"';g.fillText('ส่งกล่องให้'+to+'แล้ว',W/2,390);
-  g.fillStyle='#8C8176';g.font='400 40px "IBM Plex Sans Thai"';g.fillText(API&&SENT_LINE?SENT_LINE.replace(/^ซานต้าออกเดินทางแล้ว · /,''):S.plan==='0'?'ซานต้ากำลังเดินทาง ถึงในอีก 25 ชม.':'จะเด้งถึง '+thaiDate($('whenAt').value),W/2,470);
+  g.fillStyle='#2A2420';g.font='500 92px "Noto Serif Thai"';g.fillText(t('ส่งกล่องให้{to}แล้ว',{to:I18N_SPACE(to)}).trim(),W/2,390);
+  g.fillStyle='#8C8176';g.font='400 40px "IBM Plex Sans Thai"';g.fillText(API&&SENT_LINE?SENT_LINE.replace(/^(ซานต้าออกเดินทางแล้ว|Santa is on his way) · /,''):S.plan==='0'?t('ซานต้ากำลังเดินทาง ถึงในอีก 25 ชม.'):t('จะเด้งถึง {when}',{when:thaiDate($('whenAt').value)}),W/2,470);
   let qr=null;
   if($('qrOn').checked&&window.QRCode){const d=document.createElement('div');new QRCode(d,{text:API?location.origin+'/santa-box/':'https://play.inzeniths.com/santa-box/',width:180,height:180,colorDark:'#2A2420',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.M});qr=d.querySelector('canvas')}
   if(qr){
     g.fillStyle='#FFFFFF';g.fillRect(800,1580,220,220);g.drawImage(qr,820,1600,180,180);
     g.textAlign='left';g.fillStyle='#B3202E';g.font='italic 600 58px "Cormorant Garamond"';g.fillText('Santa Box',80,1700);
-    g.fillStyle='#8C8176';g.font='400 30px "IBM Plex Sans Thai"';g.fillText('สแกนเพื่อห่อกล่องให้คนที่คุณรัก',80,1756);g.textAlign='center';
+    g.fillStyle='#8C8176';g.font='400 30px "IBM Plex Sans Thai"';g.fillText(t('สแกนเพื่อห่อกล่องให้คนที่คุณรัก'),80,1756);g.textAlign='center';
   }else{
     g.fillStyle='#B3202E';g.font='italic 600 58px "Cormorant Garamond"';g.fillText('Santa Box',W/2,1760);
-    g.fillStyle='#8C8176';g.font='400 30px "IBM Plex Sans Thai"';g.fillText('ห่อเสียงอวยพรใส่กล่อง ส่งให้คนที่คุณรัก',W/2,1818);
+    g.fillStyle='#8C8176';g.font='400 30px "IBM Plex Sans Thai"';g.fillText(t('ห่อเสียงอวยพรใส่กล่อง ส่งให้คนที่คุณรัก'),W/2,1818);
   }
   $('shotImg').src=c.toDataURL('image/jpeg',.9);
 }
 
 go(0);
+let BOX_NO=null;
+// language switch: redraw everything built from variables (static text is swapped by i18n.js)
+if(window.I18N)I18N.onChange(()=>{stepText();markPlans();if(SENT_FN)setStatus(SENT_FN);
+  if(!$('whoSheet').hidden){$('sumPrice').textContent=S.plan==='0'?t('ฟรี'):t('{n} บาท',{n:S.plan});$('confirmBtn').textContent=payLabel()}
+  if(BOX_NO)document.querySelector('.counter').textContent=t('กล่องที่ {n}',{n:BOX_NO})});
 if(API){
   // real box counter, "send one back" prefill, preview pages on this site, and the return from the payment page
-  API.stats().then(r=>{document.querySelector('.counter').textContent='กล่องที่ '+(r.boxes+1).toLocaleString('en-US')}).catch(()=>{});
+  API.stats().then(r=>{BOX_NO=(r.boxes+1).toLocaleString('en-US');document.querySelector('.counter').textContent=t('กล่องที่ {n}',{n:BOX_NO})}).catch(()=>{});
   try{const back=new URLSearchParams(location.search).get('to');if(back){$('to').value=back.slice(0,30);$('sendTo').textContent=$('to').value}}catch(e){}
   document.querySelectorAll('a[href^="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75"]').forEach(a=>{a.href=a.href.replace('https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75','/santa-box/recipient')});
   resumeSent();

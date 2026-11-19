@@ -2,7 +2,7 @@
 import type { FastifyInstance } from 'fastify';
 import { reminderYear } from '../campaigns/santa-box/rules.js';
 import { appHome } from '../campaigns/santa-box/routes.js';
-import { SUPPORT_FOOTER } from './mailer.js';
+import { asLang, reminderEmail } from '../campaigns/santa-box/emails.js';
 
 const BATCH = 200;
 
@@ -64,11 +64,7 @@ export async function sendChristmasReminders(app: FastifyInstance, now = new Dat
     // One email per address, even if they sent several boxes.
     if (!done.has(to)) {
       await app.mailer
-        .send({
-          to,
-          subject: 'คริสต์มาสมาอีกแล้ว ห่อกล่องให้คนที่คุณรักกันไหม',
-          text: `ปีที่แล้วคุณส่ง Santa Box ให้ ${g.recipientName}\nปีนี้ห่อกล่องใหม่ได้ที่ ${appHome(app.env.SANTA_APP_URL)}\n\n(ไม่อยากได้อีเมลนี้อีก แจ้งเราที่ support@inzeniths.com)${SUPPORT_FOOTER}`,
-        })
+        .send({ to, ...reminderEmail({ lang: asLang(g.lang), recipientName: g.recipientName, home: appHome(app.env.SANTA_APP_URL) }) })
         .catch((e) => app.log.error(e, 'reminder email failed'));
       done.add(to);
     }

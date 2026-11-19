@@ -5,6 +5,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { AppError, badRequest, conflict, forbidden, notFound } from '../../lib/errors.js';
 import { randomSlug, randomToken, sameHash, sha256 } from '../../lib/tokens.js';
+import { asLang, checkoutTitle } from './emails.js';
 import { CAMPAIGN, createGiftBody, type SantaPayload } from './schema.js';
 import { newGiftTiming, onOpened, phaseOf, playableVoiceSeconds, quote, type QuoteError } from './rules.js';
 
@@ -141,6 +142,7 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
           photoKey: body.photoKey ?? null,
           remindNextYear: body.remindNextYear && !!body.senderEmail,
           showUnderTree: body.showUnderTree,
+          lang: body.lang,
           ...newGiftTiming(now),
         },
       });
@@ -204,12 +206,15 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
           /** Sender only: when the box should arrive. Omit to deliver as soon as the payment clears. */
           deliverAt: z.iso.datetime({ offset: true }).optional(),
           returnPath,
+          /** Language of the checkout page and receipt email. Default: the sender's language. */
+          lang: z.enum(['th', 'en']).optional(),
         }),
       },
     },
     async (request) => {
       const gift = await findGift(request.params.slug);
       const { plan, payer, email, returnPath: back } = request.body;
+      const lang = asLang(request.body.lang ?? gift.lang);
       if (payer === 'SENDER') requireSender(gift, request);
       const requestedDeliverAt = request.body.deliverAt ? new Date(request.body.deliverAt) : null;
       const q = quote(gift, { plan, payer, requestedDeliverAt }, new Date());
@@ -224,18 +229,20 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
           amountSatang: q.amountSatang,
           requestedDeliverAt,
           email: email ?? (payer === 'SENDER' ? gift.senderEmail : null),
+          lang,
         },
       });
       const backUrl = backTo(app.env.SANTA_APP_URL, back);
       const success = new URL(backUrl);
       success.searchParams.set('paid', payment.id);
-      const title = plan === 'FOREVER' ? (gift.plan === 'YEAR' ? 'Santa Box: อัปเกรดเก็บตลอดไป' : 'Santa Box: เก็บตลอดไป') : 'Santa Box: เก็บ 1 ปี';
+      const title = checkoutTitle(lang, plan, gift.plan === 'YEAR');
       try {
         const checkout = await app.payments.createCheckout({
           paymentId: payment.id,
           amountSatang: q.amountSatang,
           title,
           email: payment.email,
+          locale: lang,
           successUrl: success.toString(),
           cancelUrl: backUrl.toString(),
         });

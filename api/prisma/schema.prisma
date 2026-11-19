@@ -56,6 +56,8 @@ model Gift {
   openedAt      DateTime?
   /// null = never expires (FOREVER).
   expiresAt     DateTime?
+  /// Language the sender used (th / en): emails about this box are written in it.
+  lang          String    @default("th")
   remindNextYear Boolean  @default(false)
   remindedForYear Int?
   showUnderTree Boolean   @default(false)
@@ -82,6 +84,8 @@ model Payment {
   /// Sender's chosen delivery time. null = deliver as soon as the payment clears.
   requestedDeliverAt DateTime?
   email           String?
+  /// Language of the person paying (th / en): checkout page and receipt email.
+  lang            String        @default("th")
   status          PaymentStatus @default(PENDING)
   paidAt          DateTime?
   createdAt       DateTime      @default(now())

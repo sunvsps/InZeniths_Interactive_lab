@@ -44,4 +44,6 @@ export const createGiftBody = z.object({
   photoKey: z.string().max(200).optional(),
   remindNextYear: z.boolean().default(false),
   showUnderTree: z.boolean().default(false),
+  /** Language the sender used: emails about this box are written in it. */
+  lang: z.enum(['th', 'en']).default('th'),
 });

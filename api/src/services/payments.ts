@@ -7,6 +7,8 @@ export type CheckoutInput = {
   amountSatang: number;
   title: string;
   email?: string | null;
+  /** Language of the checkout page. */
+  locale?: 'th' | 'en';
   successUrl: string;
   cancelUrl: string;
 };
@@ -42,6 +44,7 @@ export function createPayments(env: Env): Payments {
         ],
         customer_email: input.email ?? undefined,
         allow_promotion_codes: true,
+        locale: input.locale ?? 'th',
         client_reference_id: input.paymentId,
         metadata: { paymentId: input.paymentId },
         success_url: input.successUrl,

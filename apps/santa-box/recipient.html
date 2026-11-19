@@ -32,7 +32,13 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .hdr{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));padding-block:14px}
 .logo{font-family:var(--f-lat);font-style:italic;font-weight:600;font-size:22px;letter-spacing:.01em;color:var(--accent)}
-.hdr-r{display:flex;gap:6px}
+.hdr-r{display:flex;gap:5px;align-items:center}
+.logo,.pill{white-space:nowrap}
+@media (max-width:400px){.hdr-r .pill{padding:6px 9px;font-size:11px}.lang button{padding:5px 7px}}
+/* TH | EN switch (i18n.js fills it) */
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:rgba(251,247,240,.75);padding:2px}
+.lang button{border:0;background:none;font:600 11px/1 inherit;letter-spacing:.04em;padding:6px 9px;border-radius:999px;color:var(--muted);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:#fff}
 .pill{border:1px solid var(--line);background:rgba(251,247,240,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:999px;padding:6px 12px;font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
 .pill[aria-pressed="true"]{color:var(--ink);border-color:var(--ink)}
 .eq{display:inline-flex;gap:2px;align-items:flex-end;height:10px}
@@ -167,6 +173,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
   <header class="hdr">
     <span class="logo">Santa Box</span>
     <div class="hdr-r">
+      <div class="lang" data-lang-switch></div>
       <button class="pill" id="transitBtn">หน้ารอส่ง</button>
       <button class="pill" id="musicBtn" aria-pressed="false"><span class="eq"><i></i><i></i><i></i></span>Silent Night</button>
     </div>
@@ -180,7 +187,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
       <div class="count" id="count">18:42:10<small><span>ชม.</span><span>นาที</span><span>วินาที</span></small></div>
     </div>
     <div class="bot">
-      <p class="sub">กล่องจาก <b>ลูกคนเล็ก</b> จะถึงเวลา 00:00 คืนวันคริสต์มาส</p>
+      <p class="sub" id="transitSub" data-no-i18n>กล่องจาก <b>ลูกคนเล็ก</b> จะถึงเวลา 00:00 คืนวันคริสต์มาส</p>
       <button class="link" id="skipBtn">ข้ามเวลา (ตัวอย่าง)</button>
     </div>
   </section>
@@ -189,8 +196,8 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
   <section class="step" id="s-land">
     <div class="top">
       <p class="eyebrow">A gift for</p>
-      <h1 class="title">แม่</h1>
-      <p class="sub">จาก <b>ลูกคนเล็ก</b></p>
+      <h1 class="title" data-no-i18n>แม่</h1>
+      <p class="sub">จาก <b data-no-i18n>ลูกคนเล็ก</b></p>
       <p class="caption" id="spinHint">↻ ลากที่กล่องเพื่อหมุนดู 360°</p>
     </div>
     <div class="bot">
@@ -215,10 +222,10 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
   <section class="step" id="s-card" hidden>
     <div></div>
     <div class="bot">
-      <article class="card paper cs-0 cf-1" id="cardEl">
-        <p class="to">ถึง แม่</p>
-        <p class="msg">ปีนี้เหนื่อยมาเยอะ ขอบคุณที่อยู่ข้างกันเสมอนะ คริสต์มาสนี้ขอให้แม่ได้พักบ้าง รักแม่ที่สุดเลย</p>
-        <p class="sig">— ลูกคนเล็ก</p>
+      <article class="card paper cs-0 cf-0" id="cardEl">
+        <p class="to" data-no-i18n>ถึง แม่</p>
+        <p class="msg" data-no-i18n>ปีนี้เหนื่อยมาเยอะ ขอบคุณที่อยู่ข้างกันเสมอนะ คริสต์มาสนี้ขอให้แม่ได้พักบ้าง รักแม่ที่สุดเลย</p>
+        <p class="sig" data-no-i18n>— ลูกคนเล็ก</p>
         <div class="voice" id="voice">
           <button class="play" id="playBtn" aria-label="ฟังเสียงอวยพร"><svg viewBox="0 0 14 14"><path id="playIcon" d="M3 1.5 L12 7 L3 12.5 Z" fill="currentColor"/></svg></button>
           <div class="wave" id="wave"></div>
@@ -235,18 +242,18 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
     <div class="top">
       <p class="eyebrow">Inside your box</p>
       <h1 class="title sm" id="giftName">ลูกแก้วสลักชื่อ</h1>
-      <p class="sub" id="giftSub">สลักชื่อ “แม่ · Christmas 2026”</p>
-      <p class="meaning" id="giftMeaning"></p>
+      <p class="sub" id="giftSub" data-no-i18n>สลักชื่อ “แม่ · Christmas 2026”</p>
+      <p class="meaning" id="giftMeaning" data-no-i18n></p>
     </div>
     <div class="bot">
       <img class="memo" id="memoImg" alt="รูปความทรงจำจากผู้ส่ง" hidden>
-      <div class="ticket" id="ticket"><span class="k">IOU</span><div><small>คูปองสัญญา</small><p>พาไปกินข้าวร้านโปรด 1 มื้อ</p></div></div>
+      <div class="ticket" id="ticket"><span class="k">IOU</span><div><small>คูปองสัญญา</small><p data-no-i18n>พาไปกินข้าวร้านโปรด 1 มื้อ</p></div></div>
       <div class="row">
         <button class="btn ghost" id="shareBtn">แชร์รูปนี้</button>
         <button class="btn ghost" id="keepBtn">เก็บไว้</button>
       </div>
-      <button class="btn full" id="backBtn">ส่งกล่องกลับให้ ลูกคนเล็ก</button>
-      <p class="expire">กล่องนี้เปิดดูได้อีก <b>6 วัน 23 ชม.</b> · <button class="link" id="replayBtn" style="padding:0">เปิดอีกครั้ง</button></p>
+      <button class="btn full" id="backBtn" data-no-i18n>ส่งกล่องกลับให้ ลูกคนเล็ก</button>
+      <p class="expire">กล่องนี้เปิดดูได้อีก <b data-no-i18n>6 วัน 23 ชม.</b> · <button class="link" id="replayBtn" style="padding:0">เปิดอีกครั้ง</button></p>
     </div>
   </section>
 </div>
@@ -301,12 +308,15 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
   </div>
 </div>
 
+<script src="/santa-box/i18n.js"></script>
 <script src="/santa-box/santa-api.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
 const $=id=>document.getElementById(id);
 // a real box from the API when the page is opened as /b/<slug>; otherwise the self-contained prototype
+// Thai / English (i18n.js); falls back to Thai if the file is missing
+const t=(window.I18N&&I18N.t)||((s,v)=>s.replace(/\{(\w+)\}/g,(_,k)=>v&&v[k]!=null?v[k]:''));
 const API=window.SantaAPI&&SantaAPI.enabled?SantaAPI:null,SLUG=API&&SantaAPI.slugFromUrl();
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DATA={to:'แม่',from:'ลูกคนเล็ก',msg:'ปีนี้เหนื่อยมาเยอะ ขอบคุณที่อยู่ข้างกันเสมอนะ คริสต์มาสนี้ขอให้แม่ได้พักบ้าง รักแม่ที่สุดเลย'};
@@ -692,11 +702,11 @@ $('keepBtn').onclick=async()=>{
   try{const d=await API.download(SLUG);[d.voiceUrl,d.photoUrl].filter(Boolean).forEach((u,i)=>setTimeout(()=>{const a=document.createElement('a');a.href=u;a.rel='noopener';document.body.append(a);a.click();a.remove()},i*800))}
   catch(e){toast('ดาวน์โหลดไม่สำเร็จ ลองใหม่อีกครั้ง')}
 };
-document.querySelectorAll('.plan').forEach(p=>p.onclick=()=>{document.querySelectorAll('.plan').forEach(x=>x.setAttribute('aria-checked',x===p));$('payBtn').textContent=`ชำระด้วย PromptPay · ${p.dataset.p} บาท`});
+document.querySelectorAll('.plan').forEach(p=>p.onclick=()=>{document.querySelectorAll('.plan').forEach(x=>x.setAttribute('aria-checked',x===p));$('payBtn').textContent=t('ชำระด้วย PromptPay · {n} บาท',{n:p.dataset.p})});
 $('payBtn').onclick=async()=>{
   if(!SLUG)return toast('หน้าตัวอย่าง ยังไม่ได้เชื่อมระบบชำระเงิน');
   const sel=document.querySelector('.plan[aria-checked="true"]'),btn=$('payBtn'),label=btn.textContent;btn.disabled=true;btn.textContent='กำลังไปหน้าชำระเงิน…';
-  try{const c=await API.checkout(SLUG,{plan:sel&&sel.dataset.p==='25'?'YEAR':'FOREVER',payer:'RECIPIENT',returnPath:location.pathname});location.href=c.checkoutUrl}
+  try{const c=await API.checkout(SLUG,{plan:sel&&sel.dataset.p==='25'?'YEAR':'FOREVER',payer:'RECIPIENT',returnPath:location.pathname,lang:window.I18N?I18N.lang:'th'});location.href=c.checkoutUrl}
   catch(e){btn.disabled=false;btn.textContent=label;toast(e.code==='ALREADY_HAS_PLAN'?'กล่องนี้เก็บไว้แล้ว':'เริ่มชำระเงินไม่สำเร็จ ลองใหม่อีกครั้ง')}
 };
 
@@ -714,7 +724,7 @@ async function makeShot(){
   g.fillStyle='#8C8176';g.textAlign='center';g.font='500 30px "IBM Plex Sans Thai"';
   g.save();g.letterSpacing='12px';g.fillText('A GIFT FOR',W/2+6,210);g.restore();
   g.fillStyle='#2A2420';g.font='500 120px "Noto Serif Thai"';g.fillText(DATA.to,W/2,350);
-  g.fillStyle='#8C8176';g.font='400 40px "IBM Plex Sans Thai"';g.fillText('จาก '+DATA.from,W/2,425);
+  g.fillStyle='#8C8176';g.font='400 40px "IBM Plex Sans Thai"';g.fillText(t('จาก {name}',{name:DATA.from}),W/2,425);
   if(withMsg){
     g.save();g.translate(W/2,1440);g.rotate(-.012);g.shadowColor='rgba(60,40,20,.25)';g.shadowBlur=50;g.shadowOffsetY=24;g.fillStyle='#FBF7F0';g.fillRect(-420,-190,840,380);g.restore();
     g.strokeStyle='#E1D6C6';g.lineWidth=2;g.strokeRect(W/2-400,1440-170,800,340);
@@ -723,7 +733,7 @@ async function makeShot(){
     g.textAlign='right';g.font='400 36px "Noto Serif Thai"';g.fillText('— '+DATA.from,W/2+350,1590);g.textAlign='center';
   }
   g.fillStyle='#B3202E';g.font='italic 600 58px "Cormorant Garamond"';g.fillText('Santa Box',W/2,1760);
-  g.fillStyle='#8C8176';g.font='400 30px "IBM Plex Sans Thai"';g.fillText('ห่อเสียงอวยพรใส่กล่อง ส่งให้คนที่คุณรัก',W/2,1818);
+  g.fillStyle='#8C8176';g.font='400 30px "IBM Plex Sans Thai"';g.fillText(t('ห่อเสียงอวยพรใส่กล่อง ส่งให้คนที่คุณรัก'),W/2,1818);
   $('shotImg').src=c.toDataURL('image/jpeg',.9);
 }
 
@@ -738,37 +748,40 @@ const GIFTS=[
 function applyGift(){const parts=(location.hash||'').slice(1).split('-'),h=parts[0];
   parts.slice(1).forEach(p=>{if(/^b\d+$/.test(p))DESIGN.box=Math.min(+p.slice(1),BOX_COLORS.length-1);else if(/^r\d+$/.test(p))DESIGN.rib=Math.min(+p.slice(1),RIBBONS.length-1);else if(/^a[a-z0]*$/.test(p))DESIGN.acc=p.slice(1).split('').filter(k=>ACCENTS.some(a=>a.id===k));else if(/^c[0-4][0-2]$/.test(p))$('cardEl').className=`card paper cs-${p[1]} cf-${p[2]}`});
   setDesign(DESIGN);const d=GIFTS.find(g=>g.id===h)||GIFTS.find(g=>g.id==='orn');
-  $('giftName').textContent=d.n;$('giftMeaning').textContent='“'+d.m+'”';$('giftSub').hidden=d.id!=='orn';if(typeof showGift==='function')showGift(d.id)}
+  $('giftName').textContent=d.n;$('giftMeaning').textContent='“'+t(d.m)+'”';$('giftSub').hidden=d.id!=='orn';if(typeof showGift==='function')showGift(d.id)}
 addEventListener('hashchange',applyGift);applyGift();
 const ENGRAVE=$('giftSub').textContent.replace(/^สลักชื่อ\s*/,'').replace(/[“”]/g,'');setEngrave(ENGRAVE);if(document.fonts)document.fonts.ready.then(()=>setEngrave(ENGRAVE));
 
 /* ================= real box (API) ================= */
+function renderTransit(){const v=TRANSIT,sub=$('transitSub');if(!v)return;sub.textContent='';
+  if(v.senderName){sub.append(t('กล่องจาก')+' ');const b=document.createElement('b');b.textContent=v.senderName;sub.append(b,' ')}
+  sub.append(t('จะถึง {when}',{when:thaiWhen(v.deliverAt)}))}
 let BOX=null;
 const THM=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-const thaiWhen=iso=>{const d=new Date(iso);return `${d.getDate()} ${THM[d.getMonth()]} เวลา ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
+const thaiWhen=iso=>window.I18N?I18N.date(iso):iso;
 function setText(sel,text){const el=document.querySelector(sel);if(el)el.textContent=text}
 function renderExpire(){
   const ex=document.querySelector('.expire'),b=ex.querySelector('b');if(!BOX)return;
-  if(BOX.plan==='FOREVER'){ex.firstChild.nodeValue='กล่องนี้เก็บไว้ ';b.textContent='ตลอดไป';$('keepBtn').textContent='ดาวน์โหลด';return}
+  if(BOX.plan==='FOREVER'){ex.firstChild.nodeValue=t('กล่องนี้เก็บไว้')+' ';b.textContent=t('ตลอดไป');$('keepBtn').textContent=t('ดาวน์โหลด');return}
   if(!BOX.expiresAt)return;const ms=new Date(BOX.expiresAt)-Date.now(),d=Math.floor(ms/864e5),h=Math.floor(ms%864e5/36e5);
-  ex.firstChild.nodeValue='กล่องนี้เปิดดูได้อีก ';b.textContent=d>0?`${d} วัน ${h} ชม.`:`${Math.max(h,0)} ชม.`;
+  ex.firstChild.nodeValue=t('กล่องนี้เปิดดูได้อีก')+' ';b.textContent=d>0?t('{d} วัน {h} ชม.',{d,h}):t('{h} ชม.',{h:Math.max(h,0)});
   // already kept for a year: only the upgrade to forever is left (pay the difference)
   const p25=document.querySelector('.plan[data-p="25"]'),p125=document.querySelector('.plan[data-p="125"]');
-  if(BOX.plan==='YEAR'){p25.hidden=true;p125.setAttribute('aria-checked','true');p125.querySelector('.price').firstChild.nodeValue='100';$('payBtn').textContent='ชำระด้วย PromptPay · 100 บาท'}
+  if(BOX.plan==='YEAR'){p25.hidden=true;p125.setAttribute('aria-checked','true');p125.querySelector('.price').firstChild.nodeValue='100';$('payBtn').textContent=t('ชำระด้วย PromptPay · {n} บาท',{n:100})}
 }
 function showBox(v){
   BOX=v;const from=v.senderName||'',to=v.recipientName;
-  DATA.to=to;DATA.from=from||'ใครบางคน';
+  DATA.to=to;DATA.from=from||t('ใครบางคน');
   setText('#s-land .title',to);document.querySelector('#s-land .sub').hidden=!from;setText('#s-land .sub b',from);
-  $('backBtn').textContent=from?'ส่งกล่องกลับให้ '+from:'ห่อกล่องให้คนที่คุณรักบ้าง';
+  $('backBtn').textContent=from?t('ส่งกล่องกลับให้ {name}',{name:from}):t('ห่อกล่องให้คนที่คุณรักบ้าง');
   if(v.phase!=='ready')return;
   const P=v.payload;DATA.msg=P.card.message;
   DESIGN.box=P.design.box;DESIGN.rib=P.design.ribbon;DESIGN.acc=P.design.accents.slice();setDesign(DESIGN);
   $('cardEl').className=`card paper cs-${P.design.paper} cf-${P.design.font}`;
-  setText('#cardEl .to','ถึง '+to);setText('#cardEl .msg',P.card.message);setText('#cardEl .sig',from?'— '+from:'');
+  setText('#cardEl .to',t('ถึง {name}',{name:to}));setText('#cardEl .msg',P.card.message);setText('#cardEl .sig',from?'— '+from:'');
   const d=GIFTS.find(g=>g.id===P.gift.item)||GIFTS[0];
-  $('giftName').textContent=d.n;$('giftMeaning').textContent='“'+d.m+'”';$('giftSub').hidden=d.id!=='orn';
-  if(d.id==='orn'){const e=P.gift.engraving||to;$('giftSub').textContent='สลักชื่อ “'+e+'”';setEngrave(e);if(document.fonts)document.fonts.ready.then(()=>setEngrave(e))}
+  $('giftName').textContent=d.n;$('giftMeaning').textContent='“'+t(d.m)+'”';$('giftSub').hidden=d.id!=='orn';
+  if(d.id==='orn'){const e=P.gift.engraving||to;$('giftSub').textContent=t('สลักชื่อ “{text}”',{text:e});setEngrave(e);if(document.fonts)document.fonts.ready.then(()=>setEngrave(e))}
   if(typeof showGift==='function')showGift(d.id);
   $('ticket').hidden=!P.gift.coupon;if(P.gift.coupon)$('ticket').querySelector('p').textContent=P.gift.coupon;
   $('memoImg').hidden=!v.photoUrl;if(v.photoUrl)$('memoImg').src=v.photoUrl;
@@ -776,10 +789,11 @@ function showBox(v){
   SONG_ID=P.music;$('musicBtn').hidden=!SONGS[SONG_ID];if(SONGS[SONG_ID])$('musicBtn').lastChild.nodeValue=SONGS[SONG_ID].n;
   renderExpire();
 }
+let GONE=null,TRANSIT=null; // what the page shows, kept so a language switch can redraw it
 function showGone(title,sub){
-  setText('#s-land .eyebrow','Santa Box');const t=document.querySelector('#s-land .title');t.textContent=title;t.classList.add('sm');
-  setText('#s-land .sub',sub);document.querySelector('#s-land .sub').hidden=false;
-  $('openBtn').textContent='ห่อกล่องให้คนที่คุณรัก';$('openBtn').onclick=sendBack;$('spinHint').hidden=true;$('musicBtn').hidden=true;go('land');
+  GONE=[title,sub];setText('#s-land .eyebrow','Santa Box');const el=document.querySelector('#s-land .title');el.textContent=t(title);el.classList.add('sm');
+  const sb=document.querySelector('#s-land .sub');sb.textContent=t(sub);sb.hidden=false;
+  $('openBtn').textContent=t('ห่อกล่องให้คนที่คุณรัก');$('openBtn').onclick=sendBack;$('spinHint').hidden=true;$('musicBtn').hidden=true;go('land');
 }
 async function loadBox(){
   let v;
@@ -787,15 +801,30 @@ async function loadBox(){
   showBox(v);
   if(v.phase==='expired')return showGone('กล่องนี้หายไปแล้ว','ห่อกล่องให้คนที่คุณรักบ้างไหม');
   if(v.phase==='in_transit'){
-    const sub=document.querySelector('#s-transit .sub');sub.textContent='';
-    if(v.senderName){sub.append('กล่องจาก ');const b=document.createElement('b');b.textContent=v.senderName;sub.append(b,' ')}
-    sub.append('จะถึง '+thaiWhen(v.deliverAt));
+    TRANSIT=v;renderTransit();
     const end=new Date(v.deliverAt).getTime();clearInterval(cdTimer);
     const t=()=>{left=Math.max(0,Math.ceil((end-Date.now())/1000));renderCount();if(!left){clearInterval(cdTimer);loadBox()}};t();cdTimer=setInterval(t,1000);
     go('transit');return;
   }
   go('land');
 }
+/* prototype (no box id): sample content in the chosen language */
+const SAMPLE={th:{to:'แม่',from:'ลูกคนเล็ก',msg:'ปีนี้เหนื่อยมาเยอะ ขอบคุณที่อยู่ข้างกันเสมอนะ คริสต์มาสนี้ขอให้แม่ได้พักบ้าง รักแม่ที่สุดเลย',coupon:'พาไปกินข้าวร้านโปรด 1 มื้อ',engrave:'แม่ · Christmas 2026',left:'6 วัน 23 ชม.',when:'จะถึงเวลา 00:00 คืนวันคริสต์มาส'},
+  en:{to:'Mom',from:'Your little one',msg:'This year was a lot. Thank you for always being by my side. Take a real rest this Christmas. Love you most.',coupon:'Dinner at your favourite restaurant',engrave:'Mom · Christmas 2026',left:'6 days 23 hrs',when:'arrives at midnight on Christmas Eve'}};
+function protoSample(){if(SLUG)return;const x=SAMPLE[window.I18N?I18N.lang:'th']||SAMPLE.th;
+  Object.assign(DATA,{to:x.to,from:x.from,msg:x.msg});
+  setText('#s-land .title',x.to);setText('#s-land .sub b',x.from);
+  const ts=$('transitSub');ts.textContent='';ts.append(t('กล่องจาก')+' ');const b=document.createElement('b');b.textContent=x.from;ts.append(b,' '+x.when);
+  setText('#cardEl .to',t('ถึง {name}',{name:x.to}));setText('#cardEl .msg',x.msg);setText('#cardEl .sig','— '+x.from);
+  $('ticket').querySelector('p').textContent=x.coupon;$('giftSub').textContent=t('สลักชื่อ “{text}”',{text:x.engrave});setEngrave(x.engrave);
+  $('backBtn').textContent=t('ส่งกล่องกลับให้ {name}',{name:x.from});document.querySelector('.expire b').textContent=x.left}
+protoSample();
+// language switch: redraw everything built from variables (static text is swapped by i18n.js)
+if(window.I18N)I18N.onChange(()=>{if(!SLUG){applyGift();protoSample()}
+  if(BOX){showBox(BOX);if(GONE)showGone(GONE[0],GONE[1]);renderTransit()}
+  else if(GONE)showGone(GONE[0],GONE[1]);
+  const sel=document.querySelector('.plan[aria-checked="true"]');if(sel&&!(BOX&&BOX.plan==='YEAR'))$('payBtn').textContent=t('ชำระด้วย PromptPay · {n} บาท',{n:sel.dataset.p})});
+
 if(SLUG){
   // hide the prototype's demo controls, show nothing sample while loading
   ['transitBtn','skipBtn'].forEach(id=>$(id).hidden=true);document.querySelector('.vnote').hidden=true;

@@ -10,11 +10,14 @@ Requirements: https://claude.ai/artifact/JoFKTcMDDwtpKzgSiXWLDd
 | `sender.html` | Sender: box design, card designer + voice, gift (lid comes off), music (lid closes and the bow pops), delivery and price, "send to whom" sheet, sent screen with copy link, teaser image and IN ZENITHS promo | https://claude.ai/artifact/4gwBv5MKhhcHJg81ozmDUd |
 | `recipient.html` | Recipient: waiting countdown, pull the ribbon, card + voice, gift with its meaning, share image, keep (25 / 125 baht), download, send one back | https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75 |
 | `santa-api.js` | Connects both pages to the API (`api/`) | – |
+| `i18n.js` | Thai / English: TH·EN switch in the header, dictionary of every text, `?lang=en` to force English | – |
 | `../_redirects` | Cloudflare Pages routes: `/santa-box/` → sender, `/santa-box/b/<id>` → recipient | – |
 | `design/promo-options.html` | The 5 IN ZENITHS promo card designs (E was chosen) | https://claude.ai/artifact/Uj7TDM6ido9vYimwxnQPU5 |
 | `archive/prototype-v1.html` | First cartoon-style version | https://claude.ai/artifact/WPDHTJTJiYn48pHnHxNQ74 |
 
-Single-page files (HTML, CSS and JS together), no build step. three.js r128 and qrcodejs load from cdnjs. Footer: © IN ZENITHS.
+Single-page files (HTML, CSS and JS together), no build step.
+
+**Languages:** pages are written in Thai; `i18n.js` swaps every known Thai text for English and back without a reload (names, card message, coupon and engraving are never translated: `data-no-i18n`). New text in a page needs an entry in the dictionary in `i18n.js`, and every English text there must be unique. The language follows `?lang=`, then the saved choice, then the phone's language. The sender's language is saved with the box (emails), the payer's with the payment (Stripe checkout page and receipt email). three.js r128 and qrcodejs load from cdnjs. Footer: © IN ZENITHS.
 
 ## Two modes
 - **Prototype** (`<meta name="santa-api" content="">`, the default and the published artifacts): runs on its own with sample data; the design travels in the link hash (`#gift-b<box>-r<ribbon>-a<accents>-c<paper><font>`).

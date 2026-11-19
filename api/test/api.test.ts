@@ -113,6 +113,26 @@ describe('paying', () => {
     expect(outside).toContain('next=https://play.example.com/santa-box/?paid=');
   });
 
+  it('English sender: English checkout and email; Thai stays the default', async () => {
+    const box = await sendBox(ctx.app, { lang: 'en' });
+    expect((await ctx.prisma.gift.findUniqueOrThrow({ where: { slug: box.slug } })).lang).toBe('en');
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: `/v1/santa-box/gifts/${box.slug}/checkout`,
+      headers: { 'x-sender-token': box.senderToken },
+      payload: { plan: 'YEAR', payer: 'SENDER' },
+    });
+    const { paymentId } = res.json();
+    expect((await ctx.prisma.payment.findUniqueOrThrow({ where: { id: paymentId } })).lang).toBe('en');
+    await webhookPaid(ctx.app, paymentId);
+    const mail = ctx.mailer.sent.find((m) => m.text.includes(box.link))!;
+    expect(mail.subject).toBe('Your Santa Box is ready to send');
+    expect(mail.text).toContain('Questions or problems? Contact support@inzeniths.com');
+
+    const thai = await sendBox(ctx.app);
+    expect((await ctx.prisma.gift.findUniqueOrThrow({ where: { slug: thai.slug } })).lang).toBe('th');
+  });
+
   it('refuses a return link to another site', async () => {
     const box = await sendBox(ctx.app);
     const res = await ctx.app.inject({
