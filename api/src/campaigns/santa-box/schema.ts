@@ -9,10 +9,13 @@ export const GIFT_ITEMS = ['bear', 'ginger', 'choco', 'orn', 'globe', 'stock'] a
 export const SONGS = ['silent', 'wish', 'jingle', 'none'] as const;
 export const ACCENTS = ['b', 'p', 'h', 'c', 'l'] as const;
 
+/** A preset (0–5) or a colour the sender picked, as #rrggbb. */
+const colour = z.union([z.number().int().min(0).max(5), z.string().regex(/^#[0-9a-fA-F]{6}$/, 'must be #rrggbb').toLowerCase()]);
+
 export const santaPayload = z.object({
   design: z.object({
-    box: z.number().int().min(0).max(5),
-    ribbon: z.number().int().min(0).max(5),
+    box: colour,
+    ribbon: colour,
     accents: z.array(z.enum(ACCENTS)).max(ACCENTS.length).refine((a) => new Set(a).size === a.length, 'duplicate accent'),
     paper: z.number().int().min(0).max(4),
     font: z.number().int().min(0).max(2),

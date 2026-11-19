@@ -95,6 +95,13 @@ textarea{resize:none;min-height:118px;font-family:var(--f-serif);font-size:16.5p
 .tile .dot{width:34px;height:34px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .tile .ico{font-size:24px;line-height:34px;height:34px}
 .tile .t{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* "pick your own colour" tile: rainbow until a colour is picked, then that colour with a rainbow ring */
+.pickTile{position:relative;cursor:pointer}
+.pickTile input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
+.tile .rainbow{background:conic-gradient(#f44 0deg,#fb3 60deg,#ee4 110deg,#4c6 170deg,#4bf 220deg,#66f 270deg,#c5f 320deg,#f44 360deg)}
+.tile .rainbow.picked{background:var(--pick);position:relative}
+.tile .rainbow.picked::after{content:'';position:absolute;inset:-5px;border-radius:inherit;padding:2px;background:conic-gradient(#f44,#fb3,#ee4,#4c6,#4bf,#66f,#c5f,#f44);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.pickTile:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .lbl em.pick{color:var(--accent);font-weight:500}
 /* card papers (shared by sender preview and recipient card) */
 .paper.cs-0{background:#FBF7F0;color:#2A2420}
@@ -472,6 +479,10 @@ const RIBBONS=[
   {n:'แดงซาติน',c:'#9E1B27',r:.3,m:.15},{n:'ทองซาติน',c:'#D4AF5A',r:.28,m:.55},{n:'แคนดี้เคน',c:'#FFFFFF',r:.35,m:.05,stripe:true},
   {n:'ไหมมรกต',c:'#2E6B4F',r:.3,m:.2},{n:'กำมะหยี่แดง',c:'#7A1420',r:.95,m:0},{n:'เงินประกาย',c:'#D9DBE0',r:.25,m:.7}];
 const ACCENTS=[{id:'b',n:'กระดิ่ง',e:'🔔'},{id:'p',n:'ลูกสน',e:'🌰'},{id:'h',n:'ฮอลลี่',e:'🌿'},{id:'c',n:'อบเชย',e:'🪵'},{id:'l',n:'ไฟกะพริบ',e:'✨'}];
+// a preset index, or a colour the sender picked (#rrggbb)
+const isHex=v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v);
+const boxOf=v=>isHex(v)?{n:'สีที่เลือกเอง',c:v}:(BOX_COLORS[v]||BOX_COLORS[0]);
+const ribOf=v=>isHex(v)?{n:'สีที่เลือกเอง',c:v,r:.3,m:.15}:(RIBBONS[v]||RIBBONS[0]);
 let DESIGN={box:0,rib:0,acc:['b']};
 var setDesign=function(){};
 /* ================= THREE ================= */
@@ -671,7 +682,7 @@ if(renderer){
       pts.push(pts[0].clone());g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x3a3a3a})));
       root.add(g);ACC.l=g;
       (function twinkle(){const t=performance.now()/1000;if(g.visible)bulbs.forEach((b,i)=>{b.material.emissiveIntensity=.4+.9*Math.max(0,Math.sin(t*2.2+i*1.7))});requestAnimationFrame(twinkle)})()}
-    setDesign=function(d){const bc=BOX_COLORS[d.box]||BOX_COLORS[0],rb=RIBBONS[d.rib]||RIBBONS[0];
+    setDesign=function(d){const bc=boxOf(d.box),rb=ribOf(d.rib);
       [boxMat,lidMat].forEach(m=>{m.color=C(bc.c);m.metalness=bc.metal||0;m.roughness=bc.metal?.45:.8;m.needsUpdate=true});
       RIB_MATS.forEach(m=>{m.color=C(rb.c);m.roughness=rb.r;m.metalness=rb.m;m.map=rb.stripe?stripe:null;m.needsUpdate=true});
       ornMat.color=C(d.box===1?'#C7A15A':'#B3202E');
@@ -752,15 +763,32 @@ $('nextBtn').onclick=()=>{if(step<4)go(step+1);else openWho()};
 // box design: colour (one), ribbon (one), accents (any)
 function tile(parent,kind,html,label,fn){const b=document.createElement('button');b.className='tile';if(kind==='radio')b.setAttribute('role','radio');
   b.innerHTML=html+'<span class="t"></span>';b.querySelector('.t').textContent=label;b.onclick=fn;$(parent).append(b)}
-BOX_COLORS.forEach((c,i)=>tile('boxTiles','radio',`<span class="sw" style="background:${c.c}"></span>`,c.n,()=>{DESIGN.box=i;designChanged()}));
-RIBBONS.forEach((r,i)=>tile('ribTiles','radio',`<span class="dot" style="background:${r.stripe?'repeating-linear-gradient(45deg,#B3202E 0 5px,#fff 5px 10px)':r.c}"></span>`,r.n,()=>{DESIGN.rib=i;designChanged()}));
+// the picker shows 5 presets + "pick your own"; hidden presets stay in the lists so older boxes still draw right
+const BOX_SHOWN=[0,1,2,3,5],RIB_SHOWN=[0,1,2,3,5];
+BOX_SHOWN.map(i=>[BOX_COLORS[i],i]).forEach(([c,i])=>tile('boxTiles','radio',`<span class="sw" style="background:${c.c}"></span>`,c.n,()=>{DESIGN.box=i;designChanged()}));
+RIB_SHOWN.map(i=>[RIBBONS[i],i]).forEach(([r,i])=>tile('ribTiles','radio',`<span class="dot" style="background:${r.stripe?'repeating-linear-gradient(45deg,#B3202E 0 5px,#fff 5px 10px)':r.c}"></span>`,r.n,()=>{DESIGN.rib=i;designChanged()}));
+// last tile: pick any colour (the phone's own colour picker)
+function colourTile(parent,cls,label,current,fn){
+  const l=document.createElement('label');l.className='tile pickTile';l.setAttribute('role','radio');
+  l.innerHTML=`<span class="${cls} rainbow"></span><span class="t"></span><input type="color" aria-label="">`;
+  const t=l.querySelector('.t'),i=l.querySelector('input'),sw=l.querySelector('.'+cls);
+  t.textContent=label;i.setAttribute('aria-label',label);i.value=current;
+  const set=()=>{sw.style.setProperty('--pick',i.value);sw.classList.add('picked');fn(i.value.toLowerCase())};
+  i.addEventListener('input',set);i.addEventListener('change',set);
+  // tapping again after a pick re-applies that colour too
+  l.addEventListener('click',()=>{if(sw.classList.contains('picked'))fn(i.value.toLowerCase())});
+  $(parent).append(l)}
+colourTile('boxTiles','sw','เลือกสีเอง','#c8a2d4',v=>{DESIGN.box=v;designChanged()});
+colourTile('ribTiles','dot','เลือกสีเอง','#e7b8c8',v=>{DESIGN.rib=v;designChanged()});
 ACCENTS.forEach(a=>tile('accTiles','toggle',`<span class="ico">${a.e}</span>`,a.n,()=>{const k=DESIGN.acc.indexOf(a.id);if(k>-1)DESIGN.acc.splice(k,1);else DESIGN.acc.push(a.id);designChanged()}));
-function markDesign(){[...$('boxTiles').children].forEach((b,i)=>b.setAttribute('aria-checked',i===DESIGN.box));
-  [...$('ribTiles').children].forEach((b,i)=>b.setAttribute('aria-checked',i===DESIGN.rib));
+function markDesign(){[...$('boxTiles').children].forEach((b,i)=>b.setAttribute('aria-checked',i<BOX_SHOWN.length?BOX_SHOWN[i]===DESIGN.box:isHex(DESIGN.box)));
+  [...$('ribTiles').children].forEach((b,i)=>b.setAttribute('aria-checked',i<RIB_SHOWN.length?RIB_SHOWN[i]===DESIGN.rib:isHex(DESIGN.rib)));
   [...$('accTiles').children].forEach((b,i)=>b.setAttribute('aria-pressed',DESIGN.acc.includes(ACCENTS[i].id)));
-  $('boxName').textContent=BOX_COLORS[DESIGN.box].n;$('ribName').textContent=RIBBONS[DESIGN.rib].n;
+  $('boxName').textContent=boxOf(DESIGN.box).n;$('ribName').textContent=ribOf(DESIGN.rib).n;
   $('accName').textContent=DESIGN.acc.length?ACCENTS.filter(a=>DESIGN.acc.includes(a.id)).map(a=>a.n).join(' · '):'เลือกได้หลายอย่าง'}
-function designHash(){return `${S.gift}-b${DESIGN.box}-r${DESIGN.rib}-a${DESIGN.acc.join('')||'0'}-c${S.cs||0}${S.cf==null?0:S.cf}`}
+// a picked colour goes in the link as bx<rrggbb> / rx<rrggbb>
+const hashCol=(k,v)=>isHex(v)?`${k}x${v.slice(1)}`:`${k}${v}`;
+function designHash(){return `${S.gift}-${hashCol('b',DESIGN.box)}-${hashCol('r',DESIGN.rib)}-a${DESIGN.acc.join('')||'0'}-c${S.cs||0}${S.cf==null?0:S.cf}`}
 function updatePreviewLink(){const pl=document.getElementById('recvPreview');if(pl)pl.href=pl.href.split('#')[0]+'#'+designHash()}
 function designChanged(){setDesign(DESIGN);spinV=.1;markDesign();updatePreviewLink()}
 markDesign();updatePreviewLink();

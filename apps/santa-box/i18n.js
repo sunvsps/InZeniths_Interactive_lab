@@ -43,6 +43,7 @@ window.I18N = (function () {
     'ขาวหิมะ': 'Snow white', 'แดงคลาสสิก': 'Classic red', 'เขียวสน': 'Pine green', 'ทองอร่าม': 'Gold',
     'ขนมปังขิง': 'Gingerbread', 'กรมท่าคืนหนาว': 'Winter navy',
     'แดงซาติน': 'Red satin', 'ทองซาติน': 'Gold satin', 'แคนดี้เคน': 'Candy cane', 'ไหมมรกต': 'Emerald silk',
+    'เลือกสีเอง': 'Pick a colour', 'สีที่เลือกเอง': 'Your own colour',
     'กำมะหยี่แดง': 'Red velvet', 'เงินประกาย': 'Silver sparkle',
     'กระดิ่ง': 'Bells', 'ลูกสน': 'Pine cones', 'ฮอลลี่': 'Holly', 'อบเชย': 'Cinnamon', 'ไฟกะพริบ': 'Fairy lights',
 

@@ -410,6 +410,10 @@ const RIBBONS=[
   {n:'แดงซาติน',c:'#9E1B27',r:.3,m:.15},{n:'ทองซาติน',c:'#D4AF5A',r:.28,m:.55},{n:'แคนดี้เคน',c:'#FFFFFF',r:.35,m:.05,stripe:true},
   {n:'ไหมมรกต',c:'#2E6B4F',r:.3,m:.2},{n:'กำมะหยี่แดง',c:'#7A1420',r:.95,m:0},{n:'เงินประกาย',c:'#D9DBE0',r:.25,m:.7}];
 const ACCENTS=[{id:'b',n:'กระดิ่ง',e:'🔔'},{id:'p',n:'ลูกสน',e:'🌰'},{id:'h',n:'ฮอลลี่',e:'🌿'},{id:'c',n:'อบเชย',e:'🪵'},{id:'l',n:'ไฟกะพริบ',e:'✨'}];
+// a preset index, or a colour the sender picked (#rrggbb)
+const isHex=v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v);
+const boxOf=v=>isHex(v)?{n:'สีที่เลือกเอง',c:v}:(BOX_COLORS[v]||BOX_COLORS[0]);
+const ribOf=v=>isHex(v)?{n:'สีที่เลือกเอง',c:v,r:.3,m:.15}:(RIBBONS[v]||RIBBONS[0]);
 let DESIGN={box:0,rib:0,acc:['b']};
 var setDesign=function(){};
 /* ================= THREE ================= */
@@ -700,7 +704,7 @@ if(renderer){
       pts.push(pts[0].clone());g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x3a3a3a})));
       root.add(g);ACC.l=g;
       (function twinkle(){const t=performance.now()/1000;if(g.visible)bulbs.forEach((b,i)=>{b.material.emissiveIntensity=.4+.9*Math.max(0,Math.sin(t*2.2+i*1.7))});requestAnimationFrame(twinkle)})()}
-    setDesign=function(d){const bc=BOX_COLORS[d.box]||BOX_COLORS[0],rb=RIBBONS[d.rib]||RIBBONS[0];
+    setDesign=function(d){const bc=boxOf(d.box),rb=ribOf(d.rib);
       [boxMat,lidMat].forEach(m=>{m.color=C(bc.c);m.metalness=bc.metal||0;m.roughness=bc.metal?.45:.8;m.needsUpdate=true});
       RIB_MATS.forEach(m=>{m.color=C(rb.c);m.roughness=rb.r;m.metalness=rb.m;m.map=rb.stripe?stripe:null;m.needsUpdate=true});
       ornMat.color=C(d.box===1?'#C7A15A':'#B3202E');
@@ -950,7 +954,8 @@ const GIFTS=[
   {id:'stock',n:'ถุงเท้าคริสต์มาส',e:'🧦',m:'สัญลักษณ์แห่งการรอคอยสิ่งดีๆ - ช่วยเรียกโชคและของขวัญให้มาเต็มถุง'}];
 // which gift is inside comes from the link: #bear, #ginger, #choco, #orn, #globe, #stock
 function applyGift(){const parts=(location.hash||'').slice(1).split('-'),h=parts[0];
-  parts.slice(1).forEach(p=>{if(/^b\d+$/.test(p))DESIGN.box=Math.min(+p.slice(1),BOX_COLORS.length-1);else if(/^r\d+$/.test(p))DESIGN.rib=Math.min(+p.slice(1),RIBBONS.length-1);else if(/^a[a-z0]*$/.test(p))DESIGN.acc=p.slice(1).split('').filter(k=>ACCENTS.some(a=>a.id===k));else if(/^c[0-4][0-2]$/.test(p))$('cardEl').className=`card paper cs-${p[1]} cf-${p[2]}`});
+  parts.slice(1).forEach(p=>{if(/^bx[0-9a-f]{6}$/i.test(p))DESIGN.box='#'+p.slice(2).toLowerCase();else if(/^rx[0-9a-f]{6}$/i.test(p))DESIGN.rib='#'+p.slice(2).toLowerCase();
+    else if(/^b\d+$/.test(p))DESIGN.box=Math.min(+p.slice(1),BOX_COLORS.length-1);else if(/^r\d+$/.test(p))DESIGN.rib=Math.min(+p.slice(1),RIBBONS.length-1);else if(/^a[a-z0]*$/.test(p))DESIGN.acc=p.slice(1).split('').filter(k=>ACCENTS.some(a=>a.id===k));else if(/^c[0-4][0-2]$/.test(p))$('cardEl').className=`card paper cs-${p[1]} cf-${p[2]}`});
   setDesign(DESIGN);const d=GIFTS.find(g=>g.id===h)||GIFTS.find(g=>g.id==='orn');
   $('giftName').textContent=d.n;$('giftMeaning').textContent='“'+t(d.m)+'”';$('giftSub').hidden=d.id!=='orn';if(typeof showGift==='function')showGift(d.id)}
 addEventListener('hashchange',applyGift);applyGift();
