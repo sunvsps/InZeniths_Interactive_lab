@@ -69,7 +69,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 @keyframes eq{50%{height:10px}}
 
 .step{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;
-  padding-left:max(22px,env(safe-area-inset-left,0px));padding-right:max(22px,env(safe-area-inset-right,0px));padding-block:66px 34px}
+  padding-left:max(22px,env(safe-area-inset-left,0px));padding-right:max(22px,env(safe-area-inset-right,0px));padding-block:66px calc(34px + env(safe-area-inset-bottom,0px))}
 .copy{position:absolute;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:3;margin:0;text-align:center;font-size:10px;letter-spacing:.04em;color:var(--muted);pointer-events:none}
 .copy a{color:inherit;text-underline-offset:2px;pointer-events:auto}
 .step .top,.step .bot{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
@@ -156,9 +156,24 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .ticket p{margin:0;font-family:var(--f-serif);font-size:15px}
 .ticket .k{font-family:var(--f-lat);font-style:italic;font-size:28px;color:var(--gold);line-height:1;padding-right:12px;border-right:1px dashed var(--line)}
 .expire{font-size:11.5px;color:var(--muted);margin:0}
+.sendown{font-size:12px;color:var(--accent);text-decoration:underline;text-underline-offset:3px;pointer-events:auto}
 .expire b{color:var(--accent);font-weight:500}
 
 #santa{position:fixed;left:0;top:0;width:78px;color:var(--ink);opacity:.82;pointer-events:none;z-index:2;transform:translate(-200px,90px)}
+/* ---- scene C: evening sky (opacity set from the 3D timeline) ---- */
+#sky{position:absolute;inset:0;z-index:0;opacity:0;pointer-events:none;
+  background:radial-gradient(1.5px 1.5px at 12% 14%,#fff 60%,transparent),radial-gradient(1px 1px at 28% 24%,#fff 60%,transparent),radial-gradient(1.5px 1.5px at 46% 9%,#fff 60%,transparent),
+    radial-gradient(1px 1px at 63% 20%,#fff 60%,transparent),radial-gradient(1.5px 1.5px at 82% 13%,#fff 60%,transparent),radial-gradient(1px 1px at 92% 30%,#fff 60%,transparent),
+    radial-gradient(1px 1px at 8% 34%,#fff 60%,transparent),radial-gradient(1px 1px at 38% 36%,#fff 60%,transparent),radial-gradient(1px 1px at 72% 38%,#fff 60%,transparent),
+    linear-gradient(180deg,#121A33 0%,#1F2B4D 28%,#4A4D72 48%,rgba(160,150,170,.35) 60%,rgba(251,248,244,0) 70%)}
+#sky .moon{position:absolute;top:13%;right:14%;width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 38% 36%,#FFFBEA,#F3E2B0 70%);box-shadow:0 0 30px 10px rgba(255,236,180,.35)}
+#gl{position:relative;z-index:1}
+/* text above the evening sky turns light */
+html.night .logo{color:#F4D9A6}
+html.night .step .top{color:#F6EFE9}
+html.night .step .top .eyebrow,html.night .step .top .sub,html.night .step .top .caption,html.night .zoomhint{color:#D6CDD9}
+html.night #giftView .gv-top{color:#F6EFE9}html.night #giftView .eyebrow{color:#D6CDD9}
+html.night #santa{color:#F6EFE9;opacity:.9}
 #santa svg{display:block;width:100%;height:auto;overflow:visible}
 .leg{transform-box:fill-box;transform-origin:top center;animation:gallop .34s ease-in-out infinite alternate}
 .leg.b{animation-delay:-.17s}
@@ -209,6 +224,8 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 <div id="boot" role="status" aria-live="polite"><span class="logo">Santa Box</span><div class="ring" aria-hidden="true"></div><p id="bootText">กำลังเปิดกล่อง…</p></div>
 <script>(function(){try{var l=new URLSearchParams(location.search).get('lang')||localStorage.getItem('santaLang')||(/^th/i.test(navigator.language||'')?'th':'en');if(l==='en')document.getElementById('bootText').textContent='Opening your box…'}catch(e){}})();</script>
 <div id="app">
+  <!-- scene C: evening falls over the top of the screen once the box is open -->
+  <div id="sky" aria-hidden="true"><i class="moon"></i></div>
   <canvas id="gl" aria-label="กล่องของขวัญสามมิติ"></canvas>
 
   <header class="hdr">
@@ -230,6 +247,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
     <div class="bot">
       <p class="sub" id="transitSub" data-no-i18n>กล่องจาก <b>ลูกคนเล็ก</b> จะถึงเวลา 00:00 คืนวันคริสต์มาส</p>
       <button class="link" id="skipBtn">ข้ามเวลา (ตัวอย่าง)</button>
+      <a class="sendown" id="sendOwn" href="/santa-box/" data-no-i18n>ห่อกล่องให้คนที่คุณรักบ้าง</a>
     </div>
   </section>
 
@@ -398,7 +416,7 @@ catch(e){const n=document.createElement('p');n.className='nogl';n.textContent='�
 const C=h=>new THREE.Color(h).convertSRGBToLinear();
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(32,1,.1,100);
-const A={untie:0,bowGone:0,ribbonDrop:0,lidOpen:0,glow:0,orn:0,cam:0,tails:0,card3:0,view:0};
+const A={untie:0,bowGone:0,ribbonDrop:0,lidOpen:0,glow:0,orn:0,cam:0,tails:0,card3:0,view:0,night:0,village:0,lights:0,snow:0};
 // gift close-up: the camera moves onto the gift; the viewer turns it (ry, rx) and zooms (1 = fits the screen, up to 2.8)
 const VIEW={on:false,ry:0,rx:0,zoom:1};
 // camera fit: the box is framed inside the empty band between this step's top text and bottom controls
@@ -419,7 +437,7 @@ function fitView(){
   const visH=2*t*d,f=((top+bottom)/2-H/2)/H;
   FIT={d,ty:cy+f*visH};if(!cur)cur={...FIT};
 }
-let root,lid,bow,orn,boxMat,lidMat,ribBody,ribLid,bowMat,tailMat,tails=[],card3,card3Mat,ornMat,glowSprite,inLight,pts,ptsData,emitting=false;
+let village,winMat,snowPts,snowData,root,lid,bow,orn,boxMat,lidMat,ribBody,ribLid,bowMat,tailMat,tails=[],card3,card3Mat,ornMat,glowSprite,inLight,pts,ptsData,emitting=false;
 
 function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t}
 function roundedBox(W,H,D,r,b){
@@ -498,6 +516,36 @@ if(renderer){
   card3Mat=new THREE.MeshStandardMaterial({map:canvasTex(256,180,(g,w,h)=>{g.fillStyle='#FFFDF9';g.fillRect(0,0,w,h);g.strokeStyle='#E7D9CF';g.lineWidth=6;g.strokeRect(12,12,w-24,h-24);
       g.fillStyle='#B3202E';g.fillRect(36,48,120,7);g.fillStyle='#CDBFB6';[78,100,122].forEach((y,i)=>g.fillRect(36,y,180-i*30,5))}),roughness:.85,transparent:true,side:THREE.DoubleSide});
   card3=new THREE.Mesh(new THREE.BoxGeometry(.98,.68,.012),card3Mat);card3.visible=false;card3.castShadow=true;root.add(card3);
+
+  /* ---- scene C: a small Santa village behind the box, windows lighting up at dusk ---- */
+  village=new THREE.Group();village.visible=false;scene.add(village); // in the scene, not the box: it stays put when the box is spun
+  {const wall=new THREE.MeshStandardMaterial({color:C('#3D3A52'),roughness:.9}),roofR=new THREE.MeshStandardMaterial({color:C('#6E2A33'),roughness:.8}),
+      roofG=new THREE.MeshStandardMaterial({color:C('#2C4A42'),roughness:.8}),snowM=new THREE.MeshStandardMaterial({color:C('#F4F1EC'),roughness:1}),
+      pine=new THREE.MeshStandardMaterial({color:C('#1F3D33'),roughness:.9});
+    winMat=new THREE.MeshBasicMaterial({color:C('#FFC86B'),transparent:true,opacity:0});
+    const winG=new THREE.PlaneGeometry(.16,.2);
+    const house=(x,z,w,h,ry,roof,delay)=>{const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=ry;g.userData.delay=delay;
+      const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,w*.8),wall);body.position.y=h/2;g.add(body);
+      const r=new THREE.Mesh(new THREE.ConeGeometry(w*.78,w*.62,4),roof);r.rotation.y=Math.PI/4;r.position.y=h+w*.31;r.scale.z=.85;g.add(r);
+      const cap=new THREE.Mesh(new THREE.ConeGeometry(w*.42,w*.3,4),snowM);cap.rotation.y=Math.PI/4;cap.position.y=h+w*.47;cap.scale.z=.85;g.add(cap);
+      [[-w*.22,h*.6],[w*.22,h*.6],[0,h*.25]].forEach(([wx,wy])=>{const m=new THREE.Mesh(winG,winMat);m.position.set(wx,wy,w*.401);g.add(m)});
+      village.add(g);return g};
+    const tree=(x,z,s,delay)=>{const g=new THREE.Group();g.position.set(x,0,z);g.userData.delay=delay;
+      [[.55,.9,.45],[.42,.7,.85],[.28,.5,1.2]].forEach(([r,h,y])=>{const c=new THREE.Mesh(new THREE.ConeGeometry(r*s,h*s,8),pine);c.position.y=y*s;g.add(c)});
+      const tip=new THREE.Mesh(new THREE.ConeGeometry(.12*s,.22*s,8),snowM);tip.position.y=1.42*s;g.add(tip);village.add(g)};
+    // the toy workshop in the middle, houses either side, pines in between (all well behind the box)
+    const shop=house(0,-5.2,1.5,1.1,0,roofR,.25);
+    const chim=new THREE.Mesh(new THREE.BoxGeometry(.18,.5,.18),wall);chim.position.set(.38,1.75,0);shop.add(chim);
+    house(-2.3,-4.4,1,.85,.35,roofG,.1);house(2.4,-4.5,1.05,.9,-.3,roofR,.4);house(-4,-3.6,.9,.75,.6,roofR,.55);house(4.1,-3.7,.9,.8,-.55,roofG,.7);
+    tree(-1.2,-4.6,.75,.2);tree(1.25,-4.7,.8,.35);tree(-3.2,-3.9,.7,.5);tree(3.3,-4,.75,.6);tree(-5,-2.9,.65,.75);tree(5,-3,.65,.8);
+  }
+  /* ---- scene C: snow that rises out of the open box and stays hanging in the air ---- */
+  {const N=110,pos=new Float32Array(N*3).fill(-50),g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    const flake=canvasTex(64,64,(c)=>{const gr=c.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.45,'rgba(255,255,255,.75)');gr.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=gr;c.fillRect(0,0,64,64)});
+    snowPts=new THREE.Points(g,new THREE.PointsMaterial({size:.13,map:flake,color:0xffffff,transparent:true,opacity:0,depthWrite:false}));scene.add(snowPts);
+    // each flake: a resting spot in the air around the box, a delay, and its own slow sway
+    snowData=Array.from({length:N},(_,i)=>{const a=i*2.399,r=.6+((i*37)%100)/100*3.4;return {tx:Math.cos(a)*r,ty:1.3+((i*53)%100)/100*3.6,tz:Math.sin(a)*r*.55-.4,d:((i*29)%100)/100*.45,ph:i*.7}});
+  }
 
   // gift inside: engraved glass bauble
   orn=new THREE.Group();orn.visible=false;root.add(orn);
@@ -678,6 +726,7 @@ const eback=p=>{const c1=1.5,c3=c1+1;return 1+c3*Math.pow(p-1,3)+c1*Math.pow(p-1
 function tw(k,to,dur,delay=0,ease=eio){for(let i=tws.length-1;i>=0;i--)if(tws[i].k===k)tws.splice(i,1);tws.push({k,to,dur:reduce?.01:dur,t:-(reduce?0:delay),from:null,ease})}
 
 let last=performance.now(),T=0;
+const skyEl=$('sky');let nightOn=false;
 function frame(now){
   const dt=Math.max(0,Math.min(.05,(now-last)/1000));last=now;T+=dt;
   for(let i=tws.length-1;i>=0;i--){const w=tws[i];w.t+=dt;if(w.t<0)continue;if(w.from===null)w.from=A[w.k];const p=Math.min(1,w.t/w.dur);A[w.k]=w.from+(w.to-w.from)*w.ease(p);if(p>=1)tws.splice(i,1)}
@@ -703,6 +752,15 @@ function frame(now){
       else{const q=(L-.42)/.58,e=1-Math.pow(1-q,3);x=-.03*e;y=1.05+(.68-1.05)*e+Math.sin(q*Math.PI)*.3;rz=.12+(1.3-.12)*e;rx=-.06*(1-e)}
       lid.position.set(x,y,0);lid.rotation.set(rx,0,rz)}
     lidMat.opacity=1;ribLid.opacity=1;lid.visible=true;
+    // scene C: dusk sky, village growing up from the ground, windows lighting, snow hanging in the air
+    skyEl.style.opacity=A.night.toFixed(3);const isNight=A.night>.35;if(isNight!==nightOn){nightOn=isNight;document.documentElement.classList.toggle('night',isNight)}
+    village.visible=A.village>.001;village.children.forEach(h=>{const k=Math.min(1,Math.max(0,A.village*1.6-h.userData.delay));h.scale.set(1,Math.max(.001,eio(k)),1)});
+    winMat.opacity=A.lights*(.85+.15*Math.sin(T*3));
+    snowPts.material.opacity=Math.min(1,A.snow*2)*.95;
+    if(A.snow>.001){const sp=snowPts.geometry.attributes.position.array;
+      snowData.forEach((f,i)=>{const k=Math.min(1,Math.max(0,(A.snow-f.d)/(1-f.d))),e=1-Math.pow(1-k,3);
+        sp[i*3]=f.tx*e+Math.sin(T*.5+f.ph)*.12*e;sp[i*3+1]=1.45+(f.ty-1.45)*e+Math.sin(T*.8+f.ph)*.08*e;sp[i*3+2]=f.tz*e+Math.cos(T*.4+f.ph)*.1*e});
+      snowPts.geometry.attributes.position.needsUpdate=true}
     // card: rises from inside the box, turns to face you, then hands over to the full-size card on the page
     {const c=A.card3;card3.visible=c>.01&&c<.999;card3.position.set(0,.75+c*1.85,.05+c*.35);card3.rotation.set(-.18*c,-root.rotation.y*c,0);
       card3Mat.opacity=c<.8?1:Math.max(0,(1-c)/.2)}
@@ -778,6 +836,8 @@ function untie(){
   tw('lidOpen',1,1.15,.85);setTimeout(()=>{pop();buzz(18)},reduce?0:900);
   tw('glow',1,.9,1.45);setTimeout(()=>{emitting=true;setTimeout(()=>{emitting=false},1400)},reduce?0:1550);
   tw('card3',1,1.05,2.05);
+  // scene C: evening falls, the village grows, windows light, snow rises from the box and stays in the air
+  tw('night',1,1.6,1.9);tw('village',1,1.7,2.0);tw('lights',1,.9,3.0);tw('snow',1,2.6,1.8);
   setTimeout(()=>{tw('cam',1,1);go('card')},reduce?300:2950);
 }
 
@@ -896,7 +956,9 @@ const ENGRAVE=$('giftSub').textContent.replace(/^สลักชื่อ\s*/,''
 /* ================= real box (API) ================= */
 function renderTransit(){const v=TRANSIT,sub=$('transitSub');if(!v)return;sub.textContent='';
   if(v.senderName){sub.append(t('กล่องจาก')+' ');const b=document.createElement('b');b.textContent=v.senderName;sub.append(b,' ')}
-  sub.append(t('จะถึง {when}',{when:thaiWhen(v.deliverAt)}))}
+  sub.append(t('จะถึง {when}',{when:thaiWhen(v.deliverAt)}));sendBackLink(v.senderName)}
+/** Small link on the waiting page: send a box back to whoever sent this one (their name already filled in). */
+function sendBackLink(name){const a=$('sendOwn');a.textContent=name?t('ส่งกล่องกลับให้ {name}',{name}):t('ห่อกล่องให้คนที่คุณรักบ้าง');a.href=SENDER_PAGE+(name?'?to='+encodeURIComponent(name):'')}
 let BOX=null;
 const THM=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const thaiWhen=iso=>window.I18N?I18N.date(iso):iso;
@@ -916,6 +978,8 @@ function showBox(v){
   DATA.to=to;DATA.from=from||t('ใครบางคน');
   setText('#s-land .title',to);document.querySelector('#s-land .sub').hidden=!from;setText('#s-land .sub b',from);
   $('backBtn').textContent=from?t('ส่งกล่องกลับให้ {name}',{name:from}):t('ห่อกล่องให้คนที่คุณรักบ้าง');
+  // the box looks as the sender designed it from the waiting page on (the API sends only the design until it arrives)
+  const D=(v.payload&&v.payload.design)||v.design;if(D){DESIGN.box=D.box;DESIGN.rib=D.ribbon;DESIGN.acc=D.accents.slice();setDesign(DESIGN)}
   if(v.phase!=='ready')return;
   const P=v.payload;DATA.msg=P.card.message;
   DESIGN.box=P.design.box;DESIGN.rib=P.design.ribbon;DESIGN.acc=P.design.accents.slice();setDesign(DESIGN);
@@ -956,7 +1020,7 @@ const SAMPLE={th:{to:'แม่',from:'ลูกคนเล็ก',msg:'ปี�
 function protoSample(){if(SLUG||PREVIEW)return;const x=SAMPLE[window.I18N?I18N.lang:'th']||SAMPLE.th;
   Object.assign(DATA,{to:x.to,from:x.from,msg:x.msg});
   setText('#s-land .title',x.to);setText('#s-land .sub b',x.from);
-  const ts=$('transitSub');ts.textContent='';ts.append(t('กล่องจาก')+' ');const b=document.createElement('b');b.textContent=x.from;ts.append(b,' '+x.when);
+  const ts=$('transitSub');ts.textContent='';ts.append(t('กล่องจาก')+' ');const b=document.createElement('b');b.textContent=x.from;ts.append(b,' '+x.when);sendBackLink(x.from);
   setText('#cardEl .to',t('ถึง {name}',{name:x.to}));setText('#cardEl .msg',x.msg);setText('#cardEl .sig','— '+x.from);
   $('ticket').querySelector('p').textContent=x.coupon;$('giftSub').textContent=t('สลักชื่อ “{text}”',{text:x.engrave});setEngrave(x.engrave);
   $('backBtn').textContent=t('ส่งกล่องกลับให้ {name}',{name:x.from});document.querySelector('.expire b').textContent=x.left}

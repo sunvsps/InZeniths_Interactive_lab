@@ -23,6 +23,7 @@ describe('sending a box', () => {
     expect(view).toMatchObject({ phase: 'in_transit', recipientName: 'แม่', senderName: 'ลูกคนเล็ก' });
     expect(view.payload).toBeUndefined();
     expect(view.voice).toBeUndefined();
+    expect(view.design).toEqual(payload.design); // the waiting page shows the box as designed
   });
 
   it('rejects bad content and file tricks', async () => {

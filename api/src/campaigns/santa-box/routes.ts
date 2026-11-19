@@ -73,7 +73,8 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
   async function publicView(gift: Gift, now = new Date()) {
     const phase = phaseOf(gift, now);
     const base = { phase, number: gift.number, recipientName: gift.recipientName, senderName: gift.senderName };
-    if (phase === 'in_transit') return { ...base, deliverAt: gift.deliverAt.toISOString() };
+    // on its way: show the box as the sender designed it, but keep what is inside (card, gift, voice, photo) hidden
+    if (phase === 'in_transit') return { ...base, deliverAt: gift.deliverAt.toISOString(), design: (gift.payload as SantaPayload).design };
     if (phase === 'expired') return base;
     return {
       ...base,
