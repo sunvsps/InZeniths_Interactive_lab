@@ -54,11 +54,41 @@ a{color:inherit}
   background:var(--accent);color:#fff;text-decoration:none;box-shadow:0 10px 24px -12px rgba(179,32,46,.7)}
 .copy{margin:0;font-size:10px;letter-spacing:.04em;color:#5E5870;text-align:center}
 .copy a{text-underline-offset:2px}
+#santa{position:fixed;left:0;top:0;z-index:2;width:78px;color:#F6EFE9;opacity:.9;pointer-events:none;transform:translate(-200px,140px)}
+#santa svg{display:block;width:100%;height:auto;overflow:visible}
+.leg{transform-box:fill-box;transform-origin:top center;animation:gallop .34s ease-in-out infinite alternate}
+.leg.b{animation-delay:-.17s}
+@keyframes gallop{from{transform:rotate(26deg)}to{transform:rotate(-22deg)}}
+@media (prefers-reduced-motion:reduce){#santa{display:none}}
 .nogl{position:fixed;top:45%;left:0;right:0;text-align:center;z-index:3;color:var(--muted);font-size:13px}
 </style>
 </head>
 <body>
 <div id="sky" aria-hidden="true"><i class="moon"></i></div>
+<!-- Santa and his reindeer crossing the night sky now and then (same sleigh as the other pages) -->
+<div id="santa" aria-hidden="true">
+  <svg viewBox="0 0 150 62" fill="currentColor">
+    <path d="M44 30 C70 22 92 26 104 24" stroke="currentColor" stroke-width="1" fill="none" opacity=".6"/>
+    <g class="leg"><rect x="100" y="34" width="2.6" height="16" rx="1.3"/></g>
+    <g class="leg b"><rect x="106" y="34" width="2.6" height="16" rx="1.3"/></g>
+    <g class="leg b"><rect x="119" y="33" width="2.6" height="16" rx="1.3"/></g>
+    <g class="leg"><rect x="125" y="33" width="2.6" height="16" rx="1.3"/></g>
+    <ellipse cx="113" cy="30" rx="17" ry="8"/>
+    <path d="M124 27 L131 14 L137 18 L130 30 Z"/>
+    <ellipse cx="136" cy="14" rx="7" ry="5"/>
+    <path d="M131 10 l-3 -8 M130 6 l-5 -1 M134 9 l1 -8 M134.5 4 l4 -2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+    <circle cx="143" cy="15" r="2.6" fill="#7A1F2B"/>
+    <path d="M96 28 q-6 -2 -7 2" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <circle cx="20" cy="22" r="9"/>
+    <circle cx="34" cy="21" r="9.5"/>
+    <circle cx="39" cy="10" r="5"/>
+    <path d="M33 8 q6 -9 13 -1 q-6 -2 -13 1z"/>
+    <path d="M33 8 q-3 -1 -5 4" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="M6 26 h44 q8 0 6 10 q-2 6 -10 6 H16 Q6 42 6 32 Z"/>
+    <path d="M2 48 H50 q8 0 10 -6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M14 42 v6 M44 42 v6" stroke="currentColor" stroke-width="2"/>
+  </svg>
+</div>
 <canvas id="gl" aria-label="ต้นคริสต์มาสสามมิติ มีกล่องของขวัญวางอยู่ใต้ต้น"></canvas>
 
 <header class="hdr">
@@ -304,6 +334,14 @@ function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;T+=dt;
   }
   requestAnimationFrame(frame)}
 requestAnimationFrame(frame);
+
+/* ---- Santa crossing the sky, between the headline and the top of the tree, then back the other way ---- */
+if(!reduce){const sa=$('santa');let x=-120,dir=1,ph=0,base=150,wait=60;
+  (function step(){const W=innerWidth;
+    if(wait>0)wait--;else{x+=dir*1.25;ph+=.05;
+      if((dir>0&&x>W+20)||(dir<0&&x<-120)){dir*=-1;base=118+Math.random()*Math.min(70,innerHeight*.08);wait=240+Math.random()*300}
+      sa.style.transform=`translate(${x}px,${base+Math.sin(ph)*12}px) scaleX(${dir}) rotate(${Math.cos(ph)*-4*dir}deg)`}
+    requestAnimationFrame(step)})()}
 
 /* ---- data ---- */
 function show(total,boxes){TOTAL=total;LIGHTS_ON=total?1:.25;headline();placeBoxes(boxes)}
