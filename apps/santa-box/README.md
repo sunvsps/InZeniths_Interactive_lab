@@ -26,5 +26,4 @@ Tested end to end on 19 Nov 2026: free send, paid send (fake checkout and back),
 
 ## Not done yet
 - Discount codes (Stripe Checkout has its own promo-code box; the sheet's code field is not wired)
-- `[IN-ZENITH-URL]` in the promo card (waiting for the domain)
 - The transit page shows the default box, not the sender's design (the API keeps content hidden until arrival)
