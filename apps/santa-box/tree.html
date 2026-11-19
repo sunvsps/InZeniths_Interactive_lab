@@ -46,21 +46,15 @@ a{color:inherit}
 .top .sub{font-size:12.5px;color:var(--muted);margin:2px 0 0}
 
 .bot{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;flex-direction:column;align-items:center;gap:10px;
-  padding:0 max(18px,env(safe-area-inset-left,0px)) calc(12px + env(safe-area-inset-bottom,0px))}
+  padding:0 max(18px,env(safe-area-inset-left,0px)) calc(34px + env(safe-area-inset-bottom,0px))}
+.bot .copy{margin-top:4px}
 .hint{font-size:11.5px;color:#4E4866;background:rgba(255,255,255,.55);border-radius:999px;padding:4px 12px;transition:opacity .4s}
 .hint.gone{opacity:0}
-.info{display:flex;align-items:center;gap:12px;background:#FBF8F4;color:var(--ink);border-radius:999px;padding:8px 18px 8px 10px;max-width:100%;box-shadow:0 10px 24px -12px rgba(0,0,0,.5);animation:pop .3s cubic-bezier(.2,1.3,.4,1) both}
-.info .sw{flex:none;width:28px;height:28px;border-radius:7px;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
-.info .sw i{position:absolute;left:50%;top:0;bottom:0;width:6px;margin-left:-3px}
-.info b{display:block;font-weight:500;font-size:13px;line-height:1.3}
-.info small{display:block;font-size:11.5px;color:#8A7B74;line-height:1.3}
-@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.95)}}
 .btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;padding:14px 28px;min-width:220px;font-size:15px;font-weight:500;
   background:var(--accent);color:#fff;text-decoration:none;box-shadow:0 10px 24px -12px rgba(179,32,46,.7)}
 .copy{margin:0;font-size:10px;letter-spacing:.04em;color:#5E5870;text-align:center}
 .copy a{text-underline-offset:2px}
 .nogl{position:fixed;top:45%;left:0;right:0;text-align:center;z-index:3;color:var(--muted);font-size:13px}
-@media (prefers-reduced-motion:reduce){.info{animation:none}}
 </style>
 </head>
 <body>
@@ -79,7 +73,6 @@ a{color:inherit}
 </div>
 
 <div class="bot">
-  <div class="info" id="info" hidden><span class="sw" id="infoSw"><i id="infoRib"></i></span><span><b id="infoName"></b><small id="infoAcc"></small></span></div>
   <span class="hint" id="hint">↻ ลากเพื่อหมุนรอบต้นไม้ · แตะกล่องเพื่อดูใกล้ๆ</span>
   <a class="btn" href="/santa-box/wrap">ห่อกล่องของคุณ</a>
   <p class="copy">© IN ZENITHS · <a href="/santa-box/privacy">นโยบายความเป็นส่วนตัว</a></p>
@@ -104,7 +97,6 @@ const BOX_COLORS=[
 const RIBBONS=[
   {n:'แดงซาติน',c:'#9E1B27',r:.3,m:.15},{n:'ทองซาติน',c:'#D4AF5A',r:.28,m:.55},{n:'แคนดี้เคน',c:'#FFFFFF',r:.35,m:.05,stripe:true},
   {n:'ไหมมรกต',c:'#2E6B4F',r:.3,m:.2},{n:'กำมะหยี่แดง',c:'#7A1420',r:.95,m:0},{n:'เงินประกาย',c:'#D9DBE0',r:.25,m:.7}];
-const ACCENTS={b:'กระดิ่ง',p:'ลูกสน',h:'ฮอลลี่',c:'อบเชย',l:'ไฟกะพริบ'};
 const isHex=v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v);
 const boxOf=v=>isHex(v)?{n:'สีที่เลือกเอง',c:v}:(BOX_COLORS[v]||BOX_COLORS[0]);
 const ribOf=v=>isHex(v)?{n:'สีที่เลือกเอง',c:v,r:.3,m:.15}:(RIBBONS[v]||RIBBONS[0]);
@@ -114,9 +106,9 @@ let TOTAL=null;
 function headline(){
   if(TOTAL==null)return;
   $('headline').textContent=TOTAL===1?t('ใต้ต้นนี้มี 1 กล่อง'):TOTAL?t('ใต้ต้นนี้มี {n} กล่อง',{n:TOTAL.toLocaleString('en-US')}):t('ยังไม่มีกล่องใต้ต้นนี้');
-  $('subline').textContent=TOTAL?t('โชว์แค่หน้าตากล่อง ไม่มีชื่อหรือข้อความ'):t('วางกล่องแรกใต้ต้นไม้ แล้วไฟบนต้นจะสว่างขึ้น');
+  $('subline').textContent=TOTAL?'':t('วางกล่องแรกใต้ต้นไม้ แล้วไฟบนต้นจะสว่างขึ้น');
 }
-if(window.I18N)I18N.onChange(()=>{headline();if(PICK)showInfo(PICK.userData.design)});
+if(window.I18N)I18N.onChange(headline);
 
 /** Prototype mode (no API): a handful of sample boxes. */
 function sampleBoxes(){let s=11;const r=()=>{s=(s*9301+49297)%233280;return s/233280};
@@ -135,6 +127,8 @@ function roundedBox(W,H,D,r,b){
   const g=new THREE.ExtrudeGeometry(s,{depth:H-2*b,bevelEnabled:true,bevelThickness:b,bevelSize:b,bevelSegments:3,curveSegments:6});
   g.rotateX(-Math.PI/2);g.translate(0,b,0);g.computeVertexNormals();return g;
 }
+// fairy light: a bright sharp core with a short halo, so each bulb reads as a light rather than a blur
+const bulbTex=canvasTex(64,64,(g)=>{const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.18,'rgba(255,246,220,1)');gr.addColorStop(.4,'rgba(255,214,140,.35)');gr.addColorStop(1,'rgba(255,200,120,0)');g.fillStyle=gr;g.fillRect(0,0,64,64)});
 const glowTex=canvasTex(64,64,(g)=>{const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.25,'rgba(255,240,205,.85)');gr.addColorStop(1,'rgba(255,220,160,0)');g.fillStyle=gr;g.fillRect(0,0,64,64)});
 
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(35,1,.1,100);
@@ -146,12 +140,13 @@ let lightPts=null,lightData=[],starGlow=null,star=null,snow=null,snowData=[],box
 let LIGHTS_ON=1;                                          // dims when nobody has placed a box yet
 
 if(renderer){
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,3));
   renderer.outputEncoding=THREE.sRGBEncoding;
   const envTex=canvasTex(256,128,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#FFF4DE');gr.addColorStop(.5,'#8C86A8');gr.addColorStop(1,'#2A2F52');g.fillStyle=gr;g.fillRect(0,0,w,h);g.fillStyle='#FFE6B8';g.fillRect(90,20,70,30)});
   scene.environment=new THREE.PMREMGenerator(renderer).fromEquirectangular(envTex).texture;
 
-  scene.add(new THREE.HemisphereLight(0x9FA8D8,0x3A3550,.55));
+  scene.add(new THREE.HemisphereLight(0xB4BDE6,0x3A3550,.75));
+  const fill=new THREE.DirectionalLight(0xFFE6C8,.75);fill.position.set(1.5,4,9);scene.add(fill); // soft front light: green and red read clearly
   const moon=new THREE.DirectionalLight(0xC9D2FF,.45);moon.position.set(-4,8,5);scene.add(moon);
   const glowLight=new THREE.PointLight(0xFFC27A,1.4,7,1.6);glowLight.position.set(0,1.4,1.2);world.add(glowLight); // the tree's lights warming the boxes
 
@@ -179,7 +174,13 @@ if(renderer){
   }
 
   /* ---- the big tree: dark cone, hundreds of warm fairy lights, red swags, red bows, gold baubles, star ---- */
-  {const cone=new THREE.Mesh(new THREE.ConeGeometry(TREE_R,TREE_H,48,8,true),new THREE.MeshStandardMaterial({color:C('#14301F'),roughness:.95,side:THREE.DoubleSide}));
+  // needle texture: short strokes in several greens so the tree has depth instead of a flat surface
+  const needles=canvasTex(512,512,(g,w,h)=>{g.fillStyle='#1F4A2F';g.fillRect(0,0,w,h);let q=9;const r=()=>{q=(q*9301+49297)%233280;return q/233280};
+    for(let i=0;i<9000;i++){const x=r()*w,y=r()*h,l=6+r()*12,a=Math.PI/2+(r()-.5)*1.1;g.strokeStyle=['#2E6A43','#174028','#3C7D52','#12321F','#285E3B'][i%5];g.lineWidth=1.4+r()*1.4;
+      g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.cos(a)*l*.35,y+Math.sin(a)*l);g.stroke()}
+    for(let y=0;y<h;y+=64){const gr=g.createLinearGradient(0,y,0,y+64);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.85,'rgba(0,0,0,.22)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,y,w,64)}});
+  needles.wrapS=needles.wrapT=THREE.RepeatWrapping;needles.repeat.set(5,4);
+  {const cone=new THREE.Mesh(new THREE.ConeGeometry(TREE_R,TREE_H,64,12,true),new THREE.MeshStandardMaterial({map:needles,roughness:.85,side:THREE.DoubleSide}));
     cone.position.y=TREE_Y+TREE_H/2;world.add(cone);
     const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.22,.26,.7,16),new THREE.MeshStandardMaterial({color:C('#5A3E2B'),roughness:.9}));trunk.position.y=.35;world.add(trunk);
 
@@ -188,27 +189,27 @@ if(renderer){
     for(let i=0;i<N;i++){const f=Math.sqrt(rnd()),y=TREE_Y+TREE_H*(1-f)+.02,r=radiusAt(y)+.035,a=rnd()*Math.PI*2;
       pos[i*3]=Math.cos(a)*r;pos[i*3+1]=y;pos[i*3+2]=Math.sin(a)*r;lightData.push({sp:1.2+rnd()*2.4,ph:rnd()*6.28,b:.55+rnd()*.45})}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));
-    lightPts=new THREE.Points(g,new THREE.PointsMaterial({size:.26,map:glowTex,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));world.add(lightPts);
+    lightPts=new THREE.Points(g,new THREE.PointsMaterial({size:.27,map:bulbTex,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));world.add(lightPts);
 
     // red satin swags: each tier is pinned at k points around the tree and hangs between them
-    const satin=new THREE.MeshStandardMaterial({color:C('#C1121F'),roughness:.32,metalness:.12,envMapIntensity:.9});
+    const satin=new THREE.MeshStandardMaterial({color:C('#D01A2A'),roughness:.3,metalness:.1,envMapIntensity:1});
     const pins=[];
     [[.8,5,.22],[.58,7,.3],[.34,9,.38]].forEach(([h,k,sag])=>{const yPin=TREE_Y+TREE_H*h,pts=[];
       for(let i=0;i<=200;i++){const a=i/200*Math.PI*2,y=yPin-sag*Math.pow(Math.sin(k*a/2),2),r=radiusAt(y)+.07;pts.push(new THREE.Vector3(Math.cos(a)*r,y,Math.sin(a)*r))}
-      world.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts,true),320,.055,8,true),satin));
+      world.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts,true),320,.085,10,true),satin));
       for(let j=0;j<k;j++)pins.push({a:j/k*Math.PI*2,y:yPin})});
 
     // a red bow at every pin: two loops, a knot and two short tails, facing outwards
-    const loopG=new THREE.TorusGeometry(.11,.032,8,20),knotG=new THREE.SphereGeometry(.05,12,10),tailG=new THREE.BoxGeometry(.05,.2,.012);
-    pins.forEach(p=>{const b=new THREE.Group(),r=radiusAt(p.y)+.1;b.position.set(Math.cos(p.a)*r,p.y,Math.sin(p.a)*r);b.rotation.y=-p.a+Math.PI/2;
-      [-1,1].forEach(sd=>{const l=new THREE.Mesh(loopG,satin);l.scale.set(1,.62,.5);l.position.x=sd*.1;l.rotation.z=sd*.35;b.add(l);
-        const tl=new THREE.Mesh(tailG,satin);tl.position.set(sd*.045,-.11,0);tl.rotation.z=sd*.3;b.add(tl)});
+    const loopG=new THREE.TorusGeometry(.16,.045,10,24),knotG=new THREE.SphereGeometry(.07,14,12),tailG=new THREE.BoxGeometry(.07,.28,.016);
+    pins.forEach(p=>{const b=new THREE.Group(),r=radiusAt(p.y)+.13;b.position.set(Math.cos(p.a)*r,p.y,Math.sin(p.a)*r);b.rotation.y=-p.a+Math.PI/2;
+      [-1,1].forEach(sd=>{const l=new THREE.Mesh(loopG,satin);l.scale.set(1,.62,.5);l.position.x=sd*.14;l.rotation.z=sd*.35;b.add(l);
+        const tl=new THREE.Mesh(tailG,satin);tl.position.set(sd*.06,-.16,0);tl.rotation.z=sd*.3;b.add(tl)});
       b.add(new THREE.Mesh(knotG,satin));b.rotation.x=-.25;world.add(b)});
 
     // gold baubles between the swags
     const gold=new THREE.MeshStandardMaterial({color:C('#D9B45A'),metalness:1,roughness:.22,envMapIntensity:1.3}),goldB=new THREE.MeshStandardMaterial({color:C('#C59A3C'),metalness:1,roughness:.35,envMapIntensity:1.1});
     const bG=new THREE.SphereGeometry(1,18,14);
-    for(let i=0;i<26;i++){const f=.18+rnd()*.78,y=TREE_Y+TREE_H*(1-f),a=rnd()*Math.PI*2,sz=.07+rnd()*.06,r=radiusAt(y)+sz*.7;
+    for(let i=0;i<26;i++){const f=.18+rnd()*.78,y=TREE_Y+TREE_H*(1-f),a=rnd()*Math.PI*2,sz=.1+rnd()*.07,r=radiusAt(y)+sz*.7;
       const m=new THREE.Mesh(bG,i%3?gold:goldB);m.scale.setScalar(sz);m.position.set(Math.cos(a)*r,y,Math.sin(a)*r);world.add(m)}
 
     // eight-point star on top, glowing
@@ -217,7 +218,7 @@ if(renderer){
       new THREE.MeshStandardMaterial({color:C('#F2C14E'),emissive:C('#FFD98A'),emissiveIntensity:.9,metalness:.6,roughness:.3}));
     star.position.set(0,TREE_Y+TREE_H+.22,-.03);world.add(star);
     starGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0xFFE2A0,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
-    starGlow.scale.setScalar(1.8);starGlow.position.copy(star.position);world.add(starGlow);
+    starGlow.scale.setScalar(1.3);starGlow.position.copy(star.position);world.add(starGlow);
   }
 
   /* ---- gently falling snow ---- */
@@ -258,24 +259,19 @@ function placeBoxes(list){
     b.userData.base={y:0,s:sz};boxGroup.add(b)}}
 }
 
-/* ---- tap a box: it lifts and glows; a label shows only its look ---- */
+/* ---- tap a box: it lifts a little (tap it again, or elsewhere, to put it back) ---- */
 let PICK=null;const ray=renderer?new THREE.Raycaster():null,ndc=renderer?new THREE.Vector2():null;
-function showInfo(d){const bc=boxOf(d.box),rb=ribOf(d.ribbon);
-  $('infoSw').style.background=bc.c;$('infoRib').style.background=rb.stripe?'repeating-linear-gradient(45deg,#B3202E 0 3px,#fff 3px 6px)':rb.c;
-  $('infoName').textContent=t('กล่อง{name} · โบว์{rib}',{name:t(bc.n),rib:t(rb.n)});
-  const acc=(d.accents||[]).map(k=>ACCENTS[k]).filter(Boolean).map(n=>t(n));
-  $('infoAcc').textContent=acc.length?acc.join(' · '):t('ไม่มีของตกแต่ง');$('info').hidden=false}
 function pick(e){if(!ray||!boxGroup)return;const r=$('gl').getBoundingClientRect();
   ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
   const hit=ray.intersectObject(boxGroup,true)[0];let o=hit&&hit.object;while(o&&!o.userData.design)o=o.parent;
-  PICK=o||null;if(PICK)showInfo(PICK.userData.design);else $('info').hidden=true}
+  PICK=o&&o!==PICK?o:null}
 
 /* ---- drag to walk around the tree ---- */
-let spinY=0,spinV=0,drag=null,touched=false,tapAt=null;
+let spinY=0,spinV=0,drag=null,touched=false,tapAt=null,lastTouch=-1e9;
 const cv=$('gl');
 cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y0:spinY};tapAt={x:e.clientX,y:e.clientY,t:performance.now()};touched=true;$('hint').classList.add('gone');cv.setPointerCapture(e.pointerId)});
 cv.addEventListener('pointermove',e=>{if(!drag)return;const ny=drag.y0+(e.clientX-drag.x)*.008;spinV=ny-spinY;spinY=ny});
-const up=e=>{if(tapAt&&performance.now()-tapAt.t<350&&Math.hypot(e.clientX-tapAt.x,e.clientY-tapAt.y)<8)pick(e);drag=null;tapAt=null};
+const up=e=>{if(tapAt&&performance.now()-tapAt.t<350&&Math.hypot(e.clientX-tapAt.x,e.clientY-tapAt.y)<8)pick(e);drag=null;tapAt=null;lastTouch=performance.now()};
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',()=>{drag=null;tapAt=null});
 
 /* ---- size and loop ---- */
@@ -292,12 +288,13 @@ addEventListener('resize',resize);resize();
 let last=performance.now(),T=0;
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;T+=dt;
   if(renderer){
-    if(!drag){spinY+=spinV;spinV*=.94;if(!touched&&!reduce)spinY+=dt*.08}
+    // the tree turns slowly on its own (about one turn a minute); it pauses while dragged and resumes 1.5 s after
+    if(!drag){spinY+=spinV;spinV*=.94;if(now-lastTouch>1500){const k=Math.min(1,(now-lastTouch-1500)/1200);spinY+=dt*(reduce?.03:.1)*k}}
     world.rotation.y=spinY;
     camera.position.set(0,target.y+dist*Math.sin(.1),dist*Math.cos(.1));camera.lookAt(target);
     // twinkle: each light breathes at its own pace; dimmer while the tree is empty
     const c=lightPts.geometry.attributes.color.array;
-    lightData.forEach((L,i)=>{const k=LIGHTS_ON*L.b*(reduce?.85:.55+.45*Math.sin(T*L.sp+L.ph));c[i*3]=k;c[i*3+1]=k*.84;c[i*3+2]=k*.5});
+    lightData.forEach((L,i)=>{const k=LIGHTS_ON*L.b*(reduce?.95:.7+.3*Math.sin(T*L.sp+L.ph));c[i*3]=k;c[i*3+1]=k*.84;c[i*3+2]=k*.5});
     lightPts.geometry.attributes.color.needsUpdate=true;
     starGlow.material.opacity=(.35+.65*LIGHTS_ON)*(.8+.2*Math.sin(T*1.6));star.rotation.y=Math.sin(T*.5)*.25;
     if(!reduce){const p=snow.geometry.attributes.position.array;snowData.forEach((S,i)=>{p[i*3+1]-=S.v*dt;p[i*3]+=Math.sin(T*.7+S.ph)*.004;if(p[i*3+1]<0)p[i*3+1]=9});snow.geometry.attributes.position.needsUpdate=true}
