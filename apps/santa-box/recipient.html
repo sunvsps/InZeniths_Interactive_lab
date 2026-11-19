@@ -498,9 +498,19 @@ if(renderer){
   const hole=new THREE.Mesh(new THREE.PlaneGeometry(1.88,1.88),new THREE.MeshBasicMaterial({map:cav}));hole.rotation.x=-Math.PI/2;hole.position.y=1.406;root.add(hole);
 
   lid=new THREE.Group();root.add(lid);
-  const lm=shadowed(new THREE.Mesh(roundedBox(2.14,.4,2.14,.07,.025),lidMat));lm.position.y=1.32;lid.add(lm);
-  const l1=new THREE.Mesh(new THREE.BoxGeometry(.32,.406,2.154),ribLid),l2=new THREE.Mesh(new THREE.BoxGeometry(2.154,.406,.32),ribLid);
-  l1.position.y=l2.position.y=1.52;lid.add(shadowed(l1),shadowed(l2));
+  // a real lid, not a block: thin top + four thin walls, open underneath with a cream lining inside,
+  // so once it comes off and leans against the box it reads as a lid (spans y 1.32–1.72, 2.14 wide)
+  const LW=2.14,LH=.4,LT=.05,LY=1.32,lining=new THREE.MeshStandardMaterial({color:'#E9DCC8',roughness:.9});
+  const top=shadowed(new THREE.Mesh(roundedBox(LW,.07,LW,.07,.02),lidMat));top.position.y=LY+LH-.07;lid.add(top);
+  const under=new THREE.Mesh(new THREE.PlaneGeometry(LW-2*LT,LW-2*LT),lining);under.rotation.x=Math.PI/2;under.position.y=LY+LH-.072;lid.add(under);
+  // BoxGeometry faces: +x, -x, +y, -y, +z, -z: outer face in the box colour, inner face lined
+  const wall=(w,d,x,z,inner)=>{const m=[lidMat,lidMat,lidMat,lidMat,lidMat,lidMat];m[inner]=lining;
+    const s=shadowed(new THREE.Mesh(new THREE.BoxGeometry(w,LH-.05,d),m));s.position.set(x,LY+(LH-.05)/2,z);lid.add(s)};
+  wall(LW,LT,0,LW/2-LT/2,5);wall(LW,LT,0,-(LW/2-LT/2),4);wall(LT,LW-2*LT,LW/2-LT/2,0,1);wall(LT,LW-2*LT,-(LW/2-LT/2),0,0);
+  // ribbon: a strip across the top and down each outer wall
+  const rib=(w,h,d,x,y,z)=>{const s=shadowed(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),ribLid));s.position.set(x,y,z);lid.add(s)};
+  rib(.32,.012,LW+.014,0,LY+LH+.002,0);rib(LW+.014,.012,.32,0,LY+LH+.004,0);
+  [1,-1].forEach(s=>{rib(.32,LH,.012,0,LY+LH/2,s*(LW/2+.006));rib(.012,LH,.32,s*(LW/2+.006),LY+LH/2,0)});
 
   bow=new THREE.Group();bow.position.y=1.72;root.add(bow);
   // satin bow: two flat ribbon loops, a wrapped knot and two tails lying on the lid
@@ -753,11 +763,12 @@ function frame(now){
     // tails: drop from the knot and land curled on the ground either side of the box
     tails.forEach(g=>{const s=g.userData.side,f=A.tails;g.visible=f>.01;
       g.position.set(s*(.25+.9*f),1.72*(1-f)*(1-f)+.005,.25+.45*f);g.rotation.set(-(1-f)*1.3,s*-.35*f,0);g.scale.setScalar(.35+.65*f)});
-    // lid: pops straight up, then swings aside and comes to rest leaning against the box's left wall
-    {const L=A.lidOpen;let x,y,rz,rx;
+    // lid: pops straight up, then swings aside and lands on the ground left of the box,
+    // leaning back with its open, lined inside towards the viewer (so it reads as a lid, not a block)
+    {const L=A.lidOpen,FX=-1.5,FY=.42,FZ=-.1,FRX=-1.15,FRY=.6;let x,y,z=0,rz,rx,ry=0;
       if(L<.42){const q=Math.sin(L/.42*Math.PI/2);x=0;y=1.05*q;rz=.12*q;rx=-.06*q}
-      else{const q=(L-.42)/.58,e=1-Math.pow(1-q,3);x=-.03*e;y=1.05+(.68-1.05)*e+Math.sin(q*Math.PI)*.3;rz=.12+(1.3-.12)*e;rx=-.06*(1-e)}
-      lid.position.set(x,y,0);lid.rotation.set(rx,0,rz)}
+      else{const q=(L-.42)/.58,e=1-Math.pow(1-q,3);x=FX*e;y=1.05+(FY-1.05)*e+Math.sin(q*Math.PI)*.3;z=FZ*e;rz=.12*(1-e);rx=-.06+(FRX+.06)*e;ry=FRY*e}
+      lid.position.set(x,y,z);lid.rotation.set(rx,ry,rz)}
     lidMat.opacity=1;ribLid.opacity=1;lid.visible=true;
     // scene C: dusk sky, village growing up from the ground, windows lighting, snow hanging in the air
     skyEl.style.opacity=A.night.toFixed(3);const isNight=A.night>.35;if(isNight!==nightOn){nightOn=isNight;document.documentElement.classList.toggle('night',isNight)}
