@@ -50,9 +50,12 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .logo{font-family:var(--f-lat);font-style:italic;font-weight:600;font-size:22px;letter-spacing:.01em;color:var(--accent)}
 .hdr-r{display:flex;gap:5px;align-items:center}
 /* "sample" tag: only on the page without a box id */
-.brand{display:flex;align-items:center;gap:8px;flex:none}
-.sample{font-size:11px;font-weight:500;line-height:1;padding:5px 9px;border-radius:999px;background:var(--accent);color:#fff;white-space:nowrap}
-@media (max-width:520px){.brand{flex-direction:column;align-items:flex-start;gap:2px}.sample{font-size:10px;padding:3px 7px}}
+.brand{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:none;line-height:1.1}
+.brand-sub{display:flex;align-items:center;gap:6px}
+.sample{font-size:10px;font-weight:500;line-height:1;padding:3px 7px;border-radius:999px;background:var(--accent);color:#fff;white-space:nowrap}
+/* how many boxes have been sent so far (same counter as the sender page) */
+.counter{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.02em;white-space:nowrap}
+html.night .counter{color:#D6CDD9}
 .logo,.pill{white-space:nowrap}
 #musicBtn{min-width:0;max-width:42vw}#musicBtn .nm{overflow:hidden;text-overflow:ellipsis;min-width:0}
 @media (max-width:400px){.hdr-r .pill{padding:6px 9px;font-size:11px}.lang button{padding:5px 7px}}
@@ -141,7 +144,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .scrim.lightbox{align-items:center;background:rgba(28,22,18,.78);padding:24px max(18px,env(safe-area-inset-left,0px))}
 .lightbox .polaroid{margin:0;padding:12px;border-radius:5px;background:repeating-linear-gradient(45deg,#C8202F 0 14px,#fff 14px 28px);box-shadow:0 30px 60px -20px rgba(0,0,0,.6);transform:rotate(-1.5deg);animation:pop .35s cubic-bezier(.2,1.3,.4,1) both;max-width:min(88vw,520px)}
 .polaroid .pf{background:#fff;padding:10px 10px 6px}
-.lightbox img{display:block;max-width:100%;max-height:62vh;object-fit:contain}
+.lightbox img{display:block;margin:0 auto;min-width:min(56vw,240px);max-width:100%;max-height:62vh;object-fit:contain}
 .polaroid figcaption{font-family:var(--f-lat);font-style:italic;font-weight:600;font-size:clamp(20px,5.5vw,28px);line-height:1.3;color:var(--accent);text-align:center;padding-top:6px}
 .lbx{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:max(14px,env(safe-area-inset-right,0px));width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.9);font-size:22px;line-height:1;color:var(--ink);cursor:pointer}
 @keyframes pop{from{opacity:0;transform:scale(.82) rotate(-1.5deg)}to{opacity:1;transform:scale(1) rotate(-1.5deg)}}
@@ -232,7 +235,7 @@ html.night #santa{color:#F6EFE9;opacity:.9}
   <canvas id="gl" aria-label="กล่องของขวัญสามมิติ"></canvas>
 
   <header class="hdr">
-    <span class="brand"><span class="logo">Santa Box</span><span class="sample" id="sampleTag">ตัวอย่าง</span></span>
+    <span class="brand"><span class="logo">Santa Box</span><span class="brand-sub"><span class="sample" id="sampleTag">ตัวอย่าง</span><span class="counter" id="boxCount" hidden></span></span></span>
     <div class="hdr-r">
       <div class="lang" data-lang-switch></div>
       <button class="pill" id="transitBtn">หน้ารอส่ง</button>
@@ -397,6 +400,9 @@ const $=id=>document.getElementById(id);
 // Thai / English (i18n.js); falls back to Thai if the file is missing
 const t=(window.I18N&&I18N.t)||((s,v)=>s.replace(/\{(\w+)\}/g,(_,k)=>v&&v[k]!=null?v[k]:''));
 const API=window.SantaAPI&&SantaAPI.enabled?SantaAPI:null,SLUG=API&&SantaAPI.slugFromUrl();
+let BOXES=null;const showCount=()=>{const el=document.getElementById('boxCount');if(!el||BOXES==null)return;el.textContent=t('ส่งกันแล้ว {n} กล่อง',{n:BOXES.toLocaleString('en-US')});el.hidden=false};
+if(API)API.stats().then(r=>{BOXES=r.boxes;showCount()}).catch(()=>{});
+if(window.I18N)I18N.onChange(showCount);
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DATA={to:'แม่',from:'ลูกคนเล็ก',msg:'ปีนี้เหนื่อยมาเยอะ ขอบคุณที่อยู่ข้างกันเสมอนะ คริสต์มาสนี้ขอให้แม่ได้พักบ้าง รักแม่ที่สุดเลย'};
 

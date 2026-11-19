@@ -10,6 +10,7 @@ window.I18N = (function () {
     // ---- shared / header / footer
     'กล่องที่ 12,345': 'Box no. 12,345',
     'กล่องที่ {n}': 'Box no. {n}',
+    'ส่งกันแล้ว {n} กล่อง': '{n} boxes sent so far',
     '© IN ZENITHS · มีปัญหาติดต่อ': '© IN ZENITHS · Need help? Contact',
     'ปิด': 'Close',
     'บาท': 'THB',

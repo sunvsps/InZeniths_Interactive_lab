@@ -183,7 +183,7 @@ textarea{resize:none;min-height:118px;font-family:var(--f-serif);font-size:16.5p
 .scrim.lightbox{align-items:center;background:rgba(28,22,18,.78);padding:24px max(18px,env(safe-area-inset-left,0px))}
 .lightbox .polaroid{margin:0;padding:12px;border-radius:5px;background:repeating-linear-gradient(45deg,#C8202F 0 14px,#fff 14px 28px);box-shadow:0 30px 60px -20px rgba(0,0,0,.6);transform:rotate(-1.5deg);animation:pop .35s cubic-bezier(.2,1.3,.4,1) both;max-width:min(88vw,520px)}
 .polaroid .pf{background:#fff;padding:10px 10px 6px}
-.lightbox .polaroid img{display:block;width:auto;height:auto;max-width:100%;max-height:62vh;object-fit:contain;border:0;border-radius:0;box-shadow:none}
+.lightbox .polaroid img{display:block;margin:0 auto;min-width:min(56vw,240px);width:auto;height:auto;max-width:100%;max-height:62vh;object-fit:contain;border:0;border-radius:0;box-shadow:none}
 .polaroid figcaption{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:clamp(20px,5.5vw,28px);line-height:1.3;color:#B3202E;text-align:center;padding-top:6px}
 .lbx{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:max(14px,env(safe-area-inset-right,0px));width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.9);font-size:22px;line-height:1;color:var(--ink);cursor:pointer}
 @keyframes pop{from{opacity:0;transform:scale(.82) rotate(-1.5deg)}to{opacity:1;transform:scale(1) rotate(-1.5deg)}}
@@ -216,6 +216,17 @@ textarea{resize:none;min-height:118px;font-family:var(--f-serif);font-size:16.5p
 .row{display:flex;gap:10px;width:100%}
 .row .btn{flex:1}
 a.textlink{color:var(--muted);font-size:13px;text-underline-offset:3px}
+.zoomhint{display:block;margin:8px auto 0;border:0;background:none;color:var(--muted);font-size:12.5px;text-decoration:underline;text-underline-offset:3px;padding:4px 8px}
+/* gift close-up: the stage fills the screen, the panel steps aside */
+html.gv .stage{flex:1 1 100%}
+html.gv .panel,html.gv .spin-hint,html.gv .stage-tag{display:none}
+#giftView{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;pointer-events:none;
+  padding:70px max(22px,env(safe-area-inset-left,0px)) calc(28px + env(safe-area-inset-bottom,0px))}
+#giftView .eyebrow{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin:0}
+#giftView h2{font-family:var(--f-serif);font-weight:500;font-size:24px;margin:2px 0 0}
+#giftView .gv-bot{display:flex;flex-direction:column;align-items:center;gap:10px}
+#giftView .caption{font-size:12px;color:var(--muted);margin:0;background:rgba(255,255,255,.85);border-radius:999px;padding:4px 12px}
+#giftView .btn{pointer-events:auto;min-width:140px;flex:0 0 auto;background:rgba(255,255,255,.92)}
 
 #santa{position:fixed;left:0;top:0;width:70px;color:var(--ink);opacity:.8;pointer-events:none;z-index:2;transform:translate(-200px,80px)}
 #santa svg{display:block;width:100%;height:auto;overflow:visible}
@@ -264,6 +275,10 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <span class="spin-hint" id="spinHint">↻ ลากเพื่อหมุนดู 360°</span>
     <header class="hdr"><div class="brand"><span class="logo">Santa Box</span><span class="counter">กล่องที่ 12,345</span></div><div class="lang" data-lang-switch></div></header>
     <p class="stage-tag" id="stageTag" data-no-i18n>A gift for …</p>
+    <div id="giftView" hidden>
+      <div class="gv-top"><p class="eyebrow">Inside your box</p><h2 id="gvName"></h2></div>
+      <div class="gv-bot"><p class="caption">ลากเพื่อหมุน · บีบนิ้วหรือเลื่อนเพื่อซูม</p><button class="btn ghost" id="gvClose" type="button">ปิด</button></div>
+    </div>
   </div>
 
   <section class="panel">
@@ -311,6 +326,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <h2 class="h">ใส่ของในกล่อง</h2>
         <p class="lead">เลือกของขวัญได้ 1 ชิ้น ทุกกล่องมีคูปองกับรูปให้ด้วย</p>
         <div class="opts" id="gifts" role="radiogroup" aria-label="ของขวัญ"></div>
+        <button class="zoomhint" id="zoomHint" type="button">แตะที่ของขวัญเพื่อดูใกล้ๆ</button>
         <div class="sub field" id="ornField"><input type="text" id="engrave" maxlength="24" placeholder="ข้อความสลัก เช่น ชื่อเขา · Christmas 2026" aria-label="ข้อความที่สลักบนลูกแก้ว"></div>
         <div class="lbl" style="margin-top:6px">มีให้ทุกกล่อง</div>
         <div class="opts">
@@ -490,7 +506,9 @@ let renderer;
 try{renderer=new THREE.WebGLRenderer({canvas:$('gl'),antialias:true,alpha:true,preserveDrawingBuffer:true})}catch(e){}
 const C=h=>new THREE.Color(h).convertSRGBToLinear();
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(30,1,.1,100);
-const A={lift:0,orn:0,pulse:0,spark:0,bowIn:1,hover:0,drop:0};
+const A={lift:0,orn:0,pulse:0,spark:0,bowIn:1,hover:0,drop:0,view:0};
+// gift close-up on the gift step (same as the recipient page): tap the gift, drag to turn, pinch or scroll to zoom
+const VIEW={on:false,ry:0,rx:0,zoom:1};
 let root,lid,bow,orn,boxMat,lidMat,ribMat,ornMat,pts,ptsData,emitting=false,drag=null,spinY=0,spinV=0,pitch=0,touched=false;
 
 function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t}
@@ -524,8 +542,17 @@ if(renderer){
   const hole=new THREE.Mesh(new THREE.PlaneGeometry(1.88,1.88),new THREE.MeshBasicMaterial({map:cav}));hole.rotation.x=-Math.PI/2;hole.position.y=1.406;root.add(hole);
   const r1=new THREE.Mesh(new THREE.BoxGeometry(.3,1.404,2.014),ribMat),r2=new THREE.Mesh(new THREE.BoxGeometry(2.014,1.404,.3),ribMat);r1.position.y=r2.position.y=.702;root.add(sh(r1),sh(r2));
   lid=new THREE.Group();root.add(lid);
-  const lm=sh(new THREE.Mesh(roundedBox(2.14,.4,2.14,.07,.025),lidMat));lm.position.y=1.32;lid.add(lm);
-  const l1=new THREE.Mesh(new THREE.BoxGeometry(.32,.406,2.154),ribMat),l2=new THREE.Mesh(new THREE.BoxGeometry(2.154,.406,.32),ribMat);l1.position.y=l2.position.y=1.52;lid.add(sh(l1),sh(l2));
+  // a real lid, not a block: thin top + four thin walls, open underneath with a cream lining (same as the recipient page)
+  {const LW=2.14,LH=.4,LT=.05,LY=1.32,lining=new THREE.MeshStandardMaterial({color:'#E9DCC8',roughness:.9});
+    const top=sh(new THREE.Mesh(roundedBox(LW,.07,LW,.07,.02),lidMat));top.position.y=LY+LH-.07;lid.add(top);
+    const under=new THREE.Mesh(new THREE.PlaneGeometry(LW-2*LT,LW-2*LT),lining);under.rotation.x=Math.PI/2;under.position.y=LY+LH-.072;lid.add(under);
+    // BoxGeometry faces: +x, -x, +y, -y, +z, -z: outer face in the box colour, inner face lined
+    const wall=(w,d,x,z,inner)=>{const m=[lidMat,lidMat,lidMat,lidMat,lidMat,lidMat];m[inner]=lining;
+      const s=sh(new THREE.Mesh(new THREE.BoxGeometry(w,LH-.05,d),m));s.position.set(x,LY+(LH-.05)/2,z);lid.add(s)};
+    wall(LW,LT,0,LW/2-LT/2,5);wall(LW,LT,0,-(LW/2-LT/2),4);wall(LT,LW-2*LT,LW/2-LT/2,0,1);wall(LT,LW-2*LT,-(LW/2-LT/2),0,0);
+    const rib=(w,h,d,x,y,z)=>{const s=sh(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),ribMat));s.position.set(x,y,z);lid.add(s)};
+    rib(.32,.012,LW+.014,0,LY+LH+.002,0);rib(LW+.014,.012,.32,0,LY+LH+.004,0);
+    [1,-1].forEach(s=>{rib(.32,LH,.012,0,LY+LH/2,s*(LW/2+.006));rib(.012,LH,.32,s*(LW/2+.006),LY+LH/2,0)})}
   bow=new THREE.Group();bow.position.y=1.72;lid.add(bow);
   // satin bow: two flat ribbon loops, a wrapped knot and two tails lying on the lid
   const strip=(curve,w,dir,seg)=>{const pos=[],uv=[],idx=[];for(let i=0;i<=seg;i++){const t=i/seg,p=curve.getPoint(t),d=dir(t,curve.getTangent(t)).normalize().multiplyScalar(w/2);
@@ -692,14 +719,37 @@ if(renderer){
 
   // drag to spin the box
   const cv=$('gl');
-  cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,y0:spinY,p0:pitch};touched=true;document.getElementById('spinHint').classList.add('gone');cv.setPointerCapture(e.pointerId)});
-  cv.addEventListener('pointermove',e=>{if(!drag)return;const ny=drag.y0+(e.clientX-drag.x)*.012;spinV=Math.max(-.2,Math.min(.2,ny-spinY));spinY=ny;pitch=Math.min(.7,Math.max(-.25,drag.p0+(e.clientY-drag.y)*.006))});
-  cv.addEventListener('pointerup',()=>{drag=null});
+  const PTR=new Map();let pinch=null,tapAt=null;
+  cv.addEventListener('pointerdown',e=>{PTR.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(PTR.size===2&&VIEW.on){const [a,b]=[...PTR.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:VIEW.zoom};drag=null;return}
+    tapAt={x:e.clientX,y:e.clientY,t:performance.now()};
+    drag=VIEW.on?{x:e.clientX,y:e.clientY,ry:VIEW.ry,rx:VIEW.rx,view:true}:{x:e.clientX,y:e.clientY,y0:spinY,p0:pitch};
+    touched=true;document.getElementById('spinHint').classList.add('gone');cv.setPointerCapture(e.pointerId)});
+  cv.addEventListener('pointermove',e=>{if(PTR.has(e.pointerId))PTR.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pinch&&PTR.size>=2){const [a,b]=[...PTR.values()];VIEW.zoom=Math.min(3.2,Math.max(1,pinch.z*Math.hypot(a.x-b.x,a.y-b.y)/pinch.d));return}
+    if(!drag)return;
+    if(drag.view){VIEW.ry=drag.ry+(e.clientX-drag.x)*.012;VIEW.rx=Math.max(-.9,Math.min(.9,drag.rx+(e.clientY-drag.y)*.008));return}
+    const ny=drag.y0+(e.clientX-drag.x)*.012;spinV=Math.max(-.2,Math.min(.2,ny-spinY));spinY=ny;pitch=Math.min(.7,Math.max(-.25,drag.p0+(e.clientY-drag.y)*.006))});
+  const up=e=>{PTR.delete(e.pointerId);if(PTR.size<2)pinch=null;
+    if(tapAt&&step===2&&!VIEW.on&&performance.now()-tapAt.t<350&&Math.hypot(e.clientX-tapAt.x,e.clientY-tapAt.y)<8&&hitsGift(e))openView();
+    tapAt=null;drag=null};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  cv.addEventListener('wheel',e=>{if(!VIEW.on)return;e.preventDefault();VIEW.zoom=Math.min(3.2,Math.max(1,VIEW.zoom*Math.exp(-e.deltaY*.0015)))},{passive:false});
 }else{const n=document.createElement('p');n.className='note';n.style.cssText='position:absolute;top:45%;width:100%;text-align:center';n.textContent='เครื่องนี้แสดงภาพ 3D ไม่ได้';$('gl').after(n)}
 
 function applyWay(){setDesign(DESIGN)}
 
 let dist=10,tY=1;
+const GV_T=new THREE.Vector3(),GV_P=new THREE.Vector3(),GV_RAY=new THREE.Raycaster(),GV_NDC=new THREE.Vector2();
+/** Did this tap land on the gift? (forgiving on small phones: near its centre on screen also counts) */
+function hitsGift(e){if(!renderer||!orn||!orn.visible)return false;const r=$('gl').getBoundingClientRect();
+  GV_NDC.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);GV_RAY.setFromCamera(GV_NDC,camera);
+  if(GV_RAY.intersectObject(orn,true).length)return true;
+  orn.getWorldPosition(GV_P);const p=GV_P.clone().project(camera);return Math.hypot((p.x+1)/2*r.width-(e.clientX-r.left),(1-p.y)/2*r.height-(e.clientY-r.top))<60}
+function openView(){if(VIEW.on||!renderer||step!==2)return;VIEW.on=true;VIEW.ry=0;VIEW.rx=0;VIEW.zoom=1;
+  const g=GIFTS.find(x=>x.id===S.gift);$('gvName').textContent=g?t(g.n):'';
+  document.documentElement.classList.add('gv');$('giftView').hidden=false;tw('view',1,.7)}
+function closeView(){if(!VIEW.on)return;VIEW.on=false;document.documentElement.classList.remove('gv');$('giftView').hidden=true;tw('view',0,.6)}
 function resize(){
   if(!renderer)return;const st=document.querySelector('.stage'),w=st.clientWidth,h=st.clientHeight;
   renderer.setSize(w,h,false);camera.aspect=w/h;const t=Math.tan(camera.fov*Math.PI/360);
@@ -714,12 +764,14 @@ function frame(now){
   const dt=Math.max(0,Math.min(.05,(now-last)/1000));last=now;T+=dt;
   for(let i=tws.length-1;i>=0;i--){const w=tws[i];w.t+=dt;if(w.t<0)continue;if(w.from===null)w.from=A[w.k];const p=Math.min(1,w.t/w.dur);A[w.k]=w.from+(w.to-w.from)*w.ease(p);if(p>=1)tws.splice(i,1)}
   if(renderer){
-    const ty=.95+A.lift*.35,pp=.34+pitch;camera.position.set(0,ty+dist*Math.sin(pp),dist*Math.cos(pp));camera.lookAt(0,ty,0);
+    let pp=.34+pitch,d=dist;GV_T.set(0,.95+A.lift*.35,0);
+    if(A.view>.001){orn.getWorldPosition(GV_P);GV_T.lerp(GV_P,A.view);d+=(5.4/VIEW.zoom-d)*A.view;pp+=(.1-pp)*A.view}  // zoom 1: the whole gift fits
+    camera.position.set(GV_T.x,GV_T.y+d*Math.sin(pp),GV_T.z+d*Math.cos(pp));camera.lookAt(GV_T);
     if(!drag){spinY+=spinV;spinV*=.94;pitch+=(0-pitch)*.04}
     root.rotation.y=spinY+(reduce||touched?0:Math.sin(T*.35)*.25);
     const H=1.1*A.hover*(1-A.drop);lid.position.set(.85*A.lift,.6*A.lift+H,-1.25*A.lift);lid.rotation.set(-.55*A.lift,0,-.12*A.lift);
     const pl=1+Math.sin(Math.min(1,A.pulse)*Math.PI)*.25;bow.scale.setScalar(Math.max(.001,A.bowIn)*pl);
-    orn.visible=A.orn>.01;orn.position.y=1.1+A.orn*.75;orn.scale.setScalar(.15+.55*A.orn);orn.rotation.y=-root.rotation.y+Math.sin(T*.6)*.35;
+    orn.visible=A.orn>.01;orn.position.y=1.1+A.orn*.75;orn.scale.setScalar(.15+.55*A.orn);orn.rotation.y=-root.rotation.y+Math.sin(T*.6)*.35*(1-A.view)+VIEW.ry*A.view;orn.rotation.x=VIEW.rx*A.view;
     const p=pts.geometry.attributes.position.array;
     ptsData.forEach((d,i)=>{d.life+=dt*.6;
       if(d.life>1){if(emitting&&Math.random()<.3){d.life=0;const a=Math.random()*6.28;p[i*3]=Math.cos(a)*1.2;p[i*3+1]=.4+Math.random()*1.4;p[i*3+2]=Math.sin(a)*1.2;d.v=[Math.cos(a)*.4,.6+Math.random(),Math.sin(a)*.4]}else{p[i*3+1]=-50;return}}
@@ -734,6 +786,7 @@ requestAnimationFrame(frame);
 /* ================= steps ================= */
 const LABELS=['กล่อง','การ์ด + เสียง','ของในกล่อง','เพลง'];
 function go(i){
+  if(i!==2)closeView();
   const prev=step;step=i;for(let k=0;k<6;k++)$('p'+k).hidden=k!==i;$('body').scrollTop=0;
   document.querySelectorAll('#steps button').forEach((b,k)=>{b.classList.toggle('done',k<i);if(k===i)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});
   $('steps').hidden=i>=4;
@@ -874,6 +927,7 @@ $('photo').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileR
   const img=new Image();img.onload=()=>{const k=Math.min(1,700/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);S.photoSmall=c.toDataURL('image/jpeg',.8)};img.src=r.result};r.readAsDataURL(f)};
 $('thumbBtn').onclick=()=>{$('photoBig').src=$('thumb').src;$('photoBox').hidden=false};
 markGifts();
+$('zoomHint').onclick=openView;$('gvClose').onclick=closeView;addEventListener('keydown',e=>{if(e.key==='Escape')closeView()});
 const engraveText=()=>$('engrave').value.trim()||$('to').value.trim(); // until the sender types, the ornament shows the recipient's name
 $('engrave').addEventListener('input',()=>setEngrave(engraveText()));$('to').addEventListener('input',()=>setEngrave(engraveText()));setEngrave(engraveText());
 if(document.fonts)document.fonts.ready.then(()=>setEngrave(engraveText()));
