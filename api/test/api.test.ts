@@ -173,16 +173,19 @@ describe('paying', () => {
 });
 
 describe('shared Christmas tree', () => {
-  it('shows only the look of boxes whose senders opted in', async () => {
+  it('shows only the look of the newest boxes', async () => {
     const design = (box: string) => ({ ...payload, design: { ...payload.design, box, ribbon: '#f06292' } });
-    await sendBox(ctx.app, { payload: design('#123456'), showUnderTree: true });
-    await sendBox(ctx.app, { payload: design('#654321'), showUnderTree: false });
+    await sendBox(ctx.app, { payload: design('#123456') });
+    await sendBox(ctx.app, { payload: design('#654321') });
     const res = await ctx.app.inject({ url: '/v1/santa-box/tree' });
     expect(res.statusCode).toBe(200);
     const tree = res.json() as { total: number; boxes: Record<string, unknown>[] };
-    expect(tree.total).toBeGreaterThanOrEqual(1);
-    expect(tree.boxes).toContainEqual({ box: '#123456', ribbon: '#f06292', accents: ['b', 'h'] });
-    expect(tree.boxes.some((b) => b.box === '#654321')).toBe(false);
+    expect(tree.total).toBe(await ctx.prisma.gift.count({ where: { campaign: 'santa-box' } }));
+    expect(tree.boxes.slice(0, 2)).toEqual([
+      { box: '#654321', ribbon: '#f06292', accents: ['b', 'h'] },
+      { box: '#123456', ribbon: '#f06292', accents: ['b', 'h'] },
+    ]);
+    expect(tree.boxes.length).toBeLessThanOrEqual(60);
     for (const b of tree.boxes) expect(Object.keys(b).sort()).toEqual(['accents', 'box', 'ribbon']);
     expect(res.body).not.toMatch(/แม่|ลูกคนเล็ก|sender@example\.com|ขอบคุณ/);
   });

@@ -92,12 +92,12 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
   r.get('/stats', async () => ({ boxes: await db.gift.count({ where: { campaign: CAMPAIGN } }) }));
 
   /**
-   * The shared Christmas tree: the look of the newest boxes whose senders ticked "under the shared tree".
+   * The shared Christmas tree on the landing page: the look of the newest boxes, and how many there are.
    * Design only (colour, ribbon, accents): no ids, links, names, messages, files or dates.
    */
   const TREE_MAX = 60;
   r.get('/tree', async (_request, reply) => {
-    const where = { campaign: CAMPAIGN, showUnderTree: true };
+    const where = { campaign: CAMPAIGN };
     const [total, gifts] = await Promise.all([
       db.gift.count({ where }),
       db.gift.findMany({ where: { ...where, purgedAt: null }, select: { payload: true }, orderBy: { createdAt: 'desc' }, take: TREE_MAX }),

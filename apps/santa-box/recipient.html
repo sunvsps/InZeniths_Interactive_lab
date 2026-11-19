@@ -253,7 +253,7 @@ html.night #santa{color:#F6EFE9;opacity:.9}
     <div class="bot">
       <p class="sub" id="transitSub" data-no-i18n>กล่องจาก <b>ลูกคนเล็ก</b> จะถึงเวลา 00:00 คืนวันคริสต์มาส</p>
       <button class="link" id="skipBtn">ข้ามเวลา (ตัวอย่าง)</button>
-      <a class="sendown" id="sendOwn" href="/santa-box/" data-no-i18n>ห่อกล่องให้คนที่คุณรักบ้าง</a>
+      <a class="sendown" id="sendOwn" href="/santa-box/wrap" data-no-i18n>ห่อกล่องให้คนที่คุณรักบ้าง</a>
     </div>
   </section>
 
@@ -389,8 +389,8 @@ html.night #santa{color:#F6EFE9;opacity:.9}
   </div>
 </div>
 
-<script src="/santa-box/i18n.js?v=20261120b"></script>
-<script src="/santa-box/santa-api.js?v=20261120b"></script>
+<script src="/santa-box/i18n.js?v=20261120c"></script>
+<script src="/santa-box/santa-api.js?v=20261120c"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
@@ -881,7 +881,7 @@ $('playBtn').onclick=()=>{
 
 $('giftBtn').onclick=()=>{stopVoice();go('gift');tw('cam',0,1);tw('glow',.55,1.2);tw('orn',1,1.6,.1,eback);setTimeout(()=>{emitting=false},2500)};
 $('replayBtn').onclick=()=>{untied=false;emitting=false;Object.keys(A).forEach(k=>tw(k,0,.6));go('land')};
-const SENDER_PAGE='/santa-box/'; // the sender page (play.inzeniths.com/santa-box/)
+const SENDER_PAGE='/santa-box/wrap'; // the wrapping page (play.inzeniths.com/santa-box/wrap; /santa-box/ is the tree)
 const sendBack=()=>{location.href=SENDER_PAGE+(BOX&&BOX.senderName?'?to='+encodeURIComponent(BOX.senderName):'')};
 $('backBtn').onclick=()=>SLUG?sendBack():toast('เว็บจริงจะพาไปหน้าห่อกล่อง โดยใส่ "ลูกคนเล็ก" เป็นผู้รับไว้ให้แล้ว');
 

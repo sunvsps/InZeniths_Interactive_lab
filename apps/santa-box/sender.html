@@ -378,7 +378,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <span class="status" id="doneStatus"><i></i>จะเด้งถึงแม่ 25 ธ.ค. เวลา 00:00</span>
         <div class="link"><code id="linkText">play.inzeniths.com/santa-box/b/x7k2p9</code><button id="copyBtn">คัดลอก</button></div>
         <p class="note">ลิงก์นี้เป็นตัวอย่าง ส่งให้ผู้รับทาง LINE หรือแชตไหนก็ได้</p>
-        <a class="treeCard" id="treeCard" href="/santa-box/tree" hidden><span class="tc-art" aria-hidden="true"></span><span><small>กล่องของคุณอยู่ใต้ต้นคริสต์มาสรวมแล้ว</small><b>ดูต้นคริสต์มาส →</b></span></a>
+        <a class="treeCard" id="treeCard" href="/santa-box/" hidden><span class="tc-art" aria-hidden="true"></span><span><small>กล่องของคุณอยู่ใต้ต้นคริสต์มาสแล้ว</small><b>ดูต้นคริสต์มาส →</b></span></a>
         <div class="row"><button class="btn ghost" id="teaserBtn">แชร์ภาพทีเซอร์</button><button class="btn ghost" id="againBtn">ห่อกล่องใหม่</button></div>
         <a class="textlink" href="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75" target="_blank" rel="noopener">ดูตัวอย่างตอนผู้รับเปิดกล่อง</a>
         <aside class="izp" aria-label="IN ZENITHS Interactive Lab">
@@ -466,7 +466,6 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <div class="field"><label class="lbl" for="wEmail">อีเมลของคุณ <em id="emailHint"></em></label><input type="email" id="wEmail" placeholder="you@example.com" autocomplete="email"><p class="err" id="emailErr" hidden>ใส่อีเมลให้ถูกต้อง เพื่อรับใบเสร็จและกู้ลิงก์คืนได้</p></div>
     <!-- next-Christmas reminder: hidden for now (always off); the API still emails people who ticked it earlier -->
     <label class="check" hidden><input type="checkbox" id="remind"><span><b>เตือนก่อนคริสต์มาสปีหน้า</b><small>อีเมลฟรีล่วงหน้า 7 วัน ขอเลิกรับได้ที่ support@inzeniths.com</small></span></label>
-    <label class="check"><input type="checkbox" id="tree"><span><b>วางกล่องไว้ใต้ต้นคริสต์มาสรวม</b><small>โชว์แค่หน้าตากล่อง ไม่โชว์ชื่อ ข้อความ หรือเสียง</small></span></label>
     <div class="field"><label class="lbl" for="code">โค้ดส่วนลด <em>ไม่บังคับ</em></label><div class="codeRow"><input type="text" id="code" placeholder="ถ้ามี"><button class="btn ghost" id="codeBtn">ใช้โค้ด</button></div><p class="codeMsg" id="codeMsg" role="status" hidden></p></div>
     <div class="summary"><span id="sumPlan"></span><b id="sumPrice"></b></div>
     <p class="note center">จ่ายครั้งเดียว ไม่ใช่รายเดือน ไม่ตัดเงินซ้ำ</p>
@@ -475,8 +474,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
   </div>
 </div>
 
-<script src="i18n.js?v=20261120b"></script>
-<script src="santa-api.js?v=20261120b"></script>
+<script src="i18n.js?v=20261120c"></script>
+<script src="santa-api.js?v=20261120c"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
@@ -985,9 +984,7 @@ function celebrate(){chime();A.pulse=0;tw('pulse',1,.7,.6);emitting=true;setTime
 function setStatus(fn){SENT_FN=fn;SENT_LINE=fn();$('doneStatus').lastChild.nodeValue=SENT_LINE}
 function showSent(link,status){
   setStatus(typeof status==='function'?status:()=>status);
-  // boxes placed under the shared tree get a link to it (remembered across the payment page)
-  let underTree=$('tree').checked;try{underTree=underTree||sessionStorage.getItem('santaTree')==='1'}catch(e){}
-  $('treeCard').hidden=!(API&&underTree);
+  $('treeCard').hidden=!API; // every box's look goes under the tree on the landing page
   if(link){$('linkText').textContent=link.replace(/^https?:\/\//,'');$('linkText').dataset.full=link;
     $('linkText').closest('.link').nextElementSibling.textContent=t('ส่งลิงก์นี้ให้ผู้รับทาง LINE หรือแชตไหนก็ได้')}
   go(5);celebrate();
@@ -1044,12 +1041,11 @@ async function sendReal(){
       created=await API.send({
         recipientName:to,senderName:from||undefined,senderEmail:email,
         voiceKey,voiceSeconds:voiceKey?Math.max(1,Math.min(60,recT)):undefined,photoKey,
-        remindNextYear:$('remind').checked,showUnderTree:$('tree').checked,lang:window.I18N?I18N.lang:'th',
+        remindNextYear:$('remind').checked,lang:window.I18N?I18N.lang:'th',
         payload:{design:{box:DESIGN.box,ribbon:DESIGN.rib,accents:DESIGN.acc.slice(),paper:S.cs||0,font:S.cf==null?0:S.cf},
           card:{message:$('msg').value.trim()},
           gift:{item:S.gift,engraving:S.gift==='orn'?(engraveText()||undefined):undefined,coupon:S.coupon?($('coupon').value.trim()||null):null},
           music:S.song}});
-      try{sessionStorage.setItem('santaTree',$('tree').checked?'1':'')}catch(e){}
       API.remember(created.slug,{token:created.senderToken,link:created.link,to,design:{box:DESIGN.box,rib:DESIGN.rib,acc:DESIGN.acc.slice()},gift:S.gift});
     }
     if(S.plan==='0'){btn.disabled=false;btn.textContent=label;bootOff();showSent(created.link,()=>t('ซานต้าออกเดินทางแล้ว · ถึง{to}ในอีก 25 ชม.',{to:I18N_SPACE(to)}));created=null;return}
@@ -1155,7 +1151,7 @@ async function makeTeaser(){
   const sub=(API&&SENT_LINE?SENT_LINE.replace(/^(ซานต้าออกเดินทางแล้ว|Santa is on his way) · /,''):S.plan==='0'?t('ซานต้ากำลังเดินทาง ถึงในอีก 25 ชม.'):t('จะเด้งถึง {when}',{when:thaiDate($('whenAt').value)})).replace(/\s+/g,' ').trim();
   drawFit(g,sub,{font:'400 {s}px "IBM Plex Sans Thai"',size:40,min:30,maxW:W-160,x:W/2,y:470+dy});
   let qr=null;
-  if($('qrOn').checked&&window.QRCode){const d=document.createElement('div');new QRCode(d,{text:API?location.origin+'/santa-box/':'https://play.inzeniths.com/santa-box/',width:180,height:180,colorDark:'#2A2420',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.M});qr=d.querySelector('canvas')}
+  if($('qrOn').checked&&window.QRCode){const d=document.createElement('div');new QRCode(d,{text:API?location.origin+'/santa-box/wrap':'https://play.inzeniths.com/santa-box/wrap',width:180,height:180,colorDark:'#2A2420',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.M});qr=d.querySelector('canvas')}
   if(qr){
     g.fillStyle='#FFFFFF';g.fillRect(800,1580,220,220);g.drawImage(qr,820,1600,180,180);
     g.textAlign='left';g.fillStyle='#B3202E';g.font='italic 600 58px "Cormorant Garamond"';g.fillText('Santa Box',80,1700);

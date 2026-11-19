@@ -24,7 +24,7 @@ window.I18N = (function () {
     'ไม่มีของตกแต่ง': 'No decorations',
     'โหลดต้นคริสต์มาสไม่สำเร็จ': 'Couldn\'t load the tree',
     'ต้นคริสต์มาสสามมิติ มีกล่องของขวัญวางอยู่ใต้ต้น': '3D Christmas tree with gift boxes underneath',
-    'กล่องของคุณอยู่ใต้ต้นคริสต์มาสรวมแล้ว': 'Your box is under the shared Christmas tree',
+    'กล่องของคุณอยู่ใต้ต้นคริสต์มาสแล้ว': 'Your box is under the Christmas tree',
     'ดูต้นคริสต์มาส →': 'See the tree →',
     '© IN ZENITHS · มีปัญหาติดต่อ': '© IN ZENITHS · Need help? Contact',
     'ปิด': 'Close',

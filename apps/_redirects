@@ -6,5 +6,6 @@
 
 # Santa Box
 /santa-box         /santa-box/                        301
-/santa-box/        /santa-box/sender                  200
+/santa-box/        /santa-box/tree                    200
+/santa-box/wrap    /santa-box/sender                  200
 /santa-box/b/*     /santa-box/recipient               200
