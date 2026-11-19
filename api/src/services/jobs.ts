@@ -1,7 +1,7 @@
 // Housekeeping that runs inside the API every JOB_INTERVAL_MINUTES (one instance only).
 import type { FastifyInstance } from 'fastify';
 import { reminderYear } from '../campaigns/santa-box/rules.js';
-import { giftLink } from '../campaigns/santa-box/routes.js';
+import { appHome } from '../campaigns/santa-box/routes.js';
 
 const BATCH = 200;
 
@@ -66,7 +66,7 @@ export async function sendChristmasReminders(app: FastifyInstance, now = new Dat
         .send({
           to,
           subject: 'คริสต์มาสมาอีกแล้ว ห่อกล่องให้คนที่คุณรักกันไหม',
-          text: `ปีที่แล้วคุณส่ง Santa Box ให้ ${g.recipientName}\nปีนี้ห่อกล่องใหม่ได้ที่ ${new URL('/', app.env.SANTA_APP_URL)}\n\n(ไม่อยากได้อีเมลนี้อีก ตอบกลับมาบอกเราได้เลย)`,
+          text: `ปีที่แล้วคุณส่ง Santa Box ให้ ${g.recipientName}\nปีนี้ห่อกล่องใหม่ได้ที่ ${appHome(app.env.SANTA_APP_URL)}\n\n(ไม่อยากได้อีเมลนี้อีก ตอบกลับมาบอกเราได้เลย)`,
         })
         .catch((e) => app.log.error(e, 'reminder email failed'));
       done.add(to);

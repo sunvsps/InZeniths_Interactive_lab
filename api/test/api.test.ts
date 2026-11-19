@@ -16,7 +16,7 @@ const arrive = (slug: string) => ctx.prisma.gift.update({ where: { slug }, data:
 describe('sending a box', () => {
   it('creates a free box that travels 25 h and hides its content until then', async () => {
     const box = await sendBox(ctx.app);
-    expect(box.link).toBe(`https://santa.example.com/b/${box.slug}`);
+    expect(box.link).toBe(`https://play.example.com/santa-box/b/${box.slug}`);
     expect(new Date(box.deliverAt).getTime() - Date.now()).toBeGreaterThan(24.9 * 3_600_000);
 
     const view = (await ctx.app.inject({ url: `/v1/santa-box/gifts/${box.slug}` })).json();
@@ -66,12 +66,12 @@ describe('paying', () => {
       method: 'POST',
       url: `/v1/santa-box/gifts/${box.slug}/checkout`,
       headers: { 'x-sender-token': box.senderToken },
-      payload: { plan: 'YEAR', payer: 'SENDER', returnPath: '/sent' },
+      payload: { plan: 'YEAR', payer: 'SENDER', returnPath: '/santa-box/?sent=' + box.slug },
     });
     expect(res.statusCode).toBe(200);
     const { paymentId, amountSatang, checkoutUrl } = res.json();
     expect(amountSatang).toBe(2_500);
-    expect(checkoutUrl).toContain(encodeURIComponent('https://santa.example.com/sent?paid='));
+    expect(decodeURIComponent(checkoutUrl)).toContain(`https://play.example.com/santa-box/?sent=${box.slug}&paid=`);
 
     expect((await webhookPaid(ctx.app, paymentId)).statusCode).toBe(200);
     await webhookPaid(ctx.app, paymentId); // providers retry: must not apply twice
@@ -100,6 +100,16 @@ describe('paying', () => {
     expect(view).toMatchObject({ plan: 'FOREVER', expiresAt: null });
     const dl = (await ctx.app.inject({ url: `/v1/santa-box/gifts/${box.slug}/download` })).json();
     expect(dl.voiceUrl).toContain(`santa-box-${box.number}-voice.webm`);
+  });
+
+  it('sends the payer back inside the Santa Box app only', async () => {
+    const box = await sendBox(ctx.app);
+    const pay = (returnPath?: string) =>
+      ctx.app.inject({ method: 'POST', url: `/v1/santa-box/gifts/${box.slug}/checkout`, headers: { 'x-sender-token': box.senderToken }, payload: { plan: 'YEAR', payer: 'SENDER', returnPath } });
+    const home = decodeURIComponent((await pay()).json().checkoutUrl);
+    expect(home).toContain('next=https://play.example.com/santa-box/?paid=');
+    const outside = decodeURIComponent((await pay('/other-campaign/')).json().checkoutUrl);
+    expect(outside).toContain('next=https://play.example.com/santa-box/?paid=');
   });
 
   it('refuses a return link to another site', async () => {

@@ -300,7 +300,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
   </div>
 </div>
 
-<script src="/santa-api.js"></script>
+<script src="/santa-box/santa-api.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
@@ -671,7 +671,7 @@ $('playBtn').onclick=()=>{
 
 $('giftBtn').onclick=()=>{stopVoice();go('gift');tw('cam',0,1);tw('glow',.55,1.2);tw('orn',1,1.6,.1,eback);setTimeout(()=>{emitting=false},2500)};
 $('replayBtn').onclick=()=>{untied=false;emitting=false;Object.keys(A).forEach(k=>tw(k,0,.6));go('land')};
-const SENDER_PAGE='/';
+const SENDER_PAGE='/santa-box/'; // the sender page (play.inzeniths.com/santa-box/)
 const sendBack=()=>{location.href=SENDER_PAGE+(BOX&&BOX.senderName?'?to='+encodeURIComponent(BOX.senderName):'')};
 $('backBtn').onclick=()=>SLUG?sendBack():toast('เว็บจริงจะพาไปหน้าห่อกล่อง โดยใส่ "ลูกคนเล็ก" เป็นผู้รับไว้ให้แล้ว');
 

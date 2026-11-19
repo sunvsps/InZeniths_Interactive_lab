@@ -306,7 +306,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <p class="eyebrow">Wrapped &amp; sent</p>
         <h2 class="h">ส่งกล่องให้ <span id="doneTo">แม่</span> แล้ว</h2>
         <span class="status" id="doneStatus"><i></i>จะเด้งถึงแม่ 25 ธ.ค. เวลา 00:00</span>
-        <div class="link"><code id="linkText">play.inzeniths.com/b/x7k2p9</code><button id="copyBtn">คัดลอก</button></div>
+        <div class="link"><code id="linkText">play.inzeniths.com/santa-box/b/x7k2p9</code><button id="copyBtn">คัดลอก</button></div>
         <p class="note">ลิงก์นี้เป็นตัวอย่าง ส่งให้ผู้รับทาง LINE หรือแชตไหนก็ได้</p>
         <div class="row"><button class="btn ghost" id="teaserBtn">แชร์ภาพทีเซอร์</button><button class="btn ghost" id="againBtn">ห่อกล่องใหม่</button></div>
         <a class="textlink" href="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75" target="_blank" rel="noopener">ดูตัวอย่างตอนผู้รับเปิดกล่อง</a>
@@ -906,7 +906,7 @@ async function makeTeaser(){
   g.fillStyle='#2A2420';g.font='500 92px "Noto Serif Thai"';g.fillText('ส่งกล่องให้'+to+'แล้ว',W/2,390);
   g.fillStyle='#8C8176';g.font='400 40px "IBM Plex Sans Thai"';g.fillText(API&&SENT_LINE?SENT_LINE.replace(/^ซานต้าออกเดินทางแล้ว · /,''):S.plan==='0'?'ซานต้ากำลังเดินทาง ถึงในอีก 25 ชม.':'จะเด้งถึง '+thaiDate($('whenAt').value),W/2,470);
   let qr=null;
-  if($('qrOn').checked&&window.QRCode){const d=document.createElement('div');new QRCode(d,{text:API?location.origin+'/':'https://play.inzeniths.com',width:180,height:180,colorDark:'#2A2420',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.M});qr=d.querySelector('canvas')}
+  if($('qrOn').checked&&window.QRCode){const d=document.createElement('div');new QRCode(d,{text:API?location.origin+'/santa-box/':'https://play.inzeniths.com/santa-box/',width:180,height:180,colorDark:'#2A2420',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.M});qr=d.querySelector('canvas')}
   if(qr){
     g.fillStyle='#FFFFFF';g.fillRect(800,1580,220,220);g.drawImage(qr,820,1600,180,180);
     g.textAlign='left';g.fillStyle='#B3202E';g.font='italic 600 58px "Cormorant Garamond"';g.fillText('Santa Box',80,1700);
@@ -923,7 +923,7 @@ if(API){
   // real box counter, "send one back" prefill, preview pages on this site, and the return from the payment page
   API.stats().then(r=>{document.querySelector('.counter').textContent='กล่องที่ '+(r.boxes+1).toLocaleString('en-US')}).catch(()=>{});
   try{const back=new URLSearchParams(location.search).get('to');if(back){$('to').value=back.slice(0,30);$('sendTo').textContent=$('to').value}}catch(e){}
-  document.querySelectorAll('a[href^="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75"]').forEach(a=>{a.href=a.href.replace('https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75','recipient.html')});
+  document.querySelectorAll('a[href^="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75"]').forEach(a=>{a.href=a.href.replace('https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75','/santa-box/recipient')});
   resumeSent();
 }
 

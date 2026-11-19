@@ -24,14 +24,27 @@ const QUOTE_MESSAGES: Record<QuoteError, string> = {
 
 const slugParams = z.object({ slug: z.string().min(6).max(40) });
 
-export const giftLink = (appUrl: string, slug: string) => new URL(`/b/${slug}`, appUrl).toString();
+/**
+ * SANTA_APP_URL may include a path (https://play.inzeniths.com/santa-box), so links are joined onto it
+ * rather than resolved from the site root.
+ */
+export const appHome = (appUrl: string) => appUrl.replace(/\/+$/, '') + '/';
+export const giftLink = (appUrl: string, slug: string) => `${appHome(appUrl)}b/${slug}`;
+
+/** Where the payer lands after checkout: a page inside the Santa Box app, or its home page. */
+function backTo(appUrl: string, path: string | undefined): URL {
+  const home = new URL(appHome(appUrl));
+  if (!path) return home;
+  const url = new URL(path, home.origin);
+  return url.pathname.startsWith(home.pathname) ? url : home;
+}
 
 /** A same-site path on the Santa Box app, never another site (no open redirect). */
 const returnPath = z
   .string()
   .max(300)
   .regex(/^\/(?!\/)[^\s\\]*$/, 'must be a path on the Santa Box site')
-  .default('/');
+  .optional();
 
 export default async function santaBoxRoutes(app: FastifyInstance) {
   const r = app.withTypeProvider<ZodTypeProvider>();
@@ -213,7 +226,7 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
           email: email ?? (payer === 'SENDER' ? gift.senderEmail : null),
         },
       });
-      const backUrl = new URL(back, app.env.SANTA_APP_URL);
+      const backUrl = backTo(app.env.SANTA_APP_URL, back);
       const success = new URL(backUrl);
       success.searchParams.set('paid', payment.id);
       const title = plan === 'FOREVER' ? (gift.plan === 'YEAR' ? 'Santa Box: อัปเกรดเก็บตลอดไป' : 'Santa Box: เก็บตลอดไป') : 'Santa Box: เก็บ 1 ปี';

@@ -1,0 +1,10 @@
+# Cloudflare Pages project for play.inzeniths.com. Build output directory = apps/
+# Each campaign lives in its own folder: /santa-box/, /<next-campaign>/ ...
+# Pages serves file.html at /file (no .html), so rewrites point at the extensionless path.
+
+/                  https://inzeniths.com/interactive  302
+
+# Santa Box
+/santa-box         /santa-box/                        301
+/santa-box/        /santa-box/sender                  200
+/santa-box/b/*     /santa-box/recipient               200

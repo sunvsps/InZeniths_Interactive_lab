@@ -52,7 +52,7 @@ npm test                # ทดสอบทั้งหมด
 ## Deploy บน Railway
 
 1. push โฟลเดอร์ `interactive` ขึ้น GitHub
-2. Railway → New Project → **Deploy from GitHub repo** → ตั้ง **Root Directory = `interactive/api`** (ระบบอ่าน `railway.json` และ `Dockerfile` เอง)
+2. Railway → New Project → **Deploy from GitHub repo** → ตั้ง **Root Directory = `api`** (ระบบอ่าน `railway.json` และ `Dockerfile` เอง)
 3. ในโปรเจกต์เดียวกัน **+ New → Database → PostgreSQL**
 4. Variables ของ service API:
 
@@ -61,7 +61,7 @@ npm test                # ทดสอบทั้งหมด
    | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
    | `REAL_IP_HEADER` | `x-real-ip` |
    | `CORS_ORIGINS` | `https://play.inzeniths.com,https://inzeniths.com` |
-   | `SANTA_APP_URL` | `https://play.inzeniths.com` |
+   | `SANTA_APP_URL` | `https://play.inzeniths.com/santa-box` (ลิงก์กล่องจะเป็น `/santa-box/b/<id>`) |
    | `STORAGE_DRIVER` | `r2` + `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` |
    | `PAYMENT_DRIVER` | `stripe` + `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
    | `MAIL_DRIVER` | `resend` + `RESEND_API_KEY`, `MAIL_FROM` |

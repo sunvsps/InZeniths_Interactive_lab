@@ -11,16 +11,16 @@ Christmas 2026 campaign: the sender wraps a 3D gift box (box design, card, voice
 Requirements: https://claude.ai/artifact/JoFKTcMDDwtpKzgSiXWLDd
 
 | `santa-api.js` | Connects both pages to the API (`interactive/api`) | – |
-| `_redirects` | Cloudflare Pages routes: `/` → sender, `/b/<id>` → recipient | – |
+| `../_redirects` | Cloudflare Pages routes for `play.inzeniths.com`: `/santa-box/` → sender, `/santa-box/b/<id>` → recipient | – |
 
 ## Two modes
 - **Prototype** (`<meta name="santa-api" content="">`, the default and the published artifacts): runs on its own with sample data; the design travels in the link hash (`#gift-b<box>-r<ribbon>-a<accents>-c<paper><font>`).
-- **Live** (`content="https://api.inzeniths.com"`): real voice recording (microphone), voice and photo upload, boxes saved in the database, PromptPay checkout, recipient link `/b/<id>` with countdown, open, voice playback (free = first 15 s), keep or upgrade, download (forever), expired / not-found pages, "send one back" prefill (`/sender.html?to=<name>`), real box counter.
+- **Live** (`content="https://api.inzeniths.com"`): real voice recording (microphone), voice and photo upload, boxes saved in the database, PromptPay checkout, recipient link `/santa-box/b/<id>` with countdown, open, voice playback (free = first 15 s), keep or upgrade, download (forever), expired / not-found pages, "send one back" prefill (`/santa-box/?to=<name>`), real box counter.
 
 ## Run locally against the API
 1. In `interactive/api`: `npm run db:dev`, then `npm run db:migrate` and `npm run dev` (port 3100, fake payments, files kept in memory)
-2. Serve this folder with the `_redirects` rules applied (Cloudflare Pages does this; locally use `npx wrangler pages dev .`), e.g. on port 8765, with `SANTA_APP_URL=http://localhost:8765` in the API's `.env`
-3. Open `http://localhost:8765/?api=http://localhost:3100` once; the tab remembers the API
+2. Serve the `apps/` folder with `apps/_redirects` applied (Cloudflare Pages does this; locally `npx wrangler pages dev apps`), e.g. on port 8765, with `SANTA_APP_URL=http://localhost:8765/santa-box` in the API's `.env`
+3. Open `http://localhost:8765/santa-box/?api=http://localhost:3100` once; the tab remembers the API
 
 Tested end to end on 19 Nov 2026: free send, paid send (fake checkout and back), countdown, open, real voice playback, photo, coupon, recipient upgrade 25 → forever, download links, expired and missing boxes, send one back, and prototype mode unchanged.
 

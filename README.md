@@ -13,10 +13,10 @@ interactive/
 ## Conventions
 - Brand: IN ZENITHS is the owner; each app is a campaign. Payments and receipts are issued as IN ZENITHS, with the campaign name on the line item.
 - Database: one shared `gifts` table with a `campaign` column (e.g. `santa-box`) and the campaign's own design data as JSON, so a new campaign needs no schema change.
-- Domain: `inzeniths.com` (bought at Cloudflare, 19 Nov 2026). Company site at the root (Cloudflare Pages, repo `INZENITH_EVENTS`); campaigns on `play.inzeniths.com`; API at `api.inzeniths.com`.
-- Deploy: campaigns are served from Cloudflare Pages at `play.inzeniths.com`; the back end is one Railway service + Postgres (`api.inzeniths.com`), files in Cloudflare R2. See `api/README.md`.
+- Domain: `inzeniths.com` (bought at Cloudflare, 19 Nov 2026). Company site at the root (Cloudflare Pages, repo `INZENITH_EVENTS`); campaigns on `play.inzeniths.com/<campaign>/` (e.g. `/santa-box/`); API at `api.inzeniths.com`.
+- Deploy: one Cloudflare Pages project serves the whole `apps/` folder at `play.inzeniths.com` (routes in `apps/_redirects`; a new campaign is a new folder, no new domain); the back end is one Railway service + Postgres (`api.inzeniths.com`), files in Cloudflare R2. See `api/README.md`.
 
 ## Status
 - `api/` is built and tested (Santa Box endpoints, payments, file uploads, clean-up jobs), not deployed yet.
-- `apps/santa-box` is still a clickable prototype: the pages do not call the API yet. See its README.
+- `apps/santa-box` calls the API when `<meta name="santa-api">` is set (empty = prototype mode). Tested end to end locally. See its README.
 - `shared/` holds plans only.
