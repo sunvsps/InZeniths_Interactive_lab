@@ -60,8 +60,8 @@ npm test                # ทดสอบทั้งหมด
    |---|---|
    | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
    | `REAL_IP_HEADER` | `x-real-ip` |
-   | `CORS_ORIGINS` | `https://santa.inzeniths.com,https://inzeniths.com` |
-   | `SANTA_APP_URL` | `https://santa.inzeniths.com` |
+   | `CORS_ORIGINS` | `https://play.inzeniths.com,https://inzeniths.com` |
+   | `SANTA_APP_URL` | `https://play.inzeniths.com` |
    | `STORAGE_DRIVER` | `r2` + `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` |
    | `PAYMENT_DRIVER` | `stripe` + `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
    | `MAIL_DRIVER` | `resend` + `RESEND_API_KEY`, `MAIL_FROM` |
@@ -73,7 +73,7 @@ npm test                # ทดสอบทั้งหมด
 
 ### ตั้งค่าบริการภายนอก
 
-- **R2**: Cloudflare → R2 → สร้าง bucket `santa-box` → Manage API Tokens (สิทธิ์ Object Read & Write เฉพาะ bucket นี้) → ตั้ง **CORS** ของ bucket ให้ `PUT` และ `GET` จาก `https://santa.inzeniths.com` ได้ (header `Content-Type`)
+- **R2**: Cloudflare → R2 → สร้าง bucket `santa-box` → Manage API Tokens (สิทธิ์ Object Read & Write เฉพาะ bucket นี้) → ตั้ง **CORS** ของ bucket ให้ `PUT` และ `GET` จาก `https://play.inzeniths.com` ได้ (header `Content-Type`)
 - **Stripe**: เปิด PromptPay ใน Payment methods → Developers → Webhooks → endpoint `https://api.inzeniths.com/v1/payments/webhook` เลือก event `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired` → คัดลอก signing secret เป็น `STRIPE_WEBHOOK_SECRET` (เริ่มด้วยคีย์ test ก่อน)
 - **Resend**: ยืนยันโดเมน `inzeniths.com` (เพิ่ม DNS record ที่ Cloudflare) แล้วตั้ง `MAIL_FROM=Santa Box <hello@inzeniths.com>`
 

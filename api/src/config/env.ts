@@ -26,7 +26,7 @@ const schema = z
     /** Railway: x-real-ip. Replaces any X-Forwarded-For the visitor sent, so nobody can dodge the per-IP limits. */
     REAL_IP_HEADER: z.string().trim().toLowerCase().optional(),
     DATABASE_URL: z.string().min(1),
-    /** Browser origins allowed to call the API, e.g. https://santa.inzeniths.com,https://inzeniths.com */
+    /** Browser origins allowed to call the API, e.g. https://play.inzeniths.com,https://inzeniths.com */
     CORS_ORIGINS: csv,
     /** Where the Santa Box pages live. Used for payment return links and links in emails. */
     SANTA_APP_URL: z.string().url().default('http://localhost:8765'),
