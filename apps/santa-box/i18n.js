@@ -203,6 +203,7 @@ window.I18N = (function () {
 
     // ---- recipient
     'หน้ารอส่ง': 'Wait',
+    'กำลังเปิดกล่อง…': 'Opening your box…',
     'ซานต้ากำลังเดินทาง': 'Santa is on his way',
     'มาหาคุณ': 'to you',
     'ชม.': 'hrs', 'นาที': 'min', 'วินาที': 'sec',

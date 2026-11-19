@@ -4,12 +4,28 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <!-- API address (see santa-api.js). Empty = prototype mode with sample data. Production: https://api.inzeniths.com -->
 <meta name="santa-api" content="https://api.inzeniths.com">
+<script>
+/* A box link (/b/<id>) shows a loading screen until the box arrives from the API, never the sample content.
+   Runs first, before any of the page is drawn; the class comes off when the box is ready (see unboot). */
+(function(){try{var link=/\/b\/[a-z0-9]{6,40}\/?$/.test(location.pathname)||new URLSearchParams(location.search).has('b');
+  var api=document.querySelector('meta[name="santa-api"]').content||sessionStorage.getItem('santaApi');
+  if(link&&api)document.documentElement.classList.add('boot')}catch(e){}})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=IBM+Plex+Sans+Thai:wght@300;400;500&family=Noto+Serif+Thai:wght@400;500;600&family=Charm:wght@400;700&family=Mali:wght@400;500&display=swap">
 <style>
 [hidden]{display:none!important}
 body{margin:0}
+/* loading screen for box links (html.boot is set in <head>) */
+#boot{display:none}
+html.boot #boot{display:flex;position:fixed;inset:0;z-index:30;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#FBF8F4;color:#8A7B74;font:400 13px/1.4 'IBM Plex Sans Thai',sans-serif}
+html.boot #boot .logo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:28px;color:#B3202E}
+html.boot #boot .ring{width:34px;height:34px;border-radius:50%;border:3px solid #EEE2DC;border-top-color:#B3202E;animation:bootspin .9s linear infinite}
+html.boot #boot p{margin:0}
+html.boot #app,html.boot #copyright{visibility:hidden}
+@keyframes bootspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){html.boot #boot .ring{animation-duration:2.4s}}
 /* Layout: one-screen phone app — a 3D gift box on an ivory "table" fills the screen; each step of the opening is a light overlay (top title, bottom actions) */
 :root{
   --bg:#FBF8F4; --bg2:#F4E8E4; --paper:#FFFFFF; --ink:#2A2420; --muted:#8A7B74; --line:#EEE2DC;
@@ -171,6 +187,8 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 }
 </style>
 
+<div id="boot" role="status" aria-live="polite"><span class="logo">Santa Box</span><div class="ring" aria-hidden="true"></div><p id="bootText">กำลังเปิดกล่อง…</p></div>
+<script>(function(){try{var l=new URLSearchParams(location.search).get('lang')||localStorage.getItem('santaLang')||(/^th/i.test(navigator.language||'')?'th':'en');if(l==='en')document.getElementById('bootText').textContent='Opening your box…'}catch(e){}})();</script>
 <div id="app">
   <canvas id="gl" aria-label="กล่องของขวัญสามมิติ"></canvas>
 
@@ -859,7 +877,9 @@ if(SLUG){
   // hide the prototype's demo controls, show nothing sample while loading
   ['transitBtn','skipBtn','sampleTag'].forEach(id=>$(id).hidden=true);document.querySelector('.vnote').hidden=true;
   ['s-land','s-transit'].forEach(id=>$(id).hidden=true);
-  loadBox().then(async()=>{
+  // the loading screen stays until the box (or its "gone / not found" page) is drawn; 20 s at most
+  const unboot=()=>document.documentElement.classList.remove('boot');setTimeout(unboot,20000);
+  loadBox().finally(unboot).then(async()=>{
     // back from paying to keep the box: wait for the payment to be confirmed
     let q;try{q=new URLSearchParams(location.search)}catch(e){return}
     if(!q.has('paid'))return;history.replaceState(null,'',location.pathname);toast('ขอบคุณ กำลังยืนยันการชำระเงิน…');
