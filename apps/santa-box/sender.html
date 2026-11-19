@@ -175,7 +175,7 @@ textarea{resize:none;min-height:118px;font-family:var(--f-serif);font-size:16.5p
 .nav{display:flex;gap:10px;padding-top:18px}
 .copy{margin:10px 0 0;text-align:center;font-size:10px;letter-spacing:.04em;color:var(--muted)}
 .copy a{color:inherit;text-underline-offset:2px}
-.btn{border:0;border-radius:999px;padding:14px 22px;font-size:15px;font-weight:500;background:var(--accent);color:#fff;flex:1;box-shadow:0 10px 24px -12px rgba(179,32,46,.55)}
+.btn{border:0;border-radius:999px;padding:11px 18px;font-size:14px;font-weight:500;background:var(--accent);color:#fff;flex:1;box-shadow:0 10px 24px -12px rgba(179,32,46,.55)}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none;flex:0 0 auto}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 
@@ -275,7 +275,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
             <div class="mid"><b id="recTitle">แตะเพื่อเริ่มอัด</b><div class="bars" id="bars"></div><div class="vtrack" aria-hidden="true"><i id="vfill"></i><b></b></div><small id="recTime">0:00 / 1:00</small></div>
             <button class="redo" id="redo" hidden>อัดใหม่</button>
           </div>
-          <p class="note">ตัวอย่างนี้จำลองการอัด ยังไม่ได้ใช้ไมโครโฟนจริง</p>
+          <p class="note" id="simNote">ตัวอย่างนี้จำลองการอัด ยังไม่ได้ใช้ไมโครโฟนจริง</p>
         </div>
       </div>
 
@@ -1000,6 +1000,7 @@ if(window.I18N)I18N.onChange(()=>{stepText();markPlans();if(SENT_FN)setStatus(SE
   if(!$('whoSheet').hidden){$('sumPrice').textContent=S.plan==='0'?t('ฟรี'):t('{n} บาท',{n:S.plan});$('confirmBtn').textContent=payLabel()}
   if(BOX_NO)document.querySelector('.counter').textContent=t('กล่องที่ {n}',{n:BOX_NO})});
 if(API){
+  $('simNote').hidden=true; // live: recording uses the real microphone
   // real box counter, "send one back" prefill, preview pages on this site, and the return from the payment page
   API.stats().then(r=>{BOX_NO=(r.boxes+1).toLocaleString('en-US');document.querySelector('.counter').textContent=t('กล่องที่ {n}',{n:BOX_NO})}).catch(()=>{});
   try{const back=new URLSearchParams(location.search).get('to');if(back){$('to').value=back.slice(0,30);$('sendTo').textContent=$('to').value}}catch(e){}
