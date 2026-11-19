@@ -4,12 +4,24 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <!-- API address (see santa-api.js). Empty = prototype mode with sample data. Production: https://api.inzeniths.com -->
 <meta name="santa-api" content="https://api.inzeniths.com">
+<script>
+/* Back from Stripe (?sent=<box>): show the loading screen at once instead of the box designer, until the sent screen is ready. */
+(function(){try{var q=new URLSearchParams(location.search);if(q.has('sent')&&(document.querySelector('meta[name="santa-api"]').content||sessionStorage.getItem('santaApi')))document.documentElement.classList.add('boot','boot-pay')}catch(e){}})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=IBM+Plex+Sans+Thai:wght@300;400;500&family=Noto+Serif+Thai:wght@400;500;600&family=Charm:wght@400;700&family=Mali:wght@400;500&family=Kanit:wght@600;700&family=Anuphan:wght@400;500;600&display=swap">
 <style>
 [hidden]{display:none!important}
 body{margin:0}
+/* loading screen: wrapping the box, going to Stripe, coming back from Stripe (html.boot) */
+#boot{display:none}
+html.boot #boot{display:flex;position:fixed;inset:0;z-index:60;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#FBF8F4;color:#8A7B74;font:400 13px/1.4 'IBM Plex Sans Thai',sans-serif;text-align:center;padding:24px}
+html.boot #boot .logo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:28px;color:#B3202E}
+html.boot #boot .ring{width:34px;height:34px;border-radius:50%;border:3px solid #EEE2DC;border-top-color:#B3202E;animation:bootspin .9s linear infinite}
+html.boot #boot p{margin:0}
+@keyframes bootspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){html.boot #boot .ring{animation-duration:2.4s}}
 /* Layout: one-screen phone app — live 3D box on top (~40%), a paper panel below holding the current wrapping step, Back/Next pinned at the bottom */
 :root{
   --bg:#FBF8F4; --bg2:#F4E8E4; --paper:#FFFFFF; --card:#FFFFFF; --ink:#2A2420; --muted:#8A7B74; --line:#EEE2DC;
@@ -217,6 +229,8 @@ a.btn{display:block;text-align:center;text-decoration:none}
 }
 </style>
 
+<div id="boot" role="status" aria-live="polite"><span class="logo">Santa Box</span><div class="ring" aria-hidden="true"></div><p id="bootText">กำลังตรวจสอบการชำระเงิน…</p></div>
+<script>(function(){try{var l=new URLSearchParams(location.search).get('lang')||localStorage.getItem('santaLang')||(/^th/i.test(navigator.language||'')?'th':'en');if(l==='en')document.getElementById('bootText').textContent='Checking your payment…'}catch(e){}})();</script>
 <div id="app">
   <div class="stage">
     <canvas id="gl" aria-label="ตัวอย่างกล่องของขวัญสามมิติ"></canvas>
@@ -855,9 +869,14 @@ function photoBlob(){
 }
 const ERR={SCHEDULE_OUT_OF_RANGE:'เวลาส่งต้องเป็นอนาคต และไม่เกิน 1 ปี',FILE_TOO_LARGE:'ไฟล์ใหญ่เกินไป',UNSUPPORTED_TYPE:'ไฟล์ชนิดนี้ใช้ไม่ได้',VALIDATION_ERROR:'ข้อมูลบางอย่างไม่ถูกต้อง ลองตรวจอีกครั้ง',RATE_LIMITED:'ส่งถี่เกินไป รอสักครู่แล้วลองใหม่'};
 const errText=e=>ERR[e&&e.code]||'ส่งไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง';
+function bootOn(text){$('bootText').textContent=text;document.documentElement.classList.add('boot')}
+function bootOff(){document.documentElement.classList.remove('boot','boot-pay')}
+// pressing Back on the Stripe page can restore this page from the browser's cache with the loading screen still up
+addEventListener('pageshow',e=>{if(e.persisted)bootOff()});
 let created=null; // a box already made on this visit (retrying a failed payment must not make a second box)
 async function sendReal(){
   const btn=$('confirmBtn'),label=btn.textContent;btn.disabled=true;btn.textContent='กำลังห่อกล่อง…';
+  $('whoSheet').hidden=true;bootOn(t('กำลังห่อกล่อง…'));
   const to=($('to').value||'').trim()||'คุณ',from=($('from').value||'').trim(),email=$('wEmail').value.trim()||undefined;
   try{
     if(!created){
@@ -873,23 +892,24 @@ async function sendReal(){
           music:S.song}});
       API.remember(created.slug,{token:created.senderToken,link:created.link,to,design:{box:DESIGN.box,rib:DESIGN.rib,acc:DESIGN.acc.slice()},gift:S.gift});
     }
-    if(S.plan==='0'){$('whoSheet').hidden=true;btn.disabled=false;btn.textContent=label;showSent(created.link,()=>t('ซานต้าออกเดินทางแล้ว · ถึง{to}ในอีก 25 ชม.',{to:I18N_SPACE(to)}));created=null;return}
-    btn.textContent='กำลังไปหน้าชำระเงิน…';
+    if(S.plan==='0'){btn.disabled=false;btn.textContent=label;bootOff();showSent(created.link,()=>t('ซานต้าออกเดินทางแล้ว · ถึง{to}ในอีก 25 ชม.',{to:I18N_SPACE(to)}));created=null;return}
+    btn.textContent='กำลังไปหน้าชำระเงิน…';bootOn(t('กำลังไปหน้าชำระเงิน…'));
     const c=await API.checkout(created.slug,{plan:S.plan==='125'?'FOREVER':'YEAR',payer:'SENDER',email,
       deliverAt:S.sched?new Date($('whenAt').value).toISOString():undefined,returnPath:location.pathname+'?sent='+created.slug,lang:window.I18N?I18N.lang:'th'},created.senderToken);
     location.href=c.checkoutUrl;
-  }catch(e){toast(errText(e));btn.disabled=false;btn.textContent=label}
+  }catch(e){bootOff();$('whoSheet').hidden=false;toast(errText(e));btn.disabled=false;btn.textContent=label}
 }
 /* back from the payment page: ?sent=<slug>&paid=<payment> (paid) or ?sent=<slug> (cancelled) */
 async function resumeSent(){
   let q;try{q=new URLSearchParams(location.search)}catch(e){return}
-  const slug=q.get('sent'),mine=slug&&API&&API.recall(slug);if(!mine)return;
+  const slug=q.get('sent'),mine=slug&&API&&API.recall(slug);if(!mine){bootOff();return}
   history.replaceState(null,'',location.pathname);
   if(mine.design){Object.assign(DESIGN,mine.design);setDesign(DESIGN);markDesign()}
   if(mine.gift){S.gift=mine.gift;if(typeof showGift==='function')showGift(S.gift)}
   $('to').value=mine.to||'';$('sendTo').textContent=mine.to||'คุณ';
   const to=mine.to||'คุณ',wasPaid=q.has('paid');
   showSent(mine.link,()=>wasPaid?t('กำลังยืนยันการชำระเงิน…'):t('ยกเลิกการชำระเงินแล้ว · กล่องจะเดินทางแบบธรรมดา ถึง{to}ในอีก 25 ชม.',{to:I18N_SPACE(to)}));
+  bootOff();
   if(!wasPaid)return;
   for(let i=0;i<15;i++){
     try{const m=await API.manage(slug,mine.token);
@@ -984,7 +1004,7 @@ if(API){
   API.stats().then(r=>{BOX_NO=(r.boxes+1).toLocaleString('en-US');document.querySelector('.counter').textContent=t('กล่องที่ {n}',{n:BOX_NO})}).catch(()=>{});
   try{const back=new URLSearchParams(location.search).get('to');if(back){$('to').value=back.slice(0,30);$('sendTo').textContent=$('to').value}}catch(e){}
   document.querySelectorAll('a[href^="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75"]').forEach(a=>{a.href=a.href.replace('https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75','/santa-box/recipient')});
-  resumeSent();
+  resumeSent().catch(()=>{}).finally(bootOff);setTimeout(bootOff,20000);
 }
 
 /* santa crossing the stage now and then */
