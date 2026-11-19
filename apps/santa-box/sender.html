@@ -16,6 +16,12 @@
 body{margin:0}
 /* loading screen: wrapping the box, going to Stripe, coming back from Stripe (html.boot) */
 #boot{display:none}
+#pvLayer{position:fixed;inset:0;z-index:55;display:flex;flex-direction:column;background:#FBF8F4;animation:fade .25s ease}
+#pvLayer .pv-top{display:flex;justify-content:center;padding:calc(8px + env(safe-area-inset-top,0px)) 16px 6px;background:#2A2420}
+#pvLayer .pv-tag{font-size:12px;letter-spacing:.06em;color:#F6EFE9}
+#pvLayer iframe{flex:1;width:100%;border:0;display:block}
+#pvLayer .pv-bar{display:flex;gap:10px;padding:10px max(16px,env(safe-area-inset-left,0px)) calc(10px + env(safe-area-inset-bottom,0px));background:#FBF8F4;border-top:1px solid #EEE2DC}
+#pvLayer .pv-bar .btn{flex:1}
 html.boot #boot{display:flex;position:fixed;inset:0;z-index:60;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#FBF8F4;color:#8A7B74;font:400 13px/1.4 'IBM Plex Sans Thai',sans-serif;text-align:center;padding:24px}
 html.boot #boot .logo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:28px;color:#B3202E}
 html.boot #boot .ring{width:34px;height:34px;border-radius:50%;border:3px solid #EEE2DC;border-top-color:#B3202E;animation:bootspin .9s linear infinite}
@@ -391,6 +397,13 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <div class="wcard paper cs-0 cf-0" id="wcardBig"><textarea id="msgBig" maxlength="280" placeholder="เขียนถึงเขาสักหน่อย..." aria-label="ข้อความในการ์ด"></textarea>
       <div class="wfoot"><em id="msgBigCount"></em><button class="btn" id="msgDone" style="flex:none;padding:10px 24px">เสร็จ</button></div></div>
   </div>
+</div>
+
+<!-- preview: the recipient's page shown over this one, so the sender never leaves the box they are wrapping -->
+<div id="pvLayer" role="dialog" aria-modal="true" aria-labelledby="pvTitle" hidden>
+  <div class="pv-top"><span class="pv-tag" id="pvTitle">ตัวอย่างที่ผู้รับจะเห็น</span></div>
+  <iframe id="pvFrame" title="ตัวอย่างที่ผู้รับจะเห็น"></iframe>
+  <div class="pv-bar"><button class="btn ghost" id="pvBack" type="button">กลับไปแก้ไข</button><button class="btn" id="pvNext" type="button">ต่อไป · ส่งให้ใคร</button></div>
 </div>
 
 <div class="scrim" id="whoSheet" hidden>
@@ -875,6 +888,17 @@ function bootOn(text){$('bootText').textContent=text;document.documentElement.cl
 function bootOff(){document.documentElement.classList.remove('boot','boot-pay')}
 // pressing Back on the Stripe page can restore this page from the browser's cache with the loading screen still up
 addEventListener('pageshow',e=>{if(e.persisted)bootOff()});
+/** Opens the recipient's page for this box over the sender page; "back" returns to exactly where they were. */
+function openPreview(){
+  savePreview();
+  const sent=step===5;
+  $('pvNext').hidden=sent;$('pvBack').textContent=sent?t('ปิดตัวอย่าง'):t('กลับไปแก้ไข');
+  $('pvFrame').src='/santa-box/recipient?preview=1&inframe=1&lang='+(window.I18N?I18N.lang:'th');
+  $('pvLayer').hidden=false;
+}
+function closePreview(){$('pvLayer').hidden=true;$('pvFrame').src='about:blank'} // about:blank also stops the music
+$('pvBack').onclick=closePreview;
+$('pvNext').onclick=()=>{closePreview();if(step<4)go(4);openWho()};
 /** What the preview page shows: this box as the recipient will get it. */
 function savePreview(){
   const plan=S.plan==='0'?'FREE':S.plan==='25'?'YEAR':'FOREVER';
@@ -1019,7 +1043,8 @@ if(API){
   // "see what they will see": the recipient page in preview mode shows THIS box (names, card, gift, photo, voice), not sample content.
   // It never opens the real box link, so the box's 7-day clock does not start.
   document.querySelectorAll('a[href^="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75"]').forEach(a=>{
-    a.href='/santa-box/recipient?preview=1';a.addEventListener('click',savePreview)});
+    a.href='/santa-box/recipient?preview=1';a.removeAttribute('target');
+    a.addEventListener('click',e=>{e.preventDefault();openPreview()})});
   resumeSent().catch(()=>{}).finally(bootOff);setTimeout(bootOff,20000);
 }
 

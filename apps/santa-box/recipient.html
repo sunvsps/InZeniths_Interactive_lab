@@ -902,6 +902,7 @@ const THM=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.
 const thaiWhen=iso=>window.I18N?I18N.date(iso):iso;
 function setText(sel,text){const el=document.querySelector(sel);if(el)el.textContent=text}
 function renderExpire(){
+  if(PREVIEW)return; // the sender's preview shows no time left
   const ex=document.querySelector('.expire'),b=ex.querySelector('b');if(!BOX)return;
   if(BOX.plan==='FOREVER'){ex.firstChild.nodeValue=t('กล่องนี้เก็บไว้')+' ';b.textContent=t('ตลอดไป');$('keepBtn').textContent=t('ดาวน์โหลด');return}
   if(!BOX.expiresAt)return;const ms=new Date(BOX.expiresAt)-Date.now(),d=Math.floor(ms/864e5),h=Math.floor(ms%864e5/36e5);
@@ -962,7 +963,10 @@ function protoSample(){if(SLUG||PREVIEW)return;const x=SAMPLE[window.I18N?I18N.l
 /* preview (?preview=1): the sender's own box, saved by the sender page just before opening this one */
 const PREVIEW=(()=>{if(SLUG)return null;try{if(!new URLSearchParams(location.search).has('preview'))return null;return JSON.parse(localStorage.getItem('santaPreview')||'null')}catch(e){return null}})();
 // drawn once the whole script has run (the music settings further down must exist first)
-if(PREVIEW){['transitBtn','skipBtn'].forEach(id=>$(id).hidden=true);document.querySelector('.vnote').hidden=true;setTimeout(()=>{showBox(PREVIEW);go('land')},0)}
+if(PREVIEW){['transitBtn','skipBtn'].forEach(id=>$(id).hidden=true);document.querySelector('.vnote').hidden=true;
+  // the sender is looking: hide what only the recipient can do (share, keep, send one back) and the time left
+  document.querySelector('#s-gift .row').hidden=true;$('backBtn').hidden=true;document.querySelector('#s-gift .expire').firstChild.nodeValue='';document.querySelector('#s-gift .expire b').hidden=true;document.querySelector('#s-gift .expire').childNodes[2].nodeValue='';
+  if(new URLSearchParams(location.search).has('inframe'))document.documentElement.classList.add('inframe');setTimeout(()=>{showBox(PREVIEW);go('land')},0)}
 protoSample();
 // language switch: redraw everything built from variables (static text is swapped by i18n.js)
 if(window.I18N)I18N.onChange(()=>{if(!SLUG&&!PREVIEW){applyGift();protoSample()}

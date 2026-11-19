@@ -204,6 +204,9 @@ window.I18N = (function () {
     // ---- recipient
     'หน้ารอส่ง': 'Wait',
     'กำลังเปิดกล่อง…': 'Opening your box…',
+    'ตัวอย่างที่ผู้รับจะเห็น': 'Preview: what they will see',
+    'กลับไปแก้ไข': 'Back to editing',
+    'ปิดตัวอย่าง': 'Close preview',
     'แตะที่ของขวัญเพื่อดูใกล้ๆ': 'Tap the gift for a closer look',
     'ลากเพื่อหมุน · บีบนิ้วหรือเลื่อนเพื่อซูม': 'Drag to turn · pinch or scroll to zoom',
     'ดูรูปความทรงจำ': 'View the memory photo',
