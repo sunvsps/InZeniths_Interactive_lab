@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { AppError, badRequest, conflict, forbidden, notFound } from '../../lib/errors.js';
 import { randomSlug, randomToken, sameHash, sha256 } from '../../lib/tokens.js';
 import { asLang, checkoutTitle } from './emails.js';
-import { CAMPAIGN, createGiftBody, type SantaPayload } from './schema.js';
+import { CAMPAIGN, createGiftBody, santaPayload, type SantaPayload } from './schema.js';
 import { applyPromo, newGiftTiming, onOpened, phaseOf, playableVoiceSeconds, quote, RULES, type QuoteError } from './rules.js';
 
 const UPLOAD_LIMITS = {
@@ -90,6 +90,25 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
   }
 
   r.get('/stats', async () => ({ boxes: await db.gift.count({ where: { campaign: CAMPAIGN } }) }));
+
+  /**
+   * The shared Christmas tree: the look of the newest boxes whose senders ticked "under the shared tree".
+   * Design only (colour, ribbon, accents): no ids, links, names, messages, files or dates.
+   */
+  const TREE_MAX = 60;
+  r.get('/tree', async (_request, reply) => {
+    const where = { campaign: CAMPAIGN, showUnderTree: true };
+    const [total, gifts] = await Promise.all([
+      db.gift.count({ where }),
+      db.gift.findMany({ where: { ...where, purgedAt: null }, select: { payload: true }, orderBy: { createdAt: 'desc' }, take: TREE_MAX }),
+    ]);
+    const boxes = gifts.flatMap((g) => {
+      const d = santaPayload.shape.design.safeParse((g.payload as { design?: unknown } | null)?.design);
+      return d.success ? [{ box: d.data.box, ribbon: d.data.ribbon, accents: d.data.accents }] : [];
+    });
+    reply.header('Cache-Control', 'public, max-age=60');
+    return { total, boxes };
+  });
 
   /** Look a discount code up before paying, so the page can show the new price. */
   async function promoPrice(code: string, baseSatang: number) {

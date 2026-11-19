@@ -257,6 +257,11 @@ html.gv .panel,html.gv .spin-hint,html.gv .stage-tag{display:none}
 .summary b{font-family:var(--f-lat);font-size:26px;font-weight:600;flex:none}
 .err{color:var(--accent);font-size:12px;margin:0}
 .note.center{text-align:center}
+/* sent screen: link to the shared Christmas tree */
+.treeCard{display:flex;align-items:center;gap:12px;background:#1C2340;color:#F6EFE9;border-radius:14px;padding:12px 14px;text-decoration:none;margin:4px 0}
+.treeCard small{display:block;font-size:11.5px;color:#C9C2D6}
+.treeCard b{display:block;font-weight:500;font-size:14px;color:#F4D9A6}
+.tc-art{flex:none;width:34px;height:40px;background:linear-gradient(#F2C14E,#F2C14E) 50% 0/6px 6px no-repeat,conic-gradient(from 160deg at 50% 8%,transparent 0 0,#2F6B4A 0 40deg,transparent 40deg) 50% 4px/34px 32px no-repeat,linear-gradient(#6B4A32,#6B4A32) 50% 36px/6px 4px no-repeat;border-radius:2px}
 .note.legal a,.photoRights a{color:inherit;text-underline-offset:2px}
 .photoRights{margin:4px 0 0}
 .btn.full{width:100%;flex:none}
@@ -373,6 +378,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <span class="status" id="doneStatus"><i></i>จะเด้งถึงแม่ 25 ธ.ค. เวลา 00:00</span>
         <div class="link"><code id="linkText">play.inzeniths.com/santa-box/b/x7k2p9</code><button id="copyBtn">คัดลอก</button></div>
         <p class="note">ลิงก์นี้เป็นตัวอย่าง ส่งให้ผู้รับทาง LINE หรือแชตไหนก็ได้</p>
+        <a class="treeCard" id="treeCard" href="/santa-box/tree" hidden><span class="tc-art" aria-hidden="true"></span><span><small>กล่องของคุณอยู่ใต้ต้นคริสต์มาสรวมแล้ว</small><b>ดูต้นคริสต์มาส →</b></span></a>
         <div class="row"><button class="btn ghost" id="teaserBtn">แชร์ภาพทีเซอร์</button><button class="btn ghost" id="againBtn">ห่อกล่องใหม่</button></div>
         <a class="textlink" href="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75" target="_blank" rel="noopener">ดูตัวอย่างตอนผู้รับเปิดกล่อง</a>
         <aside class="izp" aria-label="IN ZENITHS Interactive Lab">
@@ -460,8 +466,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <div class="field"><label class="lbl" for="wEmail">อีเมลของคุณ <em id="emailHint"></em></label><input type="email" id="wEmail" placeholder="you@example.com" autocomplete="email"><p class="err" id="emailErr" hidden>ใส่อีเมลให้ถูกต้อง เพื่อรับใบเสร็จและกู้ลิงก์คืนได้</p></div>
     <!-- next-Christmas reminder: hidden for now (always off); the API still emails people who ticked it earlier -->
     <label class="check" hidden><input type="checkbox" id="remind"><span><b>เตือนก่อนคริสต์มาสปีหน้า</b><small>อีเมลฟรีล่วงหน้า 7 วัน ขอเลิกรับได้ที่ support@inzeniths.com</small></span></label>
-    <!-- shared Christmas tree page isn't built yet: option hidden (always off) until it is -->
-    <label class="check" hidden><input type="checkbox" id="tree"><span><b>วางกล่องไว้ใต้ต้นคริสต์มาสรวม</b><small>โชว์แค่หน้าตากล่อง ไม่โชว์ชื่อ ข้อความ หรือเสียง</small></span></label>
+    <label class="check"><input type="checkbox" id="tree"><span><b>วางกล่องไว้ใต้ต้นคริสต์มาสรวม</b><small>โชว์แค่หน้าตากล่อง ไม่โชว์ชื่อ ข้อความ หรือเสียง</small></span></label>
     <div class="field"><label class="lbl" for="code">โค้ดส่วนลด <em>ไม่บังคับ</em></label><div class="codeRow"><input type="text" id="code" placeholder="ถ้ามี"><button class="btn ghost" id="codeBtn">ใช้โค้ด</button></div><p class="codeMsg" id="codeMsg" role="status" hidden></p></div>
     <div class="summary"><span id="sumPlan"></span><b id="sumPrice"></b></div>
     <p class="note center">จ่ายครั้งเดียว ไม่ใช่รายเดือน ไม่ตัดเงินซ้ำ</p>
@@ -980,6 +985,9 @@ function celebrate(){chime();A.pulse=0;tw('pulse',1,.7,.6);emitting=true;setTime
 function setStatus(fn){SENT_FN=fn;SENT_LINE=fn();$('doneStatus').lastChild.nodeValue=SENT_LINE}
 function showSent(link,status){
   setStatus(typeof status==='function'?status:()=>status);
+  // boxes placed under the shared tree get a link to it (remembered across the payment page)
+  let underTree=$('tree').checked;try{underTree=underTree||sessionStorage.getItem('santaTree')==='1'}catch(e){}
+  $('treeCard').hidden=!(API&&underTree);
   if(link){$('linkText').textContent=link.replace(/^https?:\/\//,'');$('linkText').dataset.full=link;
     $('linkText').closest('.link').nextElementSibling.textContent=t('ส่งลิงก์นี้ให้ผู้รับทาง LINE หรือแชตไหนก็ได้')}
   go(5);celebrate();
@@ -1041,6 +1049,7 @@ async function sendReal(){
           card:{message:$('msg').value.trim()},
           gift:{item:S.gift,engraving:S.gift==='orn'?(engraveText()||undefined):undefined,coupon:S.coupon?($('coupon').value.trim()||null):null},
           music:S.song}});
+      try{sessionStorage.setItem('santaTree',$('tree').checked?'1':'')}catch(e){}
       API.remember(created.slug,{token:created.senderToken,link:created.link,to,design:{box:DESIGN.box,rib:DESIGN.rib,acc:DESIGN.acc.slice()},gift:S.gift});
     }
     if(S.plan==='0'){btn.disabled=false;btn.textContent=label;bootOff();showSent(created.link,()=>t('ซานต้าออกเดินทางแล้ว · ถึง{to}ในอีก 25 ชม.',{to:I18N_SPACE(to)}));created=null;return}

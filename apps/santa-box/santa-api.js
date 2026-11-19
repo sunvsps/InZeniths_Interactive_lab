@@ -61,6 +61,8 @@ window.SantaAPI = (function () {
     enabled: !!base,
     base: base,
     stats: function () { return call('GET', '/stats'); },
+    /** The shared Christmas tree: total boxes and the look of the newest ones (no names or links). */
+    tree: function () { return call('GET', '/tree'); },
     upload: upload,
     send: function (body) { return call('POST', '/gifts', body); },
     get: function (slug) { return call('GET', '/gifts/' + slug); },

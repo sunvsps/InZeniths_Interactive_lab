@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- API address (see santa-api.js). Empty = prototype mode with sample boxes. Production: https://api.inzeniths.com -->
+<meta name="santa-api" content="https://api.inzeniths.com">
+<title>Santa Box · ต้นคริสต์มาสของทุกคน</title>
+<meta name="description" content="ต้นคริสต์มาสรวมของ Santa Box: กล่องของขวัญจากทุกคนวางอยู่ใต้ต้นเดียวกัน">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600&family=IBM+Plex+Sans+Thai:wght@400;500&family=Noto+Serif+Thai:wght@500&display=swap">
+<style>
+[hidden]{display:none!important}
+:root{
+  --ink:#2A2420; --cream:#F6EFE9; --muted:#C9C2D6; --accent:#B3202E; --gold:#F4D9A6;
+  --f-lat:'Cormorant Garamond','Times New Roman',serif;
+  --f-serif:'Noto Serif Thai','Cormorant Garamond',serif;
+  --f-sans:'IBM Plex Sans Thai','Noto Sans Thai',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:#121A33;color:var(--cream);font-family:var(--f-sans);font-size:15px;line-height:1.5}
+button{font:inherit;cursor:pointer}
+a{color:inherit}
+/* night sky behind the 3D scene (same as the recipient page after opening) */
+#sky{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(1.5px 1.5px at 12% 14%,#fff 60%,transparent),radial-gradient(1px 1px at 28% 24%,#fff 60%,transparent),radial-gradient(1.5px 1.5px at 46% 9%,#fff 60%,transparent),
+    radial-gradient(1px 1px at 63% 20%,#fff 60%,transparent),radial-gradient(1.5px 1.5px at 82% 13%,#fff 60%,transparent),radial-gradient(1px 1px at 92% 30%,#fff 60%,transparent),
+    radial-gradient(1px 1px at 8% 34%,#fff 60%,transparent),radial-gradient(1px 1px at 38% 36%,#fff 60%,transparent),radial-gradient(1px 1px at 72% 38%,#fff 60%,transparent),
+    linear-gradient(180deg,#0F1630 0%,#1B2546 32%,#3A3F66 55%,#6E6A8C 72%,#9C97B2 100%)}
+#sky .moon{position:absolute;top:calc(150px + 4vh);right:9%;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 38% 36%,#FFFBEA,#F3E2B0 70%);box-shadow:0 0 30px 10px rgba(255,236,180,.3)}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:1;touch-action:none;cursor:grab}
+#gl:active{cursor:grabbing}
+
+.hdr{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:14px max(18px,env(safe-area-inset-right,0px)) 0 max(18px,env(safe-area-inset-left,0px))}
+.logo{font-family:var(--f-lat);font-style:italic;font-weight:600;font-size:22px;color:var(--gold);text-decoration:none}
+.lang{display:inline-flex;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.1);padding:2px}
+.lang button{border:0;background:none;font:600 11px/1 var(--f-sans);letter-spacing:.04em;padding:6px 9px;border-radius:999px;color:var(--muted)}
+.lang button[aria-pressed="true"]{background:var(--cream);color:var(--ink)}
+
+.top{position:fixed;top:58px;left:0;right:0;z-index:4;text-align:center;pointer-events:none;padding:0 20px}
+.eyebrow{font-size:11px;letter-spacing:.28em;color:var(--muted);margin:0}
+.top h1{font-family:var(--f-serif);font-weight:500;font-size:22px;margin:4px 0 0;color:var(--cream)}
+.top .sub{font-size:12.5px;color:var(--muted);margin:2px 0 0}
+
+.bot{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:0 max(18px,env(safe-area-inset-left,0px)) calc(12px + env(safe-area-inset-bottom,0px))}
+.hint{font-size:11.5px;color:#4E4866;background:rgba(255,255,255,.55);border-radius:999px;padding:4px 12px;transition:opacity .4s}
+.hint.gone{opacity:0}
+.info{display:flex;align-items:center;gap:12px;background:#FBF8F4;color:var(--ink);border-radius:999px;padding:8px 18px 8px 10px;max-width:100%;box-shadow:0 10px 24px -12px rgba(0,0,0,.5);animation:pop .3s cubic-bezier(.2,1.3,.4,1) both}
+.info .sw{flex:none;width:28px;height:28px;border-radius:7px;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.info .sw i{position:absolute;left:50%;top:0;bottom:0;width:6px;margin-left:-3px}
+.info b{display:block;font-weight:500;font-size:13px;line-height:1.3}
+.info small{display:block;font-size:11.5px;color:#8A7B74;line-height:1.3}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.95)}}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;padding:14px 28px;min-width:220px;font-size:15px;font-weight:500;
+  background:var(--accent);color:#fff;text-decoration:none;box-shadow:0 10px 24px -12px rgba(179,32,46,.7)}
+.copy{margin:0;font-size:10px;letter-spacing:.04em;color:#5E5870;text-align:center}
+.copy a{text-underline-offset:2px}
+.nogl{position:fixed;top:45%;left:0;right:0;text-align:center;z-index:3;color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion:reduce){.info{animation:none}}
+</style>
+</head>
+<body>
+<div id="sky" aria-hidden="true"><i class="moon"></i></div>
+<canvas id="gl" aria-label="ต้นคริสต์มาสสามมิติ มีกล่องของขวัญวางอยู่ใต้ต้น"></canvas>
+
+<header class="hdr">
+  <a class="logo" href="/santa-box/">Santa Box</a>
+  <div class="lang" data-lang-switch></div>
+</header>
+
+<div class="top">
+  <p class="eyebrow">ต้นคริสต์มาสของทุกคน</p>
+  <h1 id="headline" aria-live="polite">&nbsp;</h1>
+  <p class="sub" id="subline"></p>
+</div>
+
+<div class="bot">
+  <div class="info" id="info" hidden><span class="sw" id="infoSw"><i id="infoRib"></i></span><span><b id="infoName"></b><small id="infoAcc"></small></span></div>
+  <span class="hint" id="hint">↻ ลากเพื่อหมุนรอบต้นไม้ · แตะกล่องเพื่อดูใกล้ๆ</span>
+  <a class="btn" href="/santa-box/">ห่อกล่องของคุณ</a>
+  <p class="copy">© IN ZENITHS · <a href="/santa-box/privacy">นโยบายความเป็นส่วนตัว</a></p>
+</div>
+
+<script src="/santa-box/i18n.js"></script>
+<script src="/santa-box/santa-api.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const t=(window.I18N&&I18N.t)||((s,v)=>s.replace(/\{(\w+)\}/g,(_,k)=>v&&v[k]!=null?v[k]:''));
+const API=window.SantaAPI&&SantaAPI.enabled?SantaAPI:null;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---- box catalog (same as sender and recipient pages) ---- */
+const BOX_COLORS=[
+  {n:'ขาวหิมะ',c:'#F4F1EC'},{n:'แดงคลาสสิก',c:'#A3202B'},{n:'เขียวสน',c:'#2F5D46'},
+  {n:'ทองอร่าม',c:'#C9A24A',metal:.45},{n:'ขนมปังขิง',c:'#A8714B'},{n:'กรมท่าคืนหนาว',c:'#1F2B45'}];
+const RIBBONS=[
+  {n:'แดงซาติน',c:'#9E1B27',r:.3,m:.15},{n:'ทองซาติน',c:'#D4AF5A',r:.28,m:.55},{n:'แคนดี้เคน',c:'#FFFFFF',r:.35,m:.05,stripe:true},
+  {n:'ไหมมรกต',c:'#2E6B4F',r:.3,m:.2},{n:'กำมะหยี่แดง',c:'#7A1420',r:.95,m:0},{n:'เงินประกาย',c:'#D9DBE0',r:.25,m:.7}];
+const ACCENTS={b:'กระดิ่ง',p:'ลูกสน',h:'ฮอลลี่',c:'อบเชย',l:'ไฟกะพริบ'};
+const isHex=v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v);
+const boxOf=v=>isHex(v)?{n:'สีที่เลือกเอง',c:v}:(BOX_COLORS[v]||BOX_COLORS[0]);
+const ribOf=v=>isHex(v)?{n:'สีที่เลือกเอง',c:v,r:.3,m:.15}:(RIBBONS[v]||RIBBONS[0]);
+
+/* ---- what the page shows: total + the newest boxes' looks ---- */
+let TOTAL=null;
+function headline(){
+  if(TOTAL==null)return;
+  $('headline').textContent=TOTAL?t('ใต้ต้นนี้มี {n} กล่อง',{n:TOTAL.toLocaleString('en-US')}):t('ยังไม่มีกล่องใต้ต้นนี้');
+  $('subline').textContent=TOTAL?t('โชว์แค่หน้าตากล่อง ไม่มีชื่อหรือข้อความ'):t('วางกล่องแรกใต้ต้นไม้ แล้วไฟบนต้นจะสว่างขึ้น');
+}
+if(window.I18N)I18N.onChange(()=>{headline();if(PICK)showInfo(PICK.userData.design)});
+
+/** Prototype mode (no API): a handful of sample boxes. */
+function sampleBoxes(){let s=11;const r=()=>{s=(s*9301+49297)%233280;return s/233280};
+  return Array.from({length:26},()=>({box:r()<.2?['#b39ddb','#e7b8c8','#4c8c9e'][Math.floor(r()*3)]:Math.floor(r()*6),ribbon:Math.floor(r()*6),accents:r()<.5?['b']:['h','p']}))}
+
+/* ================= 3D ================= */
+let renderer=null;
+try{renderer=new THREE.WebGLRenderer({canvas:$('gl'),antialias:true,alpha:true})}catch(e){}
+if(!renderer){const n=document.createElement('p');n.className='nogl';n.textContent=t('เครื่องนี้แสดงภาพ 3D ไม่ได้ ลองเปิดด้วย Safari หรือ Chrome');document.body.append(n)}
+const C=h=>new THREE.Color(h).convertSRGBToLinear();
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const tx=new THREE.CanvasTexture(c);tx.encoding=THREE.sRGBEncoding;return tx}
+function roundedBox(W,H,D,r,b){
+  const w=W-2*b,d=D-2*b,x=-w/2,y=-d/2,s=new THREE.Shape();
+  s.moveTo(x+r,y);s.lineTo(x+w-r,y);s.quadraticCurveTo(x+w,y,x+w,y+r);s.lineTo(x+w,y+d-r);s.quadraticCurveTo(x+w,y+d,x+w-r,y+d);
+  s.lineTo(x+r,y+d);s.quadraticCurveTo(x,y+d,x,y+d-r);s.lineTo(x,y+r);s.quadraticCurveTo(x,y,x+r,y);
+  const g=new THREE.ExtrudeGeometry(s,{depth:H-2*b,bevelEnabled:true,bevelThickness:b,bevelSize:b,bevelSegments:3,curveSegments:6});
+  g.rotateX(-Math.PI/2);g.translate(0,b,0);g.computeVertexNormals();return g;
+}
+const glowTex=canvasTex(64,64,(g)=>{const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.25,'rgba(255,240,205,.85)');gr.addColorStop(1,'rgba(255,220,160,0)');g.fillStyle=gr;g.fillRect(0,0,64,64)});
+
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(35,1,.1,100);
+scene.fog=new THREE.Fog(0x2A2F52,14,30);
+const world=new THREE.Group();scene.add(world);           // tree + boxes: this spins when dragged
+const TREE_H=5.3,TREE_R=1.95,TREE_Y=.6;                   // cone from y=TREE_Y (base) to TREE_Y+TREE_H (tip)
+const radiusAt=y=>TREE_R*(1-(y-TREE_Y)/TREE_H);
+let lightPts=null,lightData=[],starGlow=null,star=null,snow=null,snowData=[],boxGroup=null;
+let LIGHTS_ON=1;                                          // dims when nobody has placed a box yet
+
+if(renderer){
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  const envTex=canvasTex(256,128,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#FFF4DE');gr.addColorStop(.5,'#8C86A8');gr.addColorStop(1,'#2A2F52');g.fillStyle=gr;g.fillRect(0,0,w,h);g.fillStyle='#FFE6B8';g.fillRect(90,20,70,30)});
+  scene.environment=new THREE.PMREMGenerator(renderer).fromEquirectangular(envTex).texture;
+
+  scene.add(new THREE.HemisphereLight(0x9FA8D8,0x3A3550,.55));
+  const moon=new THREE.DirectionalLight(0xC9D2FF,.45);moon.position.set(-4,8,5);scene.add(moon);
+  const glowLight=new THREE.PointLight(0xFFC27A,1.4,7,1.6);glowLight.position.set(0,1.4,1.2);world.add(glowLight); // the tree's lights warming the boxes
+
+  // snowy ground and a soft pool of light under the tree
+  const ground=new THREE.Mesh(new THREE.CircleGeometry(40,48),new THREE.MeshStandardMaterial({color:C('#C9C5DA'),roughness:1}));ground.rotation.x=-Math.PI/2;scene.add(ground);
+  const pool=new THREE.Mesh(new THREE.CircleGeometry(3.6,40),new THREE.MeshBasicMaterial({map:glowTex,color:0xFFD9A0,transparent:true,opacity:.45,depthWrite:false}));pool.rotation.x=-Math.PI/2;pool.position.y=.01;scene.add(pool);
+
+  /* ---- the village behind (same style as the recipient page) ---- */
+  {const wall=new THREE.MeshStandardMaterial({color:C('#3D3A52'),roughness:.9}),roofR=new THREE.MeshStandardMaterial({color:C('#6E2A33'),roughness:.8}),
+      roofG=new THREE.MeshStandardMaterial({color:C('#2C4A42'),roughness:.8}),snowM=new THREE.MeshStandardMaterial({color:C('#F4F1EC'),roughness:1}),
+      pine=new THREE.MeshStandardMaterial({color:C('#1F3D33'),roughness:.9}),winMat=new THREE.MeshBasicMaterial({color:C('#FFC86B')});
+    const winG=new THREE.PlaneGeometry(.16,.2);
+    const house=(x,z,w,h,ry,roof)=>{const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=ry;
+      const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,w*.8),wall);body.position.y=h/2;g.add(body);
+      const r=new THREE.Mesh(new THREE.ConeGeometry(w*.78,w*.62,4),roof);r.rotation.y=Math.PI/4;r.position.y=h+w*.31;r.scale.z=.85;g.add(r);
+      const cap=new THREE.Mesh(new THREE.ConeGeometry(w*.42,w*.3,4),snowM);cap.rotation.y=Math.PI/4;cap.position.y=h+w*.47;cap.scale.z=.85;g.add(cap);
+      [[-w*.22,h*.6],[w*.22,h*.6],[0,h*.25]].forEach(([wx,wy])=>{const m=new THREE.Mesh(winG,winMat);m.position.set(wx,wy,w*.401);g.add(m)});
+      scene.add(g);return g};
+    const pineTree=(x,z,s)=>{const g=new THREE.Group();g.position.set(x,0,z);
+      [[.55,.9,.45],[.42,.7,.85],[.28,.5,1.2]].forEach(([r,h,y])=>{const c=new THREE.Mesh(new THREE.ConeGeometry(r*s,h*s,8),pine);c.position.y=y*s;g.add(c)});
+      const tip=new THREE.Mesh(new THREE.ConeGeometry(.12*s,.22*s,8),snowM);tip.position.y=1.42*s;g.add(tip);scene.add(g)};
+    house(-3.4,-6.4,1.4,1.05,.25,roofR);house(3.5,-6.6,1.5,1.1,-.25,roofG);house(-6.2,-5.4,1.1,.9,.55,roofG);house(6.3,-5.6,1.15,.95,-.5,roofR);
+    house(-1.2,-8.6,1.2,1,.1,roofG);house(1.6,-8.9,1.3,1.05,-.1,roofR);
+    pineTree(-4.9,-5.6,.9);pineTree(5,-5.8,.95);pineTree(-2.2,-7.4,.8);pineTree(2.6,-7.6,.85);pineTree(-7.5,-4,.8);pineTree(7.6,-4.2,.8);
+  }
+
+  /* ---- the big tree: dark cone, hundreds of warm fairy lights, red swags, red bows, gold baubles, star ---- */
+  {const cone=new THREE.Mesh(new THREE.ConeGeometry(TREE_R,TREE_H,48,8,true),new THREE.MeshStandardMaterial({color:C('#14301F'),roughness:.95,side:THREE.DoubleSide}));
+    cone.position.y=TREE_Y+TREE_H/2;world.add(cone);
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.22,.26,.7,16),new THREE.MeshStandardMaterial({color:C('#5A3E2B'),roughness:.9}));trunk.position.y=.35;world.add(trunk);
+
+    // fairy lights spread evenly over the cone's surface (area-weighted), each with its own twinkle
+    const N=1300,pos=new Float32Array(N*3),col=new Float32Array(N*3);let s=5;const rnd=()=>{s=(s*9301+49297)%233280;return s/233280};
+    for(let i=0;i<N;i++){const f=Math.sqrt(rnd()),y=TREE_Y+TREE_H*(1-f)+.02,r=radiusAt(y)+.035,a=rnd()*Math.PI*2;
+      pos[i*3]=Math.cos(a)*r;pos[i*3+1]=y;pos[i*3+2]=Math.sin(a)*r;lightData.push({sp:1.2+rnd()*2.4,ph:rnd()*6.28,b:.55+rnd()*.45})}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));
+    lightPts=new THREE.Points(g,new THREE.PointsMaterial({size:.26,map:glowTex,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));world.add(lightPts);
+
+    // red satin swags: each tier is pinned at k points around the tree and hangs between them
+    const satin=new THREE.MeshStandardMaterial({color:C('#C1121F'),roughness:.32,metalness:.12,envMapIntensity:.9});
+    const pins=[];
+    [[.8,5,.22],[.58,7,.3],[.34,9,.38]].forEach(([h,k,sag])=>{const yPin=TREE_Y+TREE_H*h,pts=[];
+      for(let i=0;i<=200;i++){const a=i/200*Math.PI*2,y=yPin-sag*Math.pow(Math.sin(k*a/2),2),r=radiusAt(y)+.07;pts.push(new THREE.Vector3(Math.cos(a)*r,y,Math.sin(a)*r))}
+      world.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts,true),320,.055,8,true),satin));
+      for(let j=0;j<k;j++)pins.push({a:j/k*Math.PI*2,y:yPin})});
+
+    // a red bow at every pin: two loops, a knot and two short tails, facing outwards
+    const loopG=new THREE.TorusGeometry(.11,.032,8,20),knotG=new THREE.SphereGeometry(.05,12,10),tailG=new THREE.BoxGeometry(.05,.2,.012);
+    pins.forEach(p=>{const b=new THREE.Group(),r=radiusAt(p.y)+.1;b.position.set(Math.cos(p.a)*r,p.y,Math.sin(p.a)*r);b.rotation.y=-p.a+Math.PI/2;
+      [-1,1].forEach(sd=>{const l=new THREE.Mesh(loopG,satin);l.scale.set(1,.62,.5);l.position.x=sd*.1;l.rotation.z=sd*.35;b.add(l);
+        const tl=new THREE.Mesh(tailG,satin);tl.position.set(sd*.045,-.11,0);tl.rotation.z=sd*.3;b.add(tl)});
+      b.add(new THREE.Mesh(knotG,satin));b.rotation.x=-.25;world.add(b)});
+
+    // gold baubles between the swags
+    const gold=new THREE.MeshStandardMaterial({color:C('#D9B45A'),metalness:1,roughness:.22,envMapIntensity:1.3}),goldB=new THREE.MeshStandardMaterial({color:C('#C59A3C'),metalness:1,roughness:.35,envMapIntensity:1.1});
+    const bG=new THREE.SphereGeometry(1,18,14);
+    for(let i=0;i<26;i++){const f=.18+rnd()*.78,y=TREE_Y+TREE_H*(1-f),a=rnd()*Math.PI*2,sz=.07+rnd()*.06,r=radiusAt(y)+sz*.7;
+      const m=new THREE.Mesh(bG,i%3?gold:goldB);m.scale.setScalar(sz);m.position.set(Math.cos(a)*r,y,Math.sin(a)*r);world.add(m)}
+
+    // eight-point star on top, glowing
+    const sh=new THREE.Shape();for(let i=0;i<16;i++){const a=i*Math.PI/8+Math.PI/2,rr=i%2?.13:(i%4?.24:.36);const x=Math.cos(a)*rr,y=Math.sin(a)*rr;i?sh.lineTo(x,y):sh.moveTo(x,y)}
+    star=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:.06,bevelEnabled:true,bevelThickness:.02,bevelSize:.02,bevelSegments:2}),
+      new THREE.MeshStandardMaterial({color:C('#F2C14E'),emissive:C('#FFD98A'),emissiveIntensity:.9,metalness:.6,roughness:.3}));
+    star.position.set(0,TREE_Y+TREE_H+.22,-.03);world.add(star);
+    starGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0xFFE2A0,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+    starGlow.scale.setScalar(1.8);starGlow.position.copy(star.position);world.add(starGlow);
+  }
+
+  /* ---- gently falling snow ---- */
+  {const N=160,pos=new Float32Array(N*3),g=new THREE.BufferGeometry();let s=3;const rnd=()=>{s=(s*9301+49297)%233280;return s/233280};
+    for(let i=0;i<N;i++){pos[i*3]=(rnd()-.5)*16;pos[i*3+1]=rnd()*9;pos[i*3+2]=(rnd()-.5)*10;snowData.push({v:.25+rnd()*.35,ph:rnd()*6.28})}
+    g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    snow=new THREE.Points(g,new THREE.PointsMaterial({size:.09,map:glowTex,color:0xffffff,transparent:true,opacity:.85,depthWrite:false}));scene.add(snow)}
+
+  boxGroup=new THREE.Group();world.add(boxGroup);
+}
+
+/* ---- boxes under the tree: shared shapes, one look per box ---- */
+const UNIT={};
+if(renderer){UNIT.body=roundedBox(1,.72,1,.06,.02);UNIT.lid=roundedBox(1.08,.17,1.08,.06,.02);
+  UNIT.ribA=new THREE.BoxGeometry(.17,.74,1.012);UNIT.ribB=new THREE.BoxGeometry(1.012,.74,.17);
+  UNIT.lidA=new THREE.BoxGeometry(.18,.19,1.092);UNIT.lidB=new THREE.BoxGeometry(1.092,.19,.18);
+  UNIT.loop=new THREE.TorusGeometry(.15,.045,8,18);UNIT.knot=new THREE.SphereGeometry(.07,10,8)}
+const stripeTex=renderer?canvasTex(64,64,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#B3202E';for(let i=-2;i<4;i++){g.beginPath();g.moveTo(i*24,0);g.lineTo(i*24+12,0);g.lineTo(i*24+12+h,h);g.lineTo(i*24+h,h);g.fill()}}):null;
+if(stripeTex){stripeTex.wrapS=stripeTex.wrapT=THREE.RepeatWrapping;stripeTex.repeat.set(2,2)}
+function makeBox(d){
+  const bc=boxOf(d.box),rb=ribOf(d.ribbon),g=new THREE.Group();
+  const bm=new THREE.MeshStandardMaterial({color:C(bc.c),roughness:bc.metal?.45:.75,metalness:bc.metal||0,envMapIntensity:.6});
+  const rm=new THREE.MeshStandardMaterial({color:C(rb.c),roughness:rb.r,metalness:rb.m,envMapIntensity:1,map:rb.stripe?stripeTex:null});
+  const add=(geo,m,y)=>{const x=new THREE.Mesh(geo,m);x.position.y=y||0;g.add(x);return x};
+  add(UNIT.body,bm);add(UNIT.lid,bm,.66);add(UNIT.ribA,rm,.37);add(UNIT.ribB,rm,.37);add(UNIT.lidA,rm,.745);add(UNIT.lidB,rm,.745);
+  [-1,1].forEach(s=>{const l=add(UNIT.loop,rm,.9);l.position.x=s*.13;l.rotation.set(Math.PI/2*.15,0,s*.5);l.scale.set(1,.7,.55)});
+  add(UNIT.knot,rm,.85);
+  g.userData.design=d;return g;
+}
+function placeBoxes(list){
+  if(!boxGroup)return;boxGroup.clear();
+  let s=17;const rnd=()=>{s=(s*9301+49297)%233280;return s/233280};
+  // rings around the trunk, front-most first so the newest boxes are easiest to see
+  const rings=[1.95,2.55,3.15,3.75];let i=0;
+  for(const R of rings){const cap=Math.floor(2*Math.PI*R/.78);for(let k=0;k<cap&&i<list.length;k++,i++){
+    const a=Math.PI/2+(k%2?1:-1)*Math.ceil(k/2)*(2*Math.PI/cap)+(rnd()-.5)*.12,sz=.46+rnd()*.2,rr=R+(rnd()-.5)*.18;
+    const b=makeBox(list[i]);b.scale.setScalar(sz);b.position.set(Math.cos(a)*rr,0,Math.sin(a)*rr);b.rotation.y=rnd()*Math.PI*2;
+    b.userData.base={y:0,s:sz};boxGroup.add(b)}}
+}
+
+/* ---- tap a box: it lifts and glows; a label shows only its look ---- */
+let PICK=null;const ray=renderer?new THREE.Raycaster():null,ndc=renderer?new THREE.Vector2():null;
+function showInfo(d){const bc=boxOf(d.box),rb=ribOf(d.ribbon);
+  $('infoSw').style.background=bc.c;$('infoRib').style.background=rb.stripe?'repeating-linear-gradient(45deg,#B3202E 0 3px,#fff 3px 6px)':rb.c;
+  $('infoName').textContent=t('กล่อง{name} · โบว์{rib}',{name:t(bc.n),rib:t(rb.n)});
+  const acc=(d.accents||[]).map(k=>ACCENTS[k]).filter(Boolean).map(n=>t(n));
+  $('infoAcc').textContent=acc.length?acc.join(' · '):t('ไม่มีของตกแต่ง');$('info').hidden=false}
+function pick(e){if(!ray||!boxGroup)return;const r=$('gl').getBoundingClientRect();
+  ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
+  const hit=ray.intersectObject(boxGroup,true)[0];let o=hit&&hit.object;while(o&&!o.userData.design)o=o.parent;
+  PICK=o||null;if(PICK)showInfo(PICK.userData.design);else $('info').hidden=true}
+
+/* ---- drag to walk around the tree ---- */
+let spinY=0,spinV=0,drag=null,touched=false,tapAt=null;
+const cv=$('gl');
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y0:spinY};tapAt={x:e.clientX,y:e.clientY,t:performance.now()};touched=true;$('hint').classList.add('gone');cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;const ny=drag.y0+(e.clientX-drag.x)*.008;spinV=ny-spinY;spinY=ny});
+const up=e=>{if(tapAt&&performance.now()-tapAt.t<350&&Math.hypot(e.clientX-tapAt.x,e.clientY-tapAt.y)<8)pick(e);drag=null;tapAt=null};
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',()=>{drag=null;tapAt=null});
+
+/* ---- size and loop ---- */
+let dist=12;const target=new THREE.Vector3(0,2.9,0);
+function resize(){if(!renderer)return;const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;
+  // fit the tree's height; on narrow phones let the outer ring of boxes run off the sides rather than shrinking the tree
+  // the tree must fit between the headline (top ~130px) and the button area (bottom ~170px), whatever the screen shape
+  const tn=Math.tan(camera.fov*Math.PI/360),free=Math.max(.45,(h-300)/h);
+  dist=Math.max(8.6/(2*tn*free),5.2/(2*tn*camera.aspect));
+  // nudge the tree down a little so it sits in the middle of that free band
+  target.y=2.9+(170-130)/2/h*2*tn*dist;camera.updateProjectionMatrix();
+  scene.fog.near=dist+2;scene.fog.far=dist+22}
+addEventListener('resize',resize);resize();
+let last=performance.now(),T=0;
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;T+=dt;
+  if(renderer){
+    if(!drag){spinY+=spinV;spinV*=.94;if(!touched&&!reduce)spinY+=dt*.08}
+    world.rotation.y=spinY;
+    camera.position.set(0,target.y+dist*Math.sin(.1),dist*Math.cos(.1));camera.lookAt(target);
+    // twinkle: each light breathes at its own pace; dimmer while the tree is empty
+    const c=lightPts.geometry.attributes.color.array;
+    lightData.forEach((L,i)=>{const k=LIGHTS_ON*L.b*(reduce?.85:.55+.45*Math.sin(T*L.sp+L.ph));c[i*3]=k;c[i*3+1]=k*.84;c[i*3+2]=k*.5});
+    lightPts.geometry.attributes.color.needsUpdate=true;
+    starGlow.material.opacity=(.35+.65*LIGHTS_ON)*(.8+.2*Math.sin(T*1.6));star.rotation.y=Math.sin(T*.5)*.25;
+    if(!reduce){const p=snow.geometry.attributes.position.array;snowData.forEach((S,i)=>{p[i*3+1]-=S.v*dt;p[i*3]+=Math.sin(T*.7+S.ph)*.004;if(p[i*3+1]<0)p[i*3+1]=9});snow.geometry.attributes.position.needsUpdate=true}
+    // the picked box lifts a little
+    if(boxGroup)boxGroup.children.forEach(b=>{const to=b===PICK?.35:0;b.position.y+=(to-b.position.y)*.15;const sc=b.userData.base.s*(b===PICK?1.18:1);b.scale.setScalar(b.scale.x+(sc-b.scale.x)*.15)});
+    renderer.render(scene,camera);
+  }
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+/* ---- data ---- */
+function show(total,boxes){TOTAL=total;LIGHTS_ON=total?1:.25;headline();placeBoxes(boxes)}
+if(API)API.tree().then(r=>show(r.total||0,r.boxes||[])).catch(()=>{TOTAL=null;$('headline').textContent=t('โหลดต้นคริสต์มาสไม่สำเร็จ');$('subline').textContent=t('ตรวจอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง')});
+else{const s=sampleBoxes();show(s.length,s)}
+})();
+</script>
+</body>
+</html>
