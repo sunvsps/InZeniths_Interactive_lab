@@ -36,12 +36,27 @@ const schema = z
 
     /** memory = files kept in this process (dev and tests only); r2 = Cloudflare R2 (any S3-compatible store). */
     STORAGE_DRIVER: z.enum(['memory', 'r2']).default('memory'),
-    R2_ACCOUNT_ID: z.string().optional(),
+    /** Just the ID. A pasted endpoint (https://<id>.r2.cloudflarestorage.com/...) is cut back to the ID. */
+    R2_ACCOUNT_ID: z
+      .string()
+      .optional()
+      .transform((v) =>
+        v
+          ?.trim()
+          .replace(/^[a-z]+:\/\//i, '')
+          .replace(/\.r2\.cloudflarestorage\.com.*$/i, '')
+          .replace(/\/.*$/, '') || undefined,
+      ),
     R2_ACCESS_KEY_ID: z.string().optional(),
     R2_SECRET_ACCESS_KEY: z.string().optional(),
     R2_BUCKET: z.string().optional(),
     /** Override for other S3-compatible stores. Default: https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com */
-    R2_ENDPOINT: z.string().url().optional(),
+    R2_ENDPOINT: z
+      .string()
+      .trim()
+      .url()
+      .optional()
+      .transform((v) => v?.replace(/\/+$/, '')),
 
     /** fake = a local "pay" link that marks the payment paid (never in production); stripe = Stripe Checkout. */
     PAYMENT_DRIVER: z.enum(['fake', 'stripe']).default('fake'),
@@ -68,6 +83,9 @@ const schema = z
     need(env.STORAGE_DRIVER === 'r2', ['R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET'], 'STORAGE_DRIVER=r2');
     if (env.STORAGE_DRIVER === 'r2' && !env.R2_ACCOUNT_ID && !env.R2_ENDPOINT) {
       ctx.addIssue({ code: 'custom', path: ['R2_ACCOUNT_ID'], message: 'R2_ACCOUNT_ID or R2_ENDPOINT is required when STORAGE_DRIVER=r2' });
+    }
+    if (env.R2_ACCOUNT_ID && !/^[a-z0-9]+$/i.test(env.R2_ACCOUNT_ID)) {
+      ctx.addIssue({ code: 'custom', path: ['R2_ACCOUNT_ID'], message: 'should be the account ID only, e.g. ea308ea1…' });
     }
     need(env.PAYMENT_DRIVER === 'stripe', ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'], 'PAYMENT_DRIVER=stripe');
     need(env.MAIL_DRIVER === 'brevo', ['BREVO_API_KEY'], 'MAIL_DRIVER=brevo');
