@@ -54,6 +54,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .sample{font-size:11px;font-weight:500;line-height:1;padding:5px 9px;border-radius:999px;background:var(--accent);color:#fff;white-space:nowrap}
 @media (max-width:520px){.brand{flex-direction:column;align-items:flex-start;gap:2px}.sample{font-size:10px;padding:3px 7px}}
 .logo,.pill{white-space:nowrap}
+#musicBtn{min-width:0;max-width:42vw}#musicBtn .nm{overflow:hidden;text-overflow:ellipsis;min-width:0}
 @media (max-width:400px){.hdr-r .pill{padding:6px 9px;font-size:11px}.lang button{padding:5px 7px}}
 /* TH | EN switch (i18n.js fills it) */
 .lang{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:rgba(251,247,240,.75);padding:2px}
@@ -197,7 +198,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
     <div class="hdr-r">
       <div class="lang" data-lang-switch></div>
       <button class="pill" id="transitBtn">หน้ารอส่ง</button>
-      <button class="pill" id="musicBtn" aria-pressed="false"><span class="eq"><i></i><i></i><i></i></span>Silent Night</button>
+      <button class="pill" id="musicBtn" aria-pressed="false"><span class="eq"><i></i><i></i><i></i></span><span class="nm">Silent Night</span></button>
     </div>
   </header>
 
@@ -363,7 +364,7 @@ catch(e){const n=document.createElement('p');n.className='nogl';n.textContent='�
 const C=h=>new THREE.Color(h).convertSRGBToLinear();
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(32,1,.1,100);
-const A={untie:0,bowGone:0,ribbonDrop:0,lidOpen:0,glow:0,orn:0,cam:0};
+const A={untie:0,bowGone:0,ribbonDrop:0,lidOpen:0,glow:0,orn:0,cam:0,tails:0,card3:0};
 // camera fit: the box is framed inside the empty band between this step's top text and bottom controls
 let F={top:80,bottom:600},FIT=null,cur=null;
 function fitView(){
@@ -376,11 +377,13 @@ function fitView(){
   F={top,bottom};
   const tall=step==='card'||step==='gift',lo=-.1,hi=tall?2.95:2.1,ext=hi-lo,cy=(hi+lo)/2;
   const t=Math.tan(camera.fov*Math.PI/360),band=(bottom-top)/H;
-  const d=Math.max(ext*1.4/(band*2*t),4.2/(2*t*camera.aspect),6);
+  // once open, the lid rests beside the box and the ribbon tails lie either side: frame a wider scene
+  const wide=(step==='card'||step==='gift')?5.6:4.2;
+  const d=Math.max(ext*1.4/(band*2*t),wide/(2*t*camera.aspect),6);
   const visH=2*t*d,f=((top+bottom)/2-H/2)/H;
   FIT={d,ty:cy+f*visH};if(!cur)cur={...FIT};
 }
-let root,lid,bow,orn,boxMat,lidMat,ribBody,ribLid,bowMat,ornMat,glowSprite,inLight,pts,ptsData,emitting=false;
+let root,lid,bow,orn,boxMat,lidMat,ribBody,ribLid,bowMat,tailMat,tails=[],card3,card3Mat,ornMat,glowSprite,inLight,pts,ptsData,emitting=false;
 
 function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t}
 function roundedBox(W,H,D,r,b){
@@ -421,13 +424,16 @@ if(renderer){
   boxMat=new THREE.MeshStandardMaterial({map:paper,roughness:.8,metalness:0,envMapIntensity:.35});
   lidMat=boxMat.clone();lidMat.transparent=true;
   ribBody=new THREE.MeshStandardMaterial({roughness:.3,metalness:.18,transparent:true,envMapIntensity:1.1});
-  ribLid=ribBody.clone();bowMat=ribBody.clone();
+  ribLid=ribBody.clone();bowMat=ribBody.clone();tailMat=ribBody.clone();tailMat.transparent=false;tailMat.side=THREE.DoubleSide;
 
   root.add(shadowed(new THREE.Mesh(roundedBox(2,1.4,2,.06,.025),boxMat)));
   const r1=new THREE.Mesh(new THREE.BoxGeometry(.3,1.404,2.014),ribBody),r2=new THREE.Mesh(new THREE.BoxGeometry(2.014,1.404,.3),ribBody);
   r1.position.y=r2.position.y=.702;root.add(shadowed(r1),shadowed(r2));
   // box opening: a shaded inner floor laid over the solid top so the open box reads hollow
-  const cav=canvasTex(128,128,(g,w,h)=>{g.fillStyle="#6E5A44";g.fillRect(0,0,w,h);const gr=g.createRadialGradient(w/2,h/2,8,w/2,h/2,w*.75);gr.addColorStop(0,"rgba(255,226,170,.55)");gr.addColorStop(1,"rgba(40,28,18,.6)");g.fillStyle=gr;g.fillRect(0,0,w,h)});
+  // warm cream lining: inner walls shade towards the rim, a soft glow on the floor (no dark empty hole)
+  const cav=canvasTex(256,256,(g,w,h)=>{g.fillStyle="#E9DCC8";g.fillRect(0,0,w,h);
+    const gr=g.createRadialGradient(w/2,h/2,10,w/2,h/2,w*.72);gr.addColorStop(0,"rgba(255,240,205,.95)");gr.addColorStop(.55,"rgba(214,193,160,.35)");gr.addColorStop(1,"rgba(120,92,62,.75)");g.fillStyle=gr;g.fillRect(0,0,w,h);
+    g.strokeStyle="rgba(120,92,62,.35)";g.lineWidth=6;g.strokeRect(10,10,w-20,h-20)});
   const hole=new THREE.Mesh(new THREE.PlaneGeometry(1.88,1.88),new THREE.MeshBasicMaterial({map:cav}));hole.rotation.x=-Math.PI/2;hole.position.y=1.406;root.add(hole);
 
   lid=new THREE.Group();root.add(lid);
@@ -447,6 +453,15 @@ if(renderer){
   const knot=new THREE.Mesh(roundedBox(.18,.16,.28,.05,.025),bowMat);knot.position.y=-.01;bow.add(shadowed(knot));
   [-1,1].forEach(s=>{const c=new THREE.CatmullRomCurve3([V3(0,.03,.05),V3(s*.1,.03,.28),V3(s*.2,.02,.52),V3(s*.27,.012,.74)]);
     bow.add(shadowed(new THREE.Mesh(strip(c,.17,(t,tan)=>V3(-tan.z,0,tan.x),40),bowMat)))});
+
+  // ribbon tails: when the bow comes undone they drop and lie curled on the ground beside the box
+  [-1,1].forEach(s=>{const c=new THREE.CatmullRomCurve3([V3(0,.012,0),V3(s*.25,.014,.16),V3(s*.5,.012,.04),V3(s*.74,.016,.22),V3(s*.95,.012,.14)]);
+    const g=new THREE.Group(),m=new THREE.Mesh(strip(c,.17,(t,tan)=>V3(-tan.z,0,tan.x),60),tailMat);m.receiveShadow=true;m.castShadow=true;g.add(m);
+    g.userData={side:s};g.visible=false;root.add(g);tails.push(g)});
+  // the card: rises out of the open box, then the page shows it full size
+  card3Mat=new THREE.MeshStandardMaterial({map:canvasTex(256,180,(g,w,h)=>{g.fillStyle='#FFFDF9';g.fillRect(0,0,w,h);g.strokeStyle='#E7D9CF';g.lineWidth=6;g.strokeRect(12,12,w-24,h-24);
+      g.fillStyle='#B3202E';g.fillRect(36,48,120,7);g.fillStyle='#CDBFB6';[78,100,122].forEach((y,i)=>g.fillRect(36,y,180-i*30,5))}),roughness:.85,transparent:true,side:THREE.DoubleSide});
+  card3=new THREE.Mesh(new THREE.BoxGeometry(.98,.68,.012),card3Mat);card3.visible=false;card3.castShadow=true;root.add(card3);
 
   // gift inside: engraved glass bauble
   orn=new THREE.Group();orn.visible=false;root.add(orn);
@@ -558,7 +573,7 @@ if(renderer){
 
   /* ---- box design in 3D: colours, ribbon styles and accents on the lid ---- */
   (function(){
-    const RIB_MATS=(typeof ribBody!=='undefined')?[ribBody,ribLid,bowMat]:[ribMat];
+    const RIB_MATS=(typeof ribBody!=='undefined')?[ribBody,ribLid,bowMat,tailMat]:[ribMat];
     const stripe=canvasTex(64,64,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#B3202E';
       for(let x=-64;x<128;x+=16){g.beginPath();g.moveTo(x,0);g.lineTo(x+8,0);g.lineTo(x+72,64);g.lineTo(x+64,64);g.closePath();g.fill()}});
     stripe.wrapS=stripe.wrapT=THREE.RepeatWrapping;stripe.repeat.set(2,2);
@@ -622,6 +637,7 @@ addEventListener('resize',resize);resize();if(window.ResizeObserver)new ResizeOb
 /* tween values in A */
 const tws=[];
 const eio=p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+const eland=p=>{const n=7.5625,d=2.75;if(p<1/d)return n*p*p;if(p<2/d)return n*(p-=1.5/d)*p+.75;if(p<2.5/d)return n*(p-=2.25/d)*p+.9375;return n*(p-=2.625/d)*p+.984375}; // falls, then a small bounce
 const eback=p=>{const c1=1.5,c3=c1+1;return 1+c3*Math.pow(p-1,3)+c1*Math.pow(p-1,2)};
 function tw(k,to,dur,delay=0,ease=eio){for(let i=tws.length-1;i>=0;i--)if(tws[i].k===k)tws.splice(i,1);tws.push({k,to,dur:reduce?.01:dur,t:-(reduce?0:delay),from:null,ease})}
 
@@ -636,11 +652,22 @@ function frame(now){
     root.rotation.y=spinY+(reduce||touched?0:Math.sin(T*.35)*.32)+A.untie*.25;
     root.position.y=reduce?0:Math.sin(T*1.1)*.03;
     const bs=Math.max(.001,(1-.3*A.untie)*(1-A.bowGone));
-    bow.scale.setScalar(bs);bow.rotation.y=A.untie*1.2+A.bowGone*3.2;bow.position.y=1.72+A.untie*.18+A.bowGone*1.6;
+    // bow: squeezes as the ribbon is pulled, then loosens and slips away (its tails take over on the ground)
+    bow.scale.set(bs*(1+.25*A.untie),bs*(1-.2*A.untie),bs);bow.rotation.y=A.untie*.5+A.bowGone*1.4;bow.position.y=1.72+A.untie*.06-A.bowGone*.12;
     bowMat.opacity=1-A.bowGone;
-    ribBody.opacity=1-A.ribbonDrop;
-    lid.position.set(A.lidOpen*.7,A.lidOpen*1.7,-A.lidOpen*1.1);lid.rotation.set(-A.lidOpen*.8,0,A.lidOpen*.35);
-    const lo=1-Math.max(0,(A.lidOpen-.55)/.45);lidMat.opacity=lo;ribLid.opacity=lo;lid.visible=lo>.01;
+    ribBody.opacity=1;
+    // tails: drop from the knot and land curled on the ground either side of the box
+    tails.forEach(g=>{const s=g.userData.side,f=A.tails;g.visible=f>.01;
+      g.position.set(s*(.25+.9*f),1.72*(1-f)*(1-f)+.005,.25+.45*f);g.rotation.set(-(1-f)*1.3,s*-.35*f,0);g.scale.setScalar(.35+.65*f)});
+    // lid: pops straight up, then swings aside and comes to rest leaning against the box's left wall
+    {const L=A.lidOpen;let x,y,rz,rx;
+      if(L<.42){const q=Math.sin(L/.42*Math.PI/2);x=0;y=1.05*q;rz=.12*q;rx=-.06*q}
+      else{const q=(L-.42)/.58,e=1-Math.pow(1-q,3);x=-.03*e;y=1.05+(.68-1.05)*e+Math.sin(q*Math.PI)*.3;rz=.12+(1.3-.12)*e;rx=-.06*(1-e)}
+      lid.position.set(x,y,0);lid.rotation.set(rx,0,rz)}
+    lidMat.opacity=1;ribLid.opacity=1;lid.visible=true;
+    // card: rises from inside the box, turns to face you, then hands over to the full-size card on the page
+    {const c=A.card3;card3.visible=c>.01&&c<.999;card3.position.set(0,.75+c*1.85,.05+c*.35);card3.rotation.set(-.18*c,-root.rotation.y*c,0);
+      card3Mat.opacity=c<.8?1:Math.max(0,(1-c)/.2)}
     glowSprite.material.opacity=A.glow*.45;glowSprite.scale.setScalar(1+A.glow*1.7);inLight.intensity=A.glow*2.2;
     orn.visible=A.orn>.005;orn.position.y=.7+A.orn*1.55;orn.scale.setScalar(.25+.75*A.orn);orn.rotation.y=-root.rotation.y+Math.sin(T*.6)*.35;orn.rotation.z=Math.sin(T*.9)*.06;
     // sparkles
@@ -683,9 +710,13 @@ addEventListener('pointerup',()=>{spin=null});addEventListener('pointercancel',(
 function untie(){
   if(untied)return;untied=true;chime();
   if(SLUG&&BOX&&!BOX.openedAt)API.open(SLUG).then(v=>{BOX=v;renderExpire()}).catch(()=>{});
-  tw('untie',1,.35);tw('bowGone',1,.9,.2);tw('lidOpen',1,1.3,.8);tw('glow',1,1,1.1);
-  setTimeout(()=>{emitting=true},1100);
-  setTimeout(()=>{tw('cam',1,1);go('card')},2300);
+  // design A: untie → tails drop → lid pops and rests against the box → warm glow → card rises out (≈3 s)
+  buzz(12);
+  tw('untie',1,.3);tw('bowGone',1,.45,.25);tw('tails',1,.75,.3,eland);
+  tw('lidOpen',1,1.15,.85);setTimeout(()=>{pop();buzz(18)},reduce?0:900);
+  tw('glow',1,.9,1.45);setTimeout(()=>{emitting=true;setTimeout(()=>{emitting=false},1400)},reduce?0:1550);
+  tw('card3',1,1.05,2.05);
+  setTimeout(()=>{tw('cam',1,1);go('card')},reduce?300:2950);
 }
 
 // voice (demo with speech synthesis)
@@ -834,7 +865,7 @@ function showBox(v){
   $('ticket').hidden=!P.gift.coupon;if(P.gift.coupon)$('ticket').querySelector('p').textContent=P.gift.coupon;
   $('memoImg').hidden=!v.photoUrl;if(v.photoUrl)$('memoImg').src=v.photoUrl;
   $('voice').hidden=!v.voice;if(v.voice){const n=v.voice.playableSeconds||0;setText('#voice .vmeta span',`${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`)}
-  SONG_ID=P.music;$('musicBtn').hidden=!SONGS[SONG_ID];if(SONGS[SONG_ID])$('musicBtn').lastChild.nodeValue=SONGS[SONG_ID].n;
+  SONG_ID=P.music;$('musicBtn').hidden=!SONGS[SONG_ID];if(SONGS[SONG_ID])$('musicBtn').querySelector('.nm').textContent=SONGS[SONG_ID].n;
   renderExpire();
 }
 let GONE=null,TRANSIT=null; // what the page shows, kept so a language switch can redraw it
@@ -859,16 +890,20 @@ async function loadBox(){
 /* prototype (no box id): sample content in the chosen language */
 const SAMPLE={th:{to:'แม่',from:'ลูกคนเล็ก',msg:'ปีนี้เหนื่อยมาเยอะ ขอบคุณที่อยู่ข้างกันเสมอนะ คริสต์มาสนี้ขอให้แม่ได้พักบ้าง รักแม่ที่สุดเลย',coupon:'พาไปกินข้าวร้านโปรด 1 มื้อ',engrave:'แม่ · Christmas 2026',left:'6 วัน 23 ชม.',when:'จะถึงเวลา 00:00 คืนวันคริสต์มาส'},
   en:{to:'Mom',from:'Your little one',msg:'This year was a lot. Thank you for always being by my side. Take a real rest this Christmas. Love you most.',coupon:'Dinner at your favourite restaurant',engrave:'Mom · Christmas 2026',left:'6 days 23 hrs',when:'arrives at midnight on Christmas Eve'}};
-function protoSample(){if(SLUG)return;const x=SAMPLE[window.I18N?I18N.lang:'th']||SAMPLE.th;
+function protoSample(){if(SLUG||PREVIEW)return;const x=SAMPLE[window.I18N?I18N.lang:'th']||SAMPLE.th;
   Object.assign(DATA,{to:x.to,from:x.from,msg:x.msg});
   setText('#s-land .title',x.to);setText('#s-land .sub b',x.from);
   const ts=$('transitSub');ts.textContent='';ts.append(t('กล่องจาก')+' ');const b=document.createElement('b');b.textContent=x.from;ts.append(b,' '+x.when);
   setText('#cardEl .to',t('ถึง {name}',{name:x.to}));setText('#cardEl .msg',x.msg);setText('#cardEl .sig','— '+x.from);
   $('ticket').querySelector('p').textContent=x.coupon;$('giftSub').textContent=t('สลักชื่อ “{text}”',{text:x.engrave});setEngrave(x.engrave);
   $('backBtn').textContent=t('ส่งกล่องกลับให้ {name}',{name:x.from});document.querySelector('.expire b').textContent=x.left}
+/* preview (?preview=1): the sender's own box, saved by the sender page just before opening this one */
+const PREVIEW=(()=>{if(SLUG)return null;try{if(!new URLSearchParams(location.search).has('preview'))return null;return JSON.parse(localStorage.getItem('santaPreview')||'null')}catch(e){return null}})();
+// drawn once the whole script has run (the music settings further down must exist first)
+if(PREVIEW){['transitBtn','skipBtn'].forEach(id=>$(id).hidden=true);document.querySelector('.vnote').hidden=true;setTimeout(()=>{showBox(PREVIEW);go('land')},0)}
 protoSample();
 // language switch: redraw everything built from variables (static text is swapped by i18n.js)
-if(window.I18N)I18N.onChange(()=>{if(!SLUG){applyGift();protoSample()}
+if(window.I18N)I18N.onChange(()=>{if(!SLUG&&!PREVIEW){applyGift();protoSample()}
   if(BOX){showBox(BOX);if(GONE)showGone(GONE[0],GONE[1]);renderTransit()}
   else if(GONE)showGone(GONE[0],GONE[1]);
   const sel=document.querySelector('.plan[aria-checked="true"]');if(sel&&!(BOX&&BOX.plan==='YEAR'))$('payBtn').textContent=t('ชำระด้วย PromptPay · {n} บาท',{n:sel.dataset.p})});
@@ -912,6 +947,11 @@ function startMusic(){
 function stopMusic(){clearTimeout(mTimer);if(master){const m=master;m.gain.setTargetAtTime(0,ctx.currentTime,.08);setTimeout(()=>m.disconnect(),500)}master=null;musicOn=false;$('musicBtn').setAttribute('aria-pressed','false')}
 function duck(on){if(master)master.gain.setTargetAtTime(on?.03:.13,ctx.currentTime,.2)}
 $('musicBtn').onclick=()=>musicOn?stopMusic():startMusic();
+/** soft "pop" when the lid comes off */
+function pop(){if(!ac())return;const t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(460,t);o.frequency.exponentialRampToValueAtTime(130,t+.13);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.28,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+.2);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.22)}
+/** a short tap of vibration where the phone allows it (Android) */
+function buzz(ms){try{if(!reduce&&navigator.vibrate)navigator.vibrate(ms)}catch(e){}}
 function chime(){if(!ac())return;const o=ctx.createGain();o.gain.value=.16;o.connect(ctx.destination);['C5','E5','G5','C6'].forEach((n,i)=>bell(o,n==='C6'?1046.5:freq(n),ctx.currentTime+i*.09,.8,.9))}
 
 /* ================= santa crossing ================= */

@@ -751,6 +751,7 @@ PROMPTS.forEach(p=>{const b=document.createElement('button');b.className='chip';
 
 // voice: a real recording (MediaRecorder). Without a microphone the prototype falls back to a simulated one.
 for(let i=0;i<30;i++){const b=document.createElement('i');b.style.setProperty('--h',(20+Math.abs(Math.sin(i*1.9))*70)+'%');b.style.animationDelay=(-i*.06)+'s';$('bars').append(b)}
+let voiceData=null; // the recording as a data URL, for the preview page
 let recT=0,recTimer=null,mode='idle',rec=null,recChunks=[],voiceBlob=null,voiceUrl=null,player=null,simulated=false;
 function vfill(){$('vfill').style.width=(recT/60*100)+'%';$('rec').classList.toggle('over',recT>15)}
 const fmt=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
@@ -771,7 +772,7 @@ async function startRec(){
     const type=pickType();
     rec=new MediaRecorder(stream,type?{mimeType:type,audioBitsPerSecond:64000}:{audioBitsPerSecond:64000});recChunks=[];
     rec.ondataavailable=e=>{if(e.data.size)recChunks.push(e.data)};
-    rec.onstop=()=>{stream.getTracks().forEach(t=>t.stop());voiceBlob=new Blob(recChunks,{type:(rec&&rec.mimeType)||type||'audio/webm'});
+    rec.onstop=()=>{stream.getTracks().forEach(t=>t.stop());setTimeout(()=>{if(voiceBlob){const fr=new FileReader();fr.onload=()=>{voiceData=fr.result};fr.readAsDataURL(voiceBlob)}},0);voiceBlob=new Blob(recChunks,{type:(rec&&rec.mimeType)||type||'audio/webm'});
       if(voiceUrl)URL.revokeObjectURL(voiceUrl);voiceUrl=URL.createObjectURL(voiceBlob);rec=null;finishRec()};
     rec.start(250);simulated=false;
   }catch(e){
@@ -789,7 +790,7 @@ function playRec(){
 function stopPlay(){clearInterval(recTimer);if(player){player.pause();player=null}setRec('ready');$('recTime').textContent=fmt(recT)}
 $('recBtn').onclick=()=>{if(mode==='idle')startRec();else if(mode==='rec')stopRec();else if(mode==='ready'){clearInterval(recTimer);playRec()}else stopPlay()};
 $('redo').onclick=()=>{clearInterval(recTimer);if(player){player.pause();player=null}if(rec&&rec.state!=='inactive'){rec.onstop=null;rec.stream.getTracks().forEach(t=>t.stop());rec.stop();rec=null}
-  S.recorded=false;voiceBlob=null;recT=0;vfill();$('recTime').textContent='0:00 / 1:00';setRec('idle')};
+  S.recorded=false;voiceBlob=null;voiceData=null;recT=0;vfill();$('recTime').textContent='0:00 / 1:00';setRec('idle')};
 
 // gifts: pick exactly one, coupon + photo come with every box
 const GIFTS=[
@@ -808,7 +809,8 @@ function markGifts(){document.querySelectorAll('#gifts .opt').forEach(b=>b.setAt
   $('couponOpt').setAttribute('aria-pressed',S.coupon);$('couponField').hidden=!S.coupon;
   if(typeof showGift==='function')showGift(S.gift);tw('orn',step===2?1:0,.8,0,eback);const pl=document.getElementById('recvPreview');if(pl)updatePreviewLink()}
 $('couponOpt').onclick=()=>{S.coupon=!S.coupon;markGifts()};
-$('photo').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{S.photo=r.result;$('thumb').src=r.result;$('thumb').hidden=false;$('photoNote').textContent=f.name};r.readAsDataURL(f)};
+$('photo').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{S.photo=r.result;$('thumb').src=r.result;$('thumb').hidden=false;$('photoNote').textContent=f.name;
+  const img=new Image();img.onload=()=>{const k=Math.min(1,700/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);S.photoSmall=c.toDataURL('image/jpeg',.8)};img.src=r.result};r.readAsDataURL(f)};
 markGifts();
 const engraveText=()=>$('engrave').value.trim()||$('to').value.trim(); // until the sender types, the ornament shows the recipient's name
 $('engrave').addEventListener('input',()=>setEngrave(engraveText()));$('to').addEventListener('input',()=>setEngrave(engraveText()));setEngrave(engraveText());
@@ -873,6 +875,16 @@ function bootOn(text){$('bootText').textContent=text;document.documentElement.cl
 function bootOff(){document.documentElement.classList.remove('boot','boot-pay')}
 // pressing Back on the Stripe page can restore this page from the browser's cache with the loading screen still up
 addEventListener('pageshow',e=>{if(e.persisted)bootOff()});
+/** What the preview page shows: this box as the recipient will get it. */
+function savePreview(){
+  const plan=S.plan==='0'?'FREE':S.plan==='25'?'YEAR':'FOREVER';
+  const box={phase:'ready',number:null,recipientName:$('to').value.trim()||t('คุณ'),senderName:$('from').value.trim()||null,plan,
+    payload:{design:{box:DESIGN.box,ribbon:DESIGN.rib,accents:DESIGN.acc.slice(),paper:S.cs||0,font:S.cf==null?0:S.cf},card:{message:$('msg').value.trim()},
+      gift:{item:S.gift,engraving:S.gift==='orn'?(engraveText()||undefined):undefined,coupon:S.coupon?($('coupon').value.trim()||null):null},music:S.song},
+    voice:voiceData?{url:voiceData,playableSeconds:Math.min(recT||1,plan==='FREE'?15:60)}:null,photoUrl:S.photoSmall||null,openedAt:null,expiresAt:null};
+  // a phone's storage is small: drop the voice, then the photo, if the box does not fit
+  for(const drop of [null,'voice','photoUrl']){if(drop)box[drop]=null;try{localStorage.setItem('santaPreview',JSON.stringify(box));return}catch(e){}}
+}
 let created=null; // a box already made on this visit (retrying a failed payment must not make a second box)
 async function sendReal(){
   const btn=$('confirmBtn'),label=btn.textContent;btn.disabled=true;btn.textContent='กำลังห่อกล่อง…';
@@ -1004,7 +1016,10 @@ if(API){
   // real box counter, "send one back" prefill, preview pages on this site, and the return from the payment page
   API.stats().then(r=>{BOX_NO=(r.boxes+1).toLocaleString('en-US');document.querySelector('.counter').textContent=t('กล่องที่ {n}',{n:BOX_NO})}).catch(()=>{});
   try{const back=new URLSearchParams(location.search).get('to');if(back){$('to').value=back.slice(0,30);$('sendTo').textContent=$('to').value}}catch(e){}
-  document.querySelectorAll('a[href^="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75"]').forEach(a=>{a.href=a.href.replace('https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75','/santa-box/recipient')});
+  // "see what they will see": the recipient page in preview mode shows THIS box (names, card, gift, photo, voice), not sample content.
+  // It never opens the real box link, so the box's 7-day clock does not start.
+  document.querySelectorAll('a[href^="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75"]').forEach(a=>{
+    a.href='/santa-box/recipient?preview=1';a.addEventListener('click',savePreview)});
   resumeSent().catch(()=>{}).finally(bootOff);setTimeout(bootOff,20000);
 }
 

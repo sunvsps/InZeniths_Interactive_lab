@@ -1,0 +1,265 @@
+<title>Santa Box Opening Concepts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Noto+Serif+Thai:wght@500;600&display=swap">
+<style>
+/* Layout: a short brief, then four concept cards (live 2D loop of the 3D motion + beat sheet), then the shared fixes and a recommendation.
+   One deliberate look: the Santa Box palette (warm white, Christmas red, gold), so colours are set once and not themed. */
+:root{
+  --ground:#FBF8F4; --card:#FFFFFF; --ink:#2A2420; --muted:#7C6E67; --line:#EADFD8;
+  --red:#B3202E; --red-deep:#8E1622; --gold:#B08D57; --gold-soft:#E6CFA4; --box:#F4EEE5; --box-side:#E4DBCD; --inside:#5A4632;
+  --f-head:'Noto Serif Thai',Georgia,serif; --f-body:'IBM Plex Sans Thai',system-ui,sans-serif; --f-brand:'Cormorant Garamond',Georgia,serif;
+  color-scheme:light;
+}
+html,body{background:var(--ground);color:var(--ink)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 56px;display:flex;flex-direction:column;gap:36px}
+header{display:flex;flex-direction:column;gap:10px;max-width:68ch}
+.brand{font-family:var(--f-brand);font-style:italic;font-size:22px;color:var(--red)}
+h1{font-family:var(--f-head);font-weight:600;font-size:clamp(26px,4.4vw,38px);line-height:1.25;margin:0;text-wrap:balance}
+h2{font-family:var(--f-head);font-weight:600;font-size:21px;line-height:1.35;margin:0;text-wrap:balance}
+h3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:600}
+p{margin:0}
+.lede{color:var(--muted);max-width:66ch}
+
+/* what feels missing now */
+.now{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:22px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.now ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.now b{color:var(--red)}
+@media (max-width:640px){.now{grid-template-columns:minmax(0,1fr)}}
+
+/* concept cards */
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+.concept{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.concept.pick{border-color:var(--red);box-shadow:0 18px 40px -28px rgba(179,32,46,.55)}
+.tag{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag .letter{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:#fff;font-weight:600}
+.tag .pickmark{font-size:12px;font-weight:600;color:var(--red);border:1px solid var(--red);border-radius:999px;padding:2px 10px}
+.stage{position:relative;aspect-ratio:4/3;max-width:100%;border-radius:14px;background:radial-gradient(120% 90% at 50% 40%,#FFFFFF 0%,#F6EEE8 62%,#EEE2DB 100%);overflow:hidden}
+.stage svg{position:absolute;inset:0;width:100%;height:100%}
+.replay{position:absolute;right:10px;bottom:10px;border:1px solid var(--line);background:rgba(255,255,255,.85);border-radius:999px;padding:5px 12px;font:500 12px var(--f-body);color:var(--ink);cursor:pointer}
+.replay:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.beats{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.beats li{display:grid;grid-template-columns:62px minmax(0,1fr);gap:10px}
+.beats time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+.pc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;font-size:13.5px}
+.pc div{display:flex;flex-direction:column;gap:4px}
+.pc ul{margin:0;padding-left:18px}
+.meta{display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.meta span{border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+
+/* shared fixes + recommendation */
+.fixes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+.fix{border-top:2px solid var(--gold);padding-top:10px;display:flex;flex-direction:column;gap:4px}
+.fix b{font-weight:600}
+.rec{background:var(--ink);color:#F6EFE9;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.rec h2{color:#fff}
+.rec p{color:#E3D7CF;max-width:70ch}
+.rec ol{margin:0;padding-left:20px;color:#E3D7CF;display:flex;flex-direction:column;gap:4px}
+
+/* ---------- the 2D box (front 3/4 view), drawn once per concept ---------- */
+.g{transform-box:fill-box;transform-origin:50% 100%}
+.lid{transform-origin:50% 100%}
+.spark{opacity:0}
+.inside-glow{opacity:0}
+.card2{opacity:0}
+
+/* A — Untie, lift, set the lid aside */
+.va .bow{animation:a-bow 6s infinite both;transform-origin:50% 80%}
+.va .tailL{animation:a-tailL 6s infinite both;transform-origin:100% 0}
+.va .tailR{animation:a-tailR 6s infinite both;transform-origin:0 0}
+.va .lidband{animation:a-lidband 6s infinite both}
+.va .lid{animation:a-lid 6s infinite both}
+.va .inside-glow{animation:a-glow 6s infinite both}
+.va .card2{animation:a-card 6s infinite both}
+.va .spark{animation:spark 6s infinite both;animation-delay:calc(var(--d) + 1.7s)}
+@keyframes a-bow{0%,8%{transform:none;opacity:1}18%{transform:scale(1.08,.85)}26%{transform:scale(.2) rotate(30deg);opacity:0}100%{opacity:0;transform:scale(.2)}}
+@keyframes a-tailL{0%,14%{transform:none;opacity:1}30%{transform:translate(-26px,60px) rotate(-55deg);opacity:1}40%,100%{transform:translate(-30px,92px) rotate(-80deg);opacity:1}}
+@keyframes a-tailR{0%,14%{transform:none;opacity:1}30%{transform:translate(26px,60px) rotate(55deg);opacity:1}40%,100%{transform:translate(34px,92px) rotate(80deg);opacity:1}}
+@keyframes a-lidband{0%,20%{opacity:1}28%,100%{opacity:0}}
+@keyframes a-lid{0%,30%{transform:none}40%{transform:translateY(-34px) rotate(-4deg)}46%{transform:translateY(-44px) rotate(-8deg)}58%{transform:translate(-86px,30px) rotate(-22deg)}62%{transform:translate(-86px,26px) rotate(-20deg)}66%,100%{transform:translate(-86px,30px) rotate(-22deg)}}
+@keyframes a-glow{0%,38%{opacity:0}50%{opacity:1}100%{opacity:.75}}
+@keyframes a-card{0%,52%{opacity:0;transform:translateY(48px)}62%{opacity:1}74%,100%{opacity:1;transform:translateY(-58px) rotate(-3deg)}}
+
+/* B — Unfold like a flower */
+.vb .bow,.vb .tailL,.vb .tailR,.vb .lid{animation:b-lid 6s infinite both}
+.vb .front{animation:b-front 6s infinite both;transform-box:fill-box;transform-origin:50% 100%}
+.vb .side{animation:b-side 6s infinite both;transform-box:fill-box;transform-origin:0 100%}
+.vb .gift{animation:b-gift 6s infinite both}
+.vb .inside-glow{animation:a-glow 6s infinite both}
+.vb .card2{animation:b-card 6s infinite both}
+.vb .spark{animation:spark 6s infinite both;animation-delay:calc(var(--d) + 2s)}
+@keyframes b-lid{0%,14%{transform:none;opacity:1}30%{transform:translateY(-70px);opacity:1}40%,100%{transform:translateY(-110px);opacity:0}}
+@keyframes b-front{0%,34%{transform:none}54%{transform:scaleY(-.42) skewX(-6deg)}60%,100%{transform:scaleY(-.38) skewX(-6deg)}}
+@keyframes b-side{0%,38%{transform:none}58%{transform:skewY(18deg) scaleX(1.6)}64%,100%{transform:skewY(16deg) scaleX(1.55)}}
+@keyframes b-gift{0%,40%{transform:translateY(40px);opacity:0}58%{transform:translateY(-6px);opacity:1}66%,100%{transform:none;opacity:1}}
+@keyframes b-card{0%,58%{opacity:0;transform:translateY(30px)}72%,100%{opacity:1;transform:translate(36px,-62px) rotate(4deg)}}
+
+/* C — Tissue and warm light (premium unboxing) */
+.vc .lidall{animation:c-lid 6s infinite both}
+.vc .tissue{animation:c-tissue 6s infinite both;transform-box:fill-box;transform-origin:50% 100%}
+.vc .tissueL{animation:c-tissueL 6s infinite both;transform-box:fill-box;transform-origin:100% 100%}
+.vc .tissueR{animation:c-tissueR 6s infinite both;transform-box:fill-box;transform-origin:0 100%}
+.vc .beam{animation:c-beam 6s infinite both}
+.vc .inside-glow{animation:a-glow 6s infinite both}
+.vc .card2{animation:c-card 6s infinite both}
+.vc .spark{animation:spark 6s infinite both;animation-delay:calc(var(--d) + 2.4s)}
+@keyframes c-lid{0%,10%{transform:none}22%{transform:translateY(-14px)}48%{transform:translate(10px,-120px) rotate(6deg)}60%,100%{transform:translate(14px,-150px) rotate(8deg);opacity:0}}
+@keyframes c-tissue{0%,24%{transform:scaleY(.2);opacity:0}38%,100%{transform:none;opacity:1}}
+@keyframes c-tissueL{0%,44%{transform:none}58%,100%{transform:rotate(-26deg)}}
+@keyframes c-tissueR{0%,44%{transform:none}58%,100%{transform:rotate(26deg)}}
+@keyframes c-beam{0%,30%{opacity:0}52%{opacity:.9}100%{opacity:.6}}
+@keyframes c-card{0%,52%{opacity:0;transform:translateY(40px)}70%,100%{opacity:1;transform:translateY(-54px)}}
+
+/* D — Shake, pop, burst */
+.vd .whole{animation:d-shake 6s infinite both;transform-box:fill-box;transform-origin:50% 100%}
+.vd .lid{animation:d-lid 6s infinite both}
+.vd .bow{animation:d-bow 6s infinite both;transform-origin:50% 80%}
+.vd .tailL,.vd .tailR{animation:d-tail 6s infinite both}
+.vd .streamer{animation:d-streamer 6s infinite both;stroke-dasharray:180;stroke-dashoffset:180}
+.vd .inside-glow{animation:a-glow 6s infinite both}
+.vd .card2{animation:d-card 6s infinite both}
+.vd .spark{animation:d-spark 6s infinite both;animation-delay:var(--d)}
+@keyframes d-shake{0%,6%{transform:none}10%{transform:rotate(-3deg)}14%{transform:rotate(3deg)}18%{transform:rotate(-4deg)}22%{transform:rotate(4deg) scaleY(.94)}26%,100%{transform:none}}
+@keyframes d-lid{0%,26%{transform:none}36%{transform:translateY(-150px) rotate(-200deg)}46%{transform:translateY(-120px) rotate(-340deg)}60%,100%{transform:translate(90px,40px) rotate(-372deg)}}
+@keyframes d-bow{0%,26%{opacity:1;transform:none}34%,100%{opacity:0;transform:scale(1.6)}}
+@keyframes d-tail{0%,26%{opacity:1}30%,100%{opacity:0}}
+@keyframes d-streamer{0%,27%{stroke-dashoffset:180;opacity:1}44%{stroke-dashoffset:0;opacity:1}70%,100%{stroke-dashoffset:0;opacity:0}}
+@keyframes d-card{0%,34%{opacity:0;transform:translateY(40px)}46%{opacity:1;transform:translateY(-78px)}54%{transform:translateY(-58px)}60%,100%{opacity:1;transform:translateY(-64px)}}
+@keyframes d-spark{0%,27%{opacity:0;transform:translate(0,0) scale(.4)}34%{opacity:1}60%{opacity:1;transform:translate(var(--x),var(--y)) scale(1)}80%,100%{opacity:0;transform:translate(var(--x),calc(var(--y) + 30px)) scale(.6)}}
+
+@keyframes spark{0%{opacity:0;transform:scale(.2)}20%{opacity:1;transform:scale(1)}60%{opacity:.9}100%{opacity:0;transform:scale(.6) translateY(-18px)}}
+.spark{transform-box:fill-box;transform-origin:50% 50%}
+.paused *{animation-play-state:paused!important}
+@media (prefers-reduced-motion:reduce){.stage *{animation-duration:.01s!important;animation-iteration-count:1!important;animation-delay:0s!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="brand">Santa Box</span>
+    <h1>อนิเมชันเปิดกล่อง 4 แบบ</h1>
+    <p class="lede">หน้าการ์ดของผู้รับตอนนี้ดูเหมือนกล่องขาดอะไรไป ด้านล่างคือ 4 ทางให้เลือก แต่ละภาพเป็นภาพ 2D จำลองการเคลื่อนไหวที่จะทำจริงเป็น 3D บนกล่องเดิม เล่นวนอัตโนมัติ กด "เล่นใหม่" เพื่อดูตั้งแต่ต้น</p>
+  </header>
+
+  <section class="now" aria-labelledby="nowH">
+    <div class="stage" style="aspect-ratio:1/1" id="stage-now"></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <h2 id="nowH">ตอนนี้ขาดอะไร</h2>
+      <ul>
+        <li><b>ฝาหายไปเฉยๆ</b> ฝาเลื่อนออกนอกจอ ผู้รับไม่เห็นว่าฝาไปไหน</li>
+        <li><b>โบว์หายวับ</b> ไม่มีจังหวะคลายโบว์ ทั้งที่เป็นจุดที่ผู้รับตั้งใจลากเอง</li>
+        <li><b>ริบบิ้นขาดกลางกล่อง</b> เหลือแถบแดงครึ่งเดียวที่ตัวกล่อง ด้านข้างตัดหาย</li>
+        <li><b>ในกล่องโล่งและมืด</b> มีแค่จุดเขียวลอย ไม่มีกระดาษรอง ไม่มีของให้เห็น</li>
+        <li><b>การ์ดไม่ได้ออกมาจากกล่อง</b> การ์ดโผล่จากขอบล่างจอ ไม่สัมพันธ์กับกล่องที่เพิ่งเปิด</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="grid" id="grid"></div>
+
+  <section style="display:flex;flex-direction:column;gap:14px" aria-labelledby="fixH">
+    <h2 id="fixH">ทำทุกแบบไม่ว่าเลือกแบบไหน</h2>
+    <div class="fixes">
+      <div class="fix"><b>ฝาอยู่ในจอตลอด</b><span>ฝาไปวางข้างกล่องหรือลอยค้างให้เห็น ไม่หายไปเฉยๆ</span></div>
+      <div class="fix"><b>ริบบิ้นที่ตัวกล่องครบรอบ</b><span>แถบแดงครบทั้งหน้าและข้าง ส่วนที่อยู่บนฝาตามฝาไป</span></div>
+      <div class="fix"><b>ซับในกล่อง</b><span>ผนังด้านในสีครีมอุ่น มีกระดาษรองสีแดง/ทอง แทนช่องมืด</span></div>
+      <div class="fix"><b>การ์ดขึ้นมาจากในกล่อง</b><span>การ์ดเลื่อนขึ้นจากช่องเปิด แล้วค่อยลอยมาหน้าจอ</span></div>
+      <div class="fix"><b>เสียงและสั่น</b><span>เสียงกระดิ่งตอนโบว์หลุด เสียง "ป๊อก" ตอนฝาเปิด มือถือสั่นเบาๆ (Android)</span></div>
+      <div class="fix"><b>ลดการเคลื่อนไหวได้</b><span>คนที่ตั้งค่าลดการเคลื่อนไหวเห็นฝาเปิดและการ์ดโดยไม่มีท่าทาง</span></div>
+    </div>
+  </section>
+
+  <section class="rec" aria-labelledby="recH">
+    <h2 id="recH">ผมแนะนำ: A + กระดาษรองจาก C</h2>
+    <p>แบบ A ตอบสิ่งที่ขาดตรงที่สุด ผู้รับเห็นโบว์คลาย ริบบิ้นหล่น ฝาถูกยกไปวางข้างกล่อง กล่องยังครบชิ้น และใส่กระดาษรองกับแสงอุ่นจากแบบ C ในกล่อง ช่องที่เคยมืดจะดูมีของ ใช้เวลาเปิดราว 3 วินาที ไม่นานจนน่าเบื่อเมื่อเปิดซ้ำ ทำบนโมเดล 3D เดิมได้โดยไม่ต้องโหลดอะไรเพิ่ม</p>
+    <ol>
+      <li>ลากริบบิ้น: โบว์คลาย หางริบบิ้นหล่นลงพื้นข้างกล่อง (0.0–0.8 วิ)</li>
+      <li>ฝาเด้งขึ้น แล้วไปวางพิงข้างกล่อง (0.8–1.8 วิ)</li>
+      <li>กระดาษรองแหวกออก แสงอุ่นและประกายทอง (1.4–2.4 วิ)</li>
+      <li>การ์ดเลื่อนขึ้นจากในกล่อง แล้วลอยมาหน้าจอ (2.2–3.2 วิ)</li>
+    </ol>
+  </section>
+</div>
+
+<script>
+(function(){
+  // One SVG box; each concept adds its own parts and the CSS above animates them.
+  const SP=[[60,70,0],[200,60,.15],[120,40,.3],[170,105,.45],[80,110,.6],[140,30,.75],[105,80,.2],[185,90,.5]];
+  function sparks(){return SP.map(([x,y,d],i)=>`<circle class="spark" cx="${x}" cy="${y}" r="${i%3?2.2:3.2}" fill="${i%2?'#E6CFA4':'#B08D57'}" style="--d:${d}s;--x:${(x-125)*.9}px;--y:${(y-120)*1.1}px"/>`).join('')}
+  function box(v){
+    const card=`<g class="card2"><rect x="102" y="96" width="46" height="34" rx="2" fill="#FFFDF9" stroke="#EADFD8"/><line x1="108" y1="106" x2="142" y2="106" stroke="#B3202E" stroke-width="1.6"/><line x1="108" y1="113" x2="138" y2="113" stroke="#CDBFB6" stroke-width="1.2"/><line x1="108" y1="119" x2="134" y2="119" stroke="#CDBFB6" stroke-width="1.2"/></g>`;
+    const tissue=v==='c'||v==='rec'?`<g class="tissue"><path class="tissueL" d="M92 104 L104 74 L122 102 Z" fill="#B3202E" opacity=".9"/><path class="tissueR" d="M128 102 L146 72 L160 104 Z" fill="#C9A86A" opacity=".95"/><path d="M110 104 L124 80 L140 104 Z" fill="#E9DCC8"/></g>`:'';
+    const beam=v==='c'?`<path class="beam" d="M96 104 L70 10 L180 10 L156 104 Z" fill="url(#beam-${v})" opacity="0"/>`:'';
+    const gift=v==='b'?`<g class="gift" opacity="0"><circle cx="126" cy="150" r="20" fill="#A8714B"/><circle cx="110" cy="132" r="7" fill="#A8714B"/><circle cx="142" cy="132" r="7" fill="#A8714B"/><circle cx="126" cy="146" r="15" fill="#B98560"/><circle cx="120" cy="143" r="2" fill="#2A2420"/><circle cx="132" cy="143" r="2" fill="#2A2420"/><ellipse cx="126" cy="151" rx="4" ry="3" fill="#2A2420"/></g>`:'';
+    const streamers=v==='d'?`<path class="streamer" d="M125 96 C 90 60, 70 40, 40 30" fill="none" stroke="#B3202E" stroke-width="5" stroke-linecap="round"/><path class="streamer" d="M125 96 C 160 50, 190 50, 214 24" fill="none" stroke="#B3202E" stroke-width="5" stroke-linecap="round"/>`:'';
+    // box body: front face, right side, opening (top) with lining
+    return `<svg viewBox="0 0 250 200" role="img" aria-label="กล่องของขวัญกำลังเปิด">
+      <defs>
+        <linearGradient id="in-${v}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6B5440"/><stop offset="1" stop-color="#3E2F22"/></linearGradient>
+        <radialGradient id="glow-${v}" cx=".5" cy=".6" r=".6"><stop offset="0" stop-color="#FFE7B0" stop-opacity=".95"/><stop offset="1" stop-color="#FFE7B0" stop-opacity="0"/></radialGradient>
+        <linearGradient id="beam-${v}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FFE7B0" stop-opacity=".85"/><stop offset="1" stop-color="#FFE7B0" stop-opacity="0"/></linearGradient>
+      </defs>
+      <ellipse cx="128" cy="186" rx="88" ry="9" fill="#2A2420" opacity=".08"/>
+      ${beam}
+      <g class="whole">
+        ${v==='b'?'':''}
+        <polygon points="70,104 96,90 186,90 160,104" fill="${v==='c'||v==='rec'?'#EFE3D2':`url(#in-${v})`}"/>
+        <ellipse class="inside-glow" cx="128" cy="98" rx="52" ry="22" fill="url(#glow-${v})"/>
+        ${tissue}
+        ${card}
+        ${gift}
+        <g class="side"><polygon points="160,104 186,90 186,170 160,184" fill="#E4DBCD"/><polygon points="170,98.6 177,94.8 177,174.8 170,178.6" fill="#8E1622"/></g>
+        <g class="front"><rect x="70" y="104" width="90" height="80" fill="#F4EEE5"/><rect x="108" y="104" width="16" height="80" fill="#B3202E"/></g>
+        <g class="lidall">
+          <g class="lid">
+            <polygon points="64,100 92,84 192,84 164,100" fill="#FBF7F1"/>
+            <polygon class="lidband" points="104,100 132,84 148,84 120,100" fill="#B3202E"/>
+            <rect x="64" y="100" width="100" height="14" fill="#F1EADF"/>
+            <polygon points="164,100 192,84 192,98 164,114" fill="#E2D8C9"/>
+            <rect class="lidband" x="106" y="100" width="18" height="14" fill="#B3202E"/>
+            <polygon class="lidband" points="172,95.4 180,90.8 180,104.8 172,109.4" fill="#8E1622"/>
+          </g>
+          <path class="tailL" d="M126 92 C 116 104, 108 112, 100 126" fill="none" stroke="#B3202E" stroke-width="6" stroke-linecap="round"/>
+          <path class="tailR" d="M128 92 C 138 104, 146 112, 154 126" fill="none" stroke="#B3202E" stroke-width="6" stroke-linecap="round"/>
+          <g class="bow"><ellipse cx="112" cy="84" rx="15" ry="9" fill="none" stroke="#B3202E" stroke-width="6" transform="rotate(-18 112 84)"/><ellipse cx="142" cy="84" rx="15" ry="9" fill="none" stroke="#B3202E" stroke-width="6" transform="rotate(18 142 84)"/><circle cx="127" cy="90" r="6" fill="#8E1622"/></g>
+        </g>
+      </g>
+      ${streamers}
+      ${sparks()}
+    </svg>`;
+  }
+  const C=[
+    {v:'a',name:'แกะโบว์ ยกฝาวางข้างกล่อง',pick:true,time:'≈ 3 วินาที',fit:'ครอบครัว ทุกวัย',
+      beats:[['0.0 วิ','ผู้รับลากริบบิ้น โบว์บีบตัวแล้วคลาย'],['0.5 วิ','หางริบบิ้นหล่นลงพื้นสองข้างกล่อง'],['1.0 วิ','ฝาเด้งขึ้นเบาๆ แล้วไปวางพิงข้างกล่อง'],['1.6 วิ','แสงอุ่นจากในกล่อง ประกายทองลอยขึ้น'],['2.4 วิ','การ์ดเลื่อนขึ้นจากในกล่อง']],
+      pros:['ตอบทุกข้อที่ขาด ฝาไม่หาย ริบบิ้นครบ','ใช้จังหวะลากริบบิ้นที่มีอยู่แล้ว','ทำบนโมเดลเดิม งานน้อยสุด'],cons:['คุ้นตา ไม่หวือหวา']},
+    {v:'b',name:'กล่องคลี่ออกเหมือนดอกไม้',time:'≈ 3.5 วินาที',fit:'คู่รัก เซอร์ไพรส์',
+      beats:[['0.0 วิ','โบว์คลาย ฝาลอยขึ้นแล้วจาง'],['1.0 วิ','ผนังกล่องพับออกสี่ทางเหมือนกลีบดอก'],['1.6 วิ','ของขวัญยกขึ้นจากฐาน เห็นเต็มตัว'],['2.4 วิ','การ์ดลอยขึ้นข้างของขวัญ']],
+      pros:['เห็นของขวัญชัดที่สุด','ภาพสวย เหมาะกับภาพแชร์'],cons:['กล่องไม่เหลือรูปกล่อง','ต้องแยกโมเดลผนังทั้ง 4 ด้าน งานมากสุด']},
+    {v:'c',name:'กระดาษรองกับแสงอุ่น',time:'≈ 3.5 วินาที',fit:'พรีเมียม ผู้ใหญ่',
+      beats:[['0.0 วิ','ฝายกขึ้นช้าๆ พร้อมโบว์ ทั้งชุดลอยขึ้นจากกล่อง'],['0.8 วิ','กระดาษรองสีแดง/ทองโผล่จากช่องเปิด'],['1.4 วิ','กระดาษแหวกออก ลำแสงอุ่นพุ่งขึ้น'],['2.2 วิ','การ์ดเลื่อนขึ้นระหว่างกระดาษ']],
+      pros:['รู้สึกหรูแบบแกะกล่องของแบรนด์','ในกล่องไม่ว่างอีกต่อไป','ฝาและโบว์ไปด้วยกัน ไม่ขาด'],cons:['ฝาลอยออกนอกจอในที่สุด','ช้ากว่าแบบ A เล็กน้อย']},
+    {v:'d',name:'เขย่า เด้ง ระเบิดสีสัน',time:'≈ 2.5 วินาที',fit:'เพื่อน วัยรุ่น',
+      beats:[['0.0 วิ','กล่องสั่นสองสามทีเหมือนมีอะไรอยู่ข้างใน'],['0.6 วิ','ฝาเด้งสูง หมุนกลางอากาศ'],['0.7 วิ','ริบบิ้นปลิวเป็นสายรุ้ง ประกายทองกระจาย'],['1.4 วิ','การ์ดเด้งขึ้นจากกล่อง']],
+      pros:['สนุก ตื่นเต้นที่สุด','ภาพเคลื่อนไหวเหมาะทำคลิปแชร์'],cons:['ไม่เข้ากับข้อความซึ้งๆ','เร็วไป อาจพลาดจังหวะลากริบบิ้น']},
+  ];
+  const grid=document.getElementById('grid');
+  C.forEach((c,i)=>{
+    const el=document.createElement('article');el.className='concept'+(c.pick?' pick':'');
+    el.innerHTML=`<div class="tag"><span class="letter">${'ABCD'[i]}</span><h2>${c.name}</h2>${c.pick?'<span class="pickmark">แนะนำ</span>':''}</div>
+      <div class="stage v${c.v}" id="stage-${c.v}">${box(c.v)}<button class="replay" type="button" id="replay-${c.v}">เล่นใหม่</button></div>
+      <div class="meta"><span>${c.time}</span><span>เหมาะกับ ${c.fit}</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><h3>ลำดับจังหวะ</h3><ol class="beats">${c.beats.map(([t,b])=>`<li><time>${t}</time><span>${b}</span></li>`).join('')}</ol></div>
+      <div class="pc"><div><h3>ข้อดี</h3><ul>${c.pros.map(p=>`<li>${p}</li>`).join('')}</ul></div><div><h3>ข้อเสีย</h3><ul>${c.cons.map(p=>`<li>${p}</li>`).join('')}</ul></div></div>`;
+    grid.append(el);
+    el.querySelector('.replay').onclick=()=>{const s=el.querySelector('.stage svg');const n=s.cloneNode(true);s.replaceWith(n)};
+  });
+  // "now": the current opening, frozen at the card moment
+  document.getElementById('stage-now').innerHTML=box('now').replace('class="whole"','class="whole now-state"');
+  const now=document.querySelector('#stage-now svg');
+  now.querySelectorAll('.lid,.bow,.tailL,.tailR').forEach(e=>e.setAttribute('opacity','0'));
+  now.querySelector('.side polygon:nth-child(2)').setAttribute('opacity','0');
+  now.querySelectorAll('.spark').forEach((e,i)=>{if(i%2){e.style.opacity=1;e.setAttribute('fill','#5FA87A')}});
+})();
+</script>
