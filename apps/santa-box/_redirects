@@ -1,2 +1,3 @@
-/       /sender.html     200
-/b/*    /recipient.html  200
+# Cloudflare Pages: serves sender.html at /sender and recipient.html at /recipient (no .html)
+/       /sender     200
+/b/*    /recipient  200
