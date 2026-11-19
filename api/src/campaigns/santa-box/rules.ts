@@ -123,3 +123,22 @@ export function reminderYear(now: Date): number | null {
   const bkk = new Date(now.getTime() + 7 * HOUR);
   return bkk.getUTCMonth() === 11 && bkk.getUTCDate() >= 18 && bkk.getUTCDate() <= 24 ? bkk.getUTCFullYear() : null;
 }
+
+/** A discount code as the payment provider describes it. */
+export type Promo = { id: string; code: string; percentOff: number | null; amountOffSatang: number | null; minSatang: number | null };
+
+/** Stripe will not charge less than 10 THB in one payment (0 is fine: the order is free). */
+export const MIN_CHARGE_SATANG = 1_000;
+
+export type PromoResult =
+  | { ok: true; amountSatang: number; discountSatang: number }
+  | { ok: false; error: 'PROMO_MIN_AMOUNT' | 'PROMO_TOO_SMALL_TOTAL' };
+
+/** Price after the code. A code that leaves 0.01–9.99 THB to pay is refused (Stripe cannot charge it). */
+export function applyPromo(baseSatang: number, promo: Promo): PromoResult {
+  if (promo.minSatang && baseSatang < promo.minSatang) return { ok: false, error: 'PROMO_MIN_AMOUNT' };
+  const off = promo.percentOff != null ? Math.round((baseSatang * promo.percentOff) / 100) : Math.min(baseSatang, promo.amountOffSatang ?? 0);
+  const amountSatang = Math.max(0, baseSatang - off);
+  if (amountSatang > 0 && amountSatang < MIN_CHARGE_SATANG) return { ok: false, error: 'PROMO_TOO_SMALL_TOTAL' };
+  return { ok: true, amountSatang, discountSatang: baseSatang - amountSatang };
+}

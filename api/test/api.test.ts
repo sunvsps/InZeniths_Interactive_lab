@@ -133,6 +133,32 @@ describe('paying', () => {
     expect((await ctx.prisma.gift.findUniqueOrThrow({ where: { slug: thai.slug } })).lang).toBe('th');
   });
 
+  it('discount code: checked on our page, applied at checkout', async () => {
+    const ok = await ctx.app.inject({ method: 'POST', url: '/v1/santa-box/promo', payload: { code: 'test20', plan: 'YEAR' } });
+    expect(ok.json()).toMatchObject({ code: 'TEST20', baseSatang: 2_500, discountSatang: 500, amountSatang: 2_000 });
+    const free = await ctx.app.inject({ method: 'POST', url: '/v1/santa-box/promo', payload: { code: 'FREE100', plan: 'FOREVER' } });
+    expect(free.json().amountSatang).toBe(0);
+    const bad = await ctx.app.inject({ method: 'POST', url: '/v1/santa-box/promo', payload: { code: 'NOPE', plan: 'YEAR' } });
+    expect(bad.statusCode).toBe(409);
+    expect(bad.json().error.code).toBe('PROMO_INVALID');
+
+    const box = await sendBox(ctx.app);
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: `/v1/santa-box/gifts/${box.slug}/checkout`,
+      headers: { 'x-sender-token': box.senderToken },
+      payload: { plan: 'YEAR', payer: 'SENDER', promoCode: 'TEST20' },
+    });
+    expect(res.json().amountSatang).toBe(2_000);
+    const wrong = await ctx.app.inject({
+      method: 'POST',
+      url: `/v1/santa-box/gifts/${box.slug}/checkout`,
+      headers: { 'x-sender-token': box.senderToken },
+      payload: { plan: 'YEAR', payer: 'SENDER', promoCode: 'NOPE' },
+    });
+    expect(wrong.json().error.code).toBe('PROMO_INVALID');
+  });
+
   it('refuses a return link to another site', async () => {
     const box = await sendBox(ctx.app);
     const res = await ctx.app.inject({

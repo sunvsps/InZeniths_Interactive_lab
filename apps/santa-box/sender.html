@@ -221,6 +221,8 @@ a.textlink{color:var(--muted);font-size:13px;text-underline-offset:3px}
 .codeRow{display:flex;gap:8px}
 .codeRow input{flex:1;min-width:0}
 .codeRow .btn{flex:none;padding:10px 16px;font-size:13px}
+.codeMsg{margin:6px 0 0;font-size:12.5px;color:#2F6B3A}.codeMsg.bad{color:var(--accent)}
+#sumPrice s{color:var(--muted);font-weight:400;margin-right:6px}
 .summary{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-top:1px solid var(--line);padding-top:12px}
 .summary b{font-family:var(--f-lat);font-size:26px;font-weight:600;flex:none}
 .err{color:var(--accent);font-size:12px;margin:0}
@@ -415,7 +417,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <div class="field"><label class="lbl" for="wEmail">อีเมลของคุณ <em id="emailHint"></em></label><input type="email" id="wEmail" placeholder="you@example.com" autocomplete="email"><p class="err" id="emailErr" hidden>ใส่อีเมลให้ถูกต้อง เพื่อรับใบเสร็จและกู้ลิงก์คืนได้</p></div>
     <label class="check"><input type="checkbox" id="remind"><span><b>เตือนก่อนคริสต์มาสปีหน้า</b><small>อีเมลฟรีล่วงหน้า 7 วัน กดเลิกรับในอีเมลได้</small></span></label>
     <label class="check"><input type="checkbox" id="tree"><span><b>วางกล่องไว้ใต้ต้นคริสต์มาสรวม</b><small>โชว์แค่หน้าตากล่อง ไม่โชว์ชื่อ ข้อความ หรือเสียง</small></span></label>
-    <div class="field"><label class="lbl" for="code">โค้ดส่วนลด <em>ไม่บังคับ</em></label><div class="codeRow"><input type="text" id="code" placeholder="ถ้ามี"><button class="btn ghost" id="codeBtn">ใช้โค้ด</button></div></div>
+    <div class="field"><label class="lbl" for="code">โค้ดส่วนลด <em>ไม่บังคับ</em></label><div class="codeRow"><input type="text" id="code" placeholder="ถ้ามี"><button class="btn ghost" id="codeBtn">ใช้โค้ด</button></div><p class="codeMsg" id="codeMsg" role="status" hidden></p></div>
     <div class="summary"><span id="sumPlan"></span><b id="sumPrice"></b></div>
     <p class="note center">จ่ายครั้งเดียว ไม่ใช่รายเดือน ไม่ตัดเงินซ้ำ</p>
     <button class="btn full" id="confirmBtn"></button>
@@ -847,10 +849,17 @@ function markSongs(){document.querySelectorAll('#songs .opt').forEach(b=>b.setAt
 // delivery
 const PRESETS=[['เที่ยงคืนวันคริสต์มาส','2026-12-25T00:00'],['เช้าวันคริสต์มาส 08:00','2026-12-25T08:00'],['เที่ยงคืนวันปีใหม่','2027-01-01T00:00']];
 PRESETS.forEach(([n,v])=>{const b=document.createElement('button');b.className='chip';b.textContent=n;b.onclick=()=>{$('whenAt').value=v};$('presets').append(b)});
-function payLabel(){return S.plan==='0'?t('ส่งฟรี'):t('ชำระ {n} บาท ด้วย PromptPay',{n:S.plan})}
+/** Price to pay now: the plan's price, or the price after a discount code checked for this plan. */
+function priceNow(){return S.promo&&S.promo.plan===S.plan?S.promo.amountSatang/100:+S.plan}
+function payLabel(){if(S.plan==='0')return t('ส่งฟรี');const n=priceNow();return n===0?t('ส่งเลย · ฟรีด้วยโค้ด'):t('ชำระ {n} บาท ด้วย PromptPay',{n})}
+function renderSum(){const el=$('sumPrice');el.textContent='';
+  if(S.plan==='0'){el.textContent=t('ฟรี');return}
+  const n=priceNow();if(n!==+S.plan){const old=document.createElement('s');old.textContent=t('{n} บาท',{n:S.plan});el.append(old)}
+  el.append(n===0?t('ฟรี'):t('{n} บาท',{n}));$('confirmBtn').textContent=payLabel()}
+function clearPromo(){S.promo=null;const m=$('codeMsg');if(m){m.hidden=true;m.textContent=''}}
 function markPlans(){document.querySelectorAll('#plans .opt').forEach(b=>b.setAttribute('aria-checked',b.dataset.p===S.plan));$('when').hidden=S.plan==='0';
   $('nowBtn').setAttribute('aria-pressed',!S.sched);$('schedBtn').setAttribute('aria-pressed',S.sched);$('presets').hidden=$('whenAt').hidden=!S.sched;}
-document.querySelectorAll('#plans .opt').forEach(b=>b.onclick=()=>{S.plan=b.dataset.p;markPlans()});
+document.querySelectorAll('#plans .opt').forEach(b=>b.onclick=()=>{S.plan=b.dataset.p;if(S.promo&&S.promo.plan!==S.plan)clearPromo();markPlans()});
 $('nowBtn').onclick=()=>{S.sched=false;markPlans()};$('schedBtn').onclick=()=>{S.sched=true;markPlans()};markPlans();
 
 function thaiDate(v){return window.I18N?I18N.date(v):v}
@@ -882,7 +891,7 @@ function photoBlob(){
   return new Promise(res=>{const img=new Image();img.onload=()=>{const k=Math.min(1,1600/Math.max(img.width,img.height)),c=document.createElement('canvas');
     c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);c.toBlob(b=>res(b),'image/jpeg',.85)};img.onerror=()=>res(null);img.src=S.photo});
 }
-const ERR={SCHEDULE_OUT_OF_RANGE:'เวลาส่งต้องเป็นอนาคต และไม่เกิน 1 ปี',FILE_TOO_LARGE:'ไฟล์ใหญ่เกินไป',UNSUPPORTED_TYPE:'ไฟล์ชนิดนี้ใช้ไม่ได้',VALIDATION_ERROR:'ข้อมูลบางอย่างไม่ถูกต้อง ลองตรวจอีกครั้ง',RATE_LIMITED:'ส่งถี่เกินไป รอสักครู่แล้วลองใหม่'};
+const ERR={PROMO_INVALID:'โค้ดนี้ใช้ไม่ได้ หรือหมดอายุแล้ว',SCHEDULE_OUT_OF_RANGE:'เวลาส่งต้องเป็นอนาคต และไม่เกิน 1 ปี',FILE_TOO_LARGE:'ไฟล์ใหญ่เกินไป',UNSUPPORTED_TYPE:'ไฟล์ชนิดนี้ใช้ไม่ได้',VALIDATION_ERROR:'ข้อมูลบางอย่างไม่ถูกต้อง ลองตรวจอีกครั้ง',RATE_LIMITED:'ส่งถี่เกินไป รอสักครู่แล้วลองใหม่'};
 const errText=e=>ERR[e&&e.code]||'ส่งไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง';
 function bootOn(text){$('bootText').textContent=text;document.documentElement.classList.add('boot')}
 function bootOff(){document.documentElement.classList.remove('boot','boot-pay')}
@@ -931,7 +940,7 @@ async function sendReal(){
     if(S.plan==='0'){btn.disabled=false;btn.textContent=label;bootOff();showSent(created.link,()=>t('ซานต้าออกเดินทางแล้ว · ถึง{to}ในอีก 25 ชม.',{to:I18N_SPACE(to)}));created=null;return}
     btn.textContent='กำลังไปหน้าชำระเงิน…';bootOn(t('กำลังไปหน้าชำระเงิน…'));
     const c=await API.checkout(created.slug,{plan:S.plan==='125'?'FOREVER':'YEAR',payer:'SENDER',email,
-      deliverAt:S.sched?new Date($('whenAt').value).toISOString():undefined,returnPath:location.pathname+'?sent='+created.slug,lang:window.I18N?I18N.lang:'th'},created.senderToken);
+      deliverAt:S.sched?new Date($('whenAt').value).toISOString():undefined,returnPath:location.pathname+'?sent='+created.slug,lang:window.I18N?I18N.lang:'th',promoCode:S.promo&&S.promo.plan===S.plan?S.promo.code:undefined},created.senderToken);
     location.href=c.checkoutUrl;
   }catch(e){bootOff();$('whoSheet').hidden=false;toast(errText(e));btn.disabled=false;btn.textContent=label}
 }
@@ -959,12 +968,26 @@ $('copyBtn').onclick=async()=>{const t=$('linkText').dataset.full||'https://'+$(
 $('againBtn').onclick=()=>{go(0)};
 const PLAN_NAME={'0':'ส่งธรรมดา · ถึงใน 25 ชม.','25':'ส่งด่วน · เก็บไว้ 1 ปี','125':'ส่งด่วน · เก็บไว้ตลอดไป'};
 function emailHint(){const need=S.plan!=='0'||$('remind').checked;$('emailHint').textContent=need?'สำหรับใบเสร็จและกู้ลิงก์คืน':'ไม่บังคับ';return need}
-function openWho(){$('wTo').value=$('to').value;$('wFrom').value=$('from').value;$('sumPlan').textContent=PLAN_NAME[S.plan];$('sumPrice').textContent=S.plan==='0'?t('ฟรี'):t('{n} บาท',{n:S.plan});
+function openWho(){$('wTo').value=$('to').value;$('wFrom').value=$('from').value;$('sumPlan').textContent=PLAN_NAME[S.plan];renderSum();
   $('confirmBtn').textContent=payLabel();$('emailErr').hidden=true;emailHint();$('whoSheet').hidden=false}
 $('wTo').oninput=()=>{$('to').value=$('wTo').value;stepText();setEngrave(engraveText())};
 $('wFrom').oninput=()=>{$('from').value=$('wFrom').value};
 $('remind').onchange=emailHint;
-$('codeBtn').onclick=()=>toast($('code').value.trim()?'ตัวอย่าง: ยังไม่ได้เชื่อมระบบโค้ดส่วนลด':'ใส่โค้ดก่อนกดใช้');
+/* discount code: checked with the API (Stripe) here, the new price shows at once, and the code is applied on the payment page */
+const PROMO_ERR={PROMO_INVALID:'โค้ดนี้ใช้ไม่ได้ หรือหมดอายุแล้ว',PROMO_MIN_AMOUNT:'โค้ดนี้ใช้กับยอดที่สูงกว่านี้',PROMO_TOO_SMALL_TOTAL:'ใช้โค้ดนี้แล้วยอดต่ำกว่า 10 บาท ซึ่งชำระไม่ได้',VALIDATION_ERROR:'รูปแบบโค้ดไม่ถูกต้อง'};
+$('code').addEventListener('input',()=>{if(S.promo){clearPromo();renderSum()}});
+$('codeBtn').onclick=async()=>{
+  const code=$('code').value.trim(),msg=$('codeMsg');
+  if(!code)return toast(t('ใส่โค้ดก่อนกดใช้'));
+  if(!API)return toast(t('ตัวอย่าง: ยังไม่ได้เชื่อมระบบโค้ดส่วนลด'));
+  if(S.plan==='0'){msg.className='codeMsg bad';msg.textContent=t('ส่งธรรมดาฟรีอยู่แล้ว โค้ดใช้กับแบบ 25 / 125 บาท');msg.hidden=false;return}
+  const btn=$('codeBtn');btn.disabled=true;
+  try{const r=await API.promo(code,S.plan==='125'?'FOREVER':'YEAR');
+    S.promo={code:r.code,amountSatang:r.amountSatang,plan:S.plan};
+    msg.className='codeMsg';msg.textContent=r.amountSatang===0?t('ใช้โค้ด {code} แล้ว · ฟรี',{code:r.code}):t('ใช้โค้ด {code} แล้ว · ลด {n} บาท',{code:r.code,n:r.discountSatang/100});msg.hidden=false}
+  catch(e){clearPromo();msg.className='codeMsg bad';msg.textContent=t(PROMO_ERR[e.code]||'ตรวจโค้ดไม่สำเร็จ ลองใหม่อีกครั้ง');msg.hidden=false}
+  finally{btn.disabled=false;renderSum()}
+};
 $('confirmBtn').onclick=()=>{const v=$('wEmail').value.trim(),ok=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
   if(!$('wTo').value.trim()){toast('ใส่ชื่อผู้รับก่อนนะ');$('wTo').focus();return}
   if((emailHint()&&!ok)||(v&&!ok)){$('emailErr').hidden=false;$('wEmail').focus();return}
@@ -1033,7 +1056,7 @@ go(0);
 let BOX_NO=null;
 // language switch: redraw everything built from variables (static text is swapped by i18n.js)
 if(window.I18N)I18N.onChange(()=>{stepText();markPlans();if(SENT_FN)setStatus(SENT_FN);
-  if(!$('whoSheet').hidden){$('sumPrice').textContent=S.plan==='0'?t('ฟรี'):t('{n} บาท',{n:S.plan});$('confirmBtn').textContent=payLabel()}
+  if(!$('whoSheet').hidden)renderSum();
   if(BOX_NO)document.querySelector('.counter').textContent=t('กล่องที่ {n}',{n:BOX_NO})});
 if(API){
   $('simNote').hidden=true; // live: recording uses the real microphone

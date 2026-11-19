@@ -68,6 +68,8 @@ window.SantaAPI = (function () {
     manage: function (slug, token) { return call('GET', '/gifts/' + slug + '/manage', null, { 'X-Sender-Token': token }); },
     checkout: function (slug, body, token) { return call('POST', '/gifts/' + slug + '/checkout', body, token ? { 'X-Sender-Token': token } : null); },
     download: function (slug) { return call('GET', '/gifts/' + slug + '/download'); },
+    /** Check a discount code for a plan; returns the price after it. */
+    promo: function (code, plan) { return call('POST', '/promo', { code: code, plan: plan }); },
     remember: remember,
     recall: recall,
     slugFromUrl: slugFromUrl,

@@ -7,7 +7,7 @@ import { AppError, badRequest, conflict, forbidden, notFound } from '../../lib/e
 import { randomSlug, randomToken, sameHash, sha256 } from '../../lib/tokens.js';
 import { asLang, checkoutTitle } from './emails.js';
 import { CAMPAIGN, createGiftBody, type SantaPayload } from './schema.js';
-import { newGiftTiming, onOpened, phaseOf, playableVoiceSeconds, quote, type QuoteError } from './rules.js';
+import { applyPromo, newGiftTiming, onOpened, phaseOf, playableVoiceSeconds, quote, RULES, type QuoteError } from './rules.js';
 
 const UPLOAD_LIMITS = {
   VOICE: { maxBytes: 1_500_000, types: { 'audio/webm': 'webm', 'audio/ogg': 'ogg', 'audio/mp4': 'm4a', 'audio/mpeg': 'mp3', 'audio/aac': 'aac' } },
@@ -24,6 +24,12 @@ const QUOTE_MESSAGES: Record<QuoteError, string> = {
 };
 
 const slugParams = z.object({ slug: z.string().min(6).max(40) });
+const promoCode = z.string().trim().min(2).max(40).regex(/^[A-Za-z0-9_-]+$/, 'letters, digits, - and _ only');
+const PROMO_MESSAGES = {
+  PROMO_INVALID: 'This code does not exist, has expired or has been used up',
+  PROMO_MIN_AMOUNT: 'This code needs a bigger order',
+  PROMO_TOO_SMALL_TOTAL: 'After this code the total would be under 10 THB, which cannot be charged',
+} as const;
 
 /**
  * SANTA_APP_URL may include a path (https://play.inzeniths.com/santa-box), so links are joined onto it
@@ -83,6 +89,32 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
   }
 
   r.get('/stats', async () => ({ boxes: await db.gift.count({ where: { campaign: CAMPAIGN } }) }));
+
+  /** Look a discount code up before paying, so the page can show the new price. */
+  async function promoPrice(code: string, baseSatang: number) {
+    let promo;
+    try {
+      promo = await app.payments.findPromo(code);
+    } catch (e) {
+      app.log.error(e, 'promo lookup failed');
+      throw new AppError(502, 'PAYMENT_PROVIDER_ERROR', 'Could not check the code, please try again');
+    }
+    if (!promo) throw conflict('PROMO_INVALID', PROMO_MESSAGES.PROMO_INVALID);
+    const r = applyPromo(baseSatang, promo);
+    if (!r.ok) throw conflict(r.error, PROMO_MESSAGES[r.error]);
+    return { promo, ...r };
+  }
+
+  r.post(
+    '/promo',
+    { config: createLimit, schema: { body: z.object({ code: promoCode, plan: z.enum(['YEAR', 'FOREVER']), upgrade: z.boolean().default(false) }) } },
+    async (request) => {
+      const { code, plan, upgrade } = request.body;
+      const base = RULES.price[plan] - (upgrade ? RULES.price.YEAR : 0);
+      const p = await promoPrice(code, base);
+      return { code: p.promo.code, percentOff: p.promo.percentOff, baseSatang: base, discountSatang: p.discountSatang, amountSatang: p.amountSatang };
+    },
+  );
 
   // 1. The page asks for a file slot, then PUTs the voice note or photo straight to storage.
   r.post(
@@ -208,6 +240,8 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
           returnPath,
           /** Language of the checkout page and receipt email. Default: the sender's language. */
           lang: z.enum(['th', 'en']).optional(),
+          /** Discount code typed on our page; checked again here and applied on the payment page. */
+          promoCode: promoCode.optional(),
         }),
       },
     },
@@ -219,6 +253,8 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
       const requestedDeliverAt = request.body.deliverAt ? new Date(request.body.deliverAt) : null;
       const q = quote(gift, { plan, payer, requestedDeliverAt }, new Date());
       if (!q.ok) throw conflict(q.error, QUOTE_MESSAGES[q.error]);
+      const promo = request.body.promoCode ? await promoPrice(request.body.promoCode, q.amountSatang) : null;
+      const amountSatang = promo ? promo.amountSatang : q.amountSatang;
 
       const payment = await db.payment.create({
         data: {
@@ -226,7 +262,7 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
           provider: app.payments.name,
           plan,
           payer,
-          amountSatang: q.amountSatang,
+          amountSatang,
           requestedDeliverAt,
           email: email ?? (payer === 'SENDER' ? gift.senderEmail : null),
           lang,
@@ -240,6 +276,7 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
         const checkout = await app.payments.createCheckout({
           paymentId: payment.id,
           amountSatang: q.amountSatang,
+          promoId: promo?.promo.id,
           title,
           email: payment.email,
           locale: lang,
@@ -247,7 +284,7 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
           cancelUrl: backUrl.toString(),
         });
         await db.payment.update({ where: { id: payment.id }, data: { providerRef: checkout.providerRef } });
-        return { paymentId: payment.id, amountSatang: q.amountSatang, checkoutUrl: checkout.url };
+        return { paymentId: payment.id, amountSatang, checkoutUrl: checkout.url };
       } catch (e) {
         await db.payment.update({ where: { id: payment.id }, data: { status: 'EXPIRED' } });
         request.log.error(e, 'checkout failed');

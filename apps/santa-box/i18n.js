@@ -156,6 +156,15 @@ window.I18N = (function () {
     'ใช้โค้ด': 'Apply',
     'ตัวอย่าง: ยังไม่ได้เชื่อมระบบโค้ดส่วนลด': 'Preview: discount codes are not connected',
     'ใส่โค้ดก่อนกดใช้': 'Enter a code first',
+    'ส่งเลย · ฟรีด้วยโค้ด': 'Send · free with your code',
+    'ส่งธรรมดาฟรีอยู่แล้ว โค้ดใช้กับแบบ 25 / 125 บาท': 'Standard is already free. Codes work on the 25 / 125 THB plans.',
+    'ใช้โค้ด {code} แล้ว · ฟรี': 'Code {code} applied · free',
+    'ใช้โค้ด {code} แล้ว · ลด {n} บาท': 'Code {code} applied · {n} THB off',
+    'โค้ดนี้ใช้ไม่ได้ หรือหมดอายุแล้ว': "This code doesn't work or has expired",
+    'โค้ดนี้ใช้กับยอดที่สูงกว่านี้': 'This code needs a bigger order',
+    'ใช้โค้ดนี้แล้วยอดต่ำกว่า 10 บาท ซึ่งชำระไม่ได้': 'With this code the total is under 10 THB, which cannot be charged',
+    'รูปแบบโค้ดไม่ถูกต้อง': "That doesn't look like a code",
+    'ตรวจโค้ดไม่สำเร็จ ลองใหม่อีกครั้ง': "Couldn't check the code. Please try again.",
     'ใส่ชื่อผู้รับก่อนนะ': "Add the recipient's name first",
 
     // ---- sending and sent screen

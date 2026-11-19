@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { newGiftTiming, onOpened, onPaid, phaseOf, playableVoiceSeconds, quote, reminderYear, RULES, type GiftState } from '../src/campaigns/santa-box/rules.js';
+import { applyPromo, newGiftTiming, onOpened, onPaid, phaseOf, playableVoiceSeconds, quote, reminderYear, RULES, type GiftState } from '../src/campaigns/santa-box/rules.js';
 
 const H = 3_600_000;
 const D = 24 * H;
@@ -99,5 +99,22 @@ describe('voice and reminders', () => {
     expect(reminderYear(new Date('2027-12-17T17:00:00Z'))).toBe(2027); // 18 Dec 00:00 BKK
     expect(reminderYear(new Date('2027-12-24T16:59:00Z'))).toBe(2027);
     expect(reminderYear(new Date('2027-12-24T17:00:00Z'))).toBeNull();
+  });
+});
+
+describe('discount codes', () => {
+  const promo = (o: Partial<Parameters<typeof applyPromo>[1]>) => ({ id: 'p', code: 'X', percentOff: null, amountOffSatang: null, minSatang: null, ...o });
+  it('percent and fixed amounts', () => {
+    expect(applyPromo(2_500, promo({ percentOff: 20 }))).toEqual({ ok: true, amountSatang: 2_000, discountSatang: 500 });
+    expect(applyPromo(12_500, promo({ amountOffSatang: 2_500 }))).toEqual({ ok: true, amountSatang: 10_000, discountSatang: 2_500 });
+  });
+  it('100% makes it free', () => {
+    expect(applyPromo(2_500, promo({ percentOff: 100 }))).toEqual({ ok: true, amountSatang: 0, discountSatang: 2_500 });
+  });
+  it('refuses a total Stripe cannot charge (under 10 THB, not 0)', () => {
+    expect(applyPromo(2_500, promo({ percentOff: 70 }))).toEqual({ ok: false, error: 'PROMO_TOO_SMALL_TOTAL' });
+  });
+  it('respects a minimum order', () => {
+    expect(applyPromo(2_500, promo({ percentOff: 10, minSatang: 10_000 }))).toEqual({ ok: false, error: 'PROMO_MIN_AMOUNT' });
   });
 });
