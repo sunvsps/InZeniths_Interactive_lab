@@ -24,6 +24,9 @@ export interface Payments {
   parseWebhook(rawBody: Buffer, signature: string | undefined): PaymentEvent;
 }
 
+/** Stripe checkout statuses that mean the order is settled: paid, or free because a discount code covered all of it. */
+export const isSettled = (status: string | null | undefined) => status === 'paid' || status === 'no_payment_required';
+
 export function createPayments(env: Env): Payments {
   if (env.PAYMENT_DRIVER === 'fake') return fakePayments(env);
   const stripe = new Stripe(env.STRIPE_SECRET_KEY!);
@@ -55,7 +58,8 @@ export function createPayments(env: Env): Payments {
         case 'checkout.session.completed':
         case 'checkout.session.async_payment_succeeded':
           // PromptPay can finish later than the checkout page: "completed" may still be unpaid.
-          if (session.payment_status !== 'paid') return { type: 'ignored' };
+          // A 100% discount code makes the total 0: Stripe then says "no_payment_required", which counts as paid.
+          if (!isSettled(session.payment_status)) return { type: 'ignored' };
           return { type: 'paid', providerRef: session.id, paymentId, email: session.customer_details?.email ?? null };
         case 'checkout.session.expired':
         case 'checkout.session.async_payment_failed':

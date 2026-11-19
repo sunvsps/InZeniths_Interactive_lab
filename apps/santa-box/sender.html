@@ -45,7 +45,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .steps button i{display:block;width:100%;height:2px;border-radius:2px;background:var(--line)}
 .steps button.done i,.steps button[aria-current="step"] i{background:var(--accent)}
 .steps button[aria-current="step"]{color:var(--ink);font-weight:500}
-.body{flex:1;min-height:0;overflow-y:auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));padding-block:12px 20px}
+.body{flex:1;min-height:0;overflow-y:auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));padding-block:12px calc(6px + env(safe-area-inset-bottom,0px))}
 .pane{display:flex;flex-direction:column;gap:18px;animation:fadeUp .45s ease both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}}
 .h{font-family:var(--f-serif);font-weight:500;font-size:22px;margin:0;line-height:1.3}
@@ -156,8 +156,8 @@ textarea{resize:none;min-height:118px;font-family:var(--f-serif);font-size:16.5p
 .seg button{border:0;background:none;padding:10px;font-size:13px;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
 
-.nav{display:flex;gap:10px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));padding-block:12px 6px;border-top:1px solid var(--line);background:var(--paper)}
-.copy{margin:0;padding:2px 20px calc(8px + env(safe-area-inset-bottom,0px));text-align:center;font-size:10.5px;letter-spacing:.04em;color:var(--muted);background:var(--paper)}
+.nav{display:flex;gap:10px;padding-top:18px}
+.copy{margin:10px 0 0;text-align:center;font-size:10px;letter-spacing:.04em;color:var(--muted)}
 .copy a{color:inherit;text-underline-offset:2px}
 .btn{border:0;border-radius:999px;padding:14px 22px;font-size:15px;font-weight:500;background:var(--accent);color:#fff;flex:1;box-shadow:0 10px 24px -12px rgba(179,32,46,.55)}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none;flex:0 0 auto}
@@ -218,7 +218,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
     <canvas id="gl" aria-label="ตัวอย่างกล่องของขวัญสามมิติ"></canvas>
     <span class="spin-hint" id="spinHint">↻ ลากเพื่อหมุนดู 360°</span>
     <header class="hdr"><div class="brand"><span class="logo">Santa Box</span><span class="counter">กล่องที่ 12,345</span></div></header>
-    <p class="stage-tag" id="stageTag">A gift for แม่</p>
+    <p class="stage-tag" id="stageTag">A gift for …</p>
   </div>
 
   <section class="panel">
@@ -245,9 +245,9 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <div class="field"><div class="lbl">กระดาษการ์ด</div><div class="cstyles" id="cardStyles" role="radiogroup" aria-label="กระดาษการ์ด"></div></div>
         <div class="field"><div class="lbl">ลายมือ</div><div class="fonts" id="cardFonts" role="radiogroup" aria-label="แบบตัวอักษร"></div></div>
         <article class="wcard paper cs-0 cf-1" id="wcard">
-          <label class="wto">ถึง <input type="text" id="to" maxlength="30" value="แม่" aria-label="ชื่อผู้รับ"></label>
-          <textarea id="msg" maxlength="280" placeholder="เขียนถึงเขาสักหน่อย..." aria-label="ข้อความในการ์ด">ปีนี้เหนื่อยมาเยอะ ขอบคุณที่อยู่ข้างกันเสมอนะ คริสต์มาสนี้ขอให้แม่ได้พักบ้าง รักแม่ที่สุดเลย</textarea>
-          <div class="wfoot"><em id="msgCount"></em><label class="wfrom">— <input type="text" id="from" maxlength="30" value="ลูกคนเล็ก" aria-label="ชื่อผู้ส่ง"></label></div>
+          <label class="wto">ถึง <input type="text" id="to" maxlength="30" placeholder="ชื่อผู้รับ" aria-label="ชื่อผู้รับ"></label>
+          <textarea id="msg" maxlength="280" placeholder="เขียนถึงเขาสักหน่อย..." aria-label="ข้อความในการ์ด"></textarea>
+          <div class="wfoot"><em id="msgCount"></em><label class="wfrom">— <input type="text" id="from" maxlength="30" placeholder="ชื่อคุณ" aria-label="ชื่อผู้ส่ง"></label></div>
         </article>
         <div class="field"><div class="lbl">ไม่รู้จะเริ่มยังไง <em>แตะเพื่อเติมคำ</em></div><div class="chips" id="prompts"></div></div>
         <div class="field">
@@ -266,11 +266,11 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <h2 class="h">ใส่ของในกล่อง</h2>
         <p class="lead">เลือกของขวัญได้ 1 ชิ้น ทุกกล่องมีคูปองกับรูปให้ด้วย</p>
         <div class="opts" id="gifts" role="radiogroup" aria-label="ของขวัญ"></div>
-        <div class="sub field" id="ornField"><input type="text" id="engrave" maxlength="24" value="แม่ · Christmas 2026" aria-label="ข้อความที่สลักบนลูกแก้ว"></div>
+        <div class="sub field" id="ornField"><input type="text" id="engrave" maxlength="24" placeholder="ข้อความสลัก เช่น ชื่อเขา · Christmas 2026" aria-label="ข้อความที่สลักบนลูกแก้ว"></div>
         <div class="lbl" style="margin-top:6px">มีให้ทุกกล่อง</div>
         <div class="opts">
           <button class="opt" id="couponOpt" aria-pressed="true"><span class="ic">IOU</span><span class="tx"><b>คูปองสัญญา</b><small>สัญญาที่ผู้รับเอาไปแลกได้จริง แตะเพื่อเอาออก</small></span><span class="tick"></span></button>
-          <div class="sub field" id="couponField"><input type="text" id="coupon" maxlength="80" value="พาไปกินข้าวร้านโปรด 1 มื้อ" aria-label="ข้อความคูปอง"></div>
+          <div class="sub field" id="couponField"><input type="text" id="coupon" maxlength="80" placeholder="สัญญาว่าจะ… เช่น พาไปกินข้าวร้านโปรด 1 มื้อ" aria-label="ข้อความคูปอง"></div>
           <div class="opt" style="cursor:default"><span class="ic">◻</span><span class="tx"><b>รูปความทรงจำ</b><small>ไม่บังคับ ถ้าไม่ใส่รูป ผู้รับจะไม่เห็นช่องนี้</small></span></div>
           <div class="sub photo" id="photoField"><label for="photo">เลือกรูป</label><input class="sr" type="file" id="photo" accept="image/*"><img id="thumb" alt="" hidden><span class="note" id="photoNote">ยังไม่ได้เลือกรูป</span></div>
         </div>
@@ -286,7 +286,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
 
       <!-- 5. delivery -->
       <div class="pane" id="p4" hidden>
-        <h2 class="h">ส่งกล่องให้ <span id="sendTo">แม่</span></h2>
+        <h2 class="h">ส่งกล่องให้ <span id="sendTo">คุณ</span></h2>
         <div class="opts" id="plans" role="radiogroup">
           <button class="opt" role="radio" data-p="0" aria-checked="false"><span class="tx"><b>ส่งธรรมดา</b><small>ซานต้าใช้เวลาเดินทาง 25 ชม. · เปิดดูได้ 7 วัน</small></span><span class="price">ฟรี</span></button>
           <button class="opt" role="radio" data-p="25" aria-checked="true"><span class="tx"><b>ส่งด่วน · เก็บไว้ 1 ปี</b><small>ถึงทันทีหรือตามเวลาที่ตั้ง · เสียงอวยพร 1 นาที · เปิดฟังได้ถึงคริสต์มาสหน้า</small></span><span class="price">25<span>บาท</span></span></button>
@@ -305,7 +305,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
       <!-- 6. sent -->
       <div class="pane done" id="p5" hidden>
         <p class="eyebrow">Wrapped &amp; sent</p>
-        <h2 class="h">ส่งกล่องให้ <span id="doneTo">แม่</span> แล้ว</h2>
+        <h2 class="h">ส่งกล่องให้ <span id="doneTo">คุณ</span> แล้ว</h2>
         <span class="status" id="doneStatus"><i></i>จะเด้งถึงแม่ 25 ธ.ค. เวลา 00:00</span>
         <div class="link"><code id="linkText">play.inzeniths.com/santa-box/b/x7k2p9</code><button id="copyBtn">คัดลอก</button></div>
         <p class="note">ลิงก์นี้เป็นตัวอย่าง ส่งให้ผู้รับทาง LINE หรือแชตไหนก็ได้</p>
@@ -324,13 +324,13 @@ a.btn{display:block;text-align:center;text-decoration:none}
           <div class="r"><a class="l" href="https://inzeniths.com/interactive.html" target="_blank" rel="noopener">ดูผลงาน</a><a class="g" href="https://inzeniths.com/#contact" target="_blank" rel="noopener">คุยกับเรา</a></div>
         </aside>
       </div>
+      <!-- Back / Next scroll with the step instead of staying pinned, so the phone keeps more room -->
+      <div class="nav" id="nav">
+        <button class="btn ghost" id="backBtn">ย้อนกลับ</button>
+        <button class="btn" id="nextBtn">ถัดไป</button>
+      </div>
+      <p class="copy">© IN ZENITHS · <a href="mailto:support@inzeniths.com">ติดต่อเรา</a></p>
     </div>
-
-    <div class="nav" id="nav">
-      <button class="btn ghost" id="backBtn">ย้อนกลับ</button>
-      <button class="btn" id="nextBtn">ถัดไป</button>
-    </div>
-    <p class="copy">© IN ZENITHS · มีปัญหาติดต่อ <a href="mailto:support@inzeniths.com">support@inzeniths.com</a></p>
   </section>
 </div>
 
@@ -780,8 +780,9 @@ function markGifts(){document.querySelectorAll('#gifts .opt').forEach(b=>b.setAt
 $('couponOpt').onclick=()=>{S.coupon=!S.coupon;markGifts()};
 $('photo').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{S.photo=r.result;$('thumb').src=r.result;$('thumb').hidden=false;$('photoNote').textContent=f.name};r.readAsDataURL(f)};
 markGifts();
-$('engrave').addEventListener('input',()=>setEngrave($('engrave').value));setEngrave($('engrave').value);
-if(document.fonts)document.fonts.ready.then(()=>setEngrave($('engrave').value));
+const engraveText=()=>$('engrave').value.trim()||$('to').value.trim(); // until the sender types, the ornament shows the recipient's name
+$('engrave').addEventListener('input',()=>setEngrave(engraveText()));$('to').addEventListener('input',()=>setEngrave(engraveText()));setEngrave(engraveText());
+if(document.fonts)document.fonts.ready.then(()=>setEngrave(engraveText()));
 
 // music
 let ctx=null,master=null,mTimer=null;
@@ -850,7 +851,7 @@ async function sendReal(){
         remindNextYear:$('remind').checked,showUnderTree:$('tree').checked,
         payload:{design:{box:DESIGN.box,ribbon:DESIGN.rib,accents:DESIGN.acc.slice(),paper:S.cs||0,font:S.cf==null?1:S.cf},
           card:{message:$('msg').value.trim()},
-          gift:{item:S.gift,engraving:S.gift==='orn'?($('engrave').value.trim()||undefined):undefined,coupon:S.coupon?($('coupon').value.trim()||null):null},
+          gift:{item:S.gift,engraving:S.gift==='orn'?(engraveText()||undefined):undefined,coupon:S.coupon?($('coupon').value.trim()||null):null},
           music:S.song}});
       API.remember(created.slug,{token:created.senderToken,link:created.link,to,design:{box:DESIGN.box,rib:DESIGN.rib,acc:DESIGN.acc.slice()},gift:S.gift});
     }
@@ -886,11 +887,12 @@ const PLAN_NAME={'0':'ส่งธรรมดา · ถึงใน 25 ชม.'
 function emailHint(){const need=S.plan!=='0'||$('remind').checked;$('emailHint').textContent=need?'สำหรับใบเสร็จและกู้ลิงก์คืน':'ไม่บังคับ';return need}
 function openWho(){$('wTo').value=$('to').value;$('wFrom').value=$('from').value;$('sumPlan').textContent=PLAN_NAME[S.plan];$('sumPrice').textContent=S.plan==='0'?'ฟรี':S.plan+' บาท';
   $('confirmBtn').textContent=payLabel();$('emailErr').hidden=true;emailHint();$('whoSheet').hidden=false}
-$('wTo').oninput=()=>{$('to').value=$('wTo').value;$('sendTo').textContent=$('wTo').value||'คุณ'};
+$('wTo').oninput=()=>{$('to').value=$('wTo').value;$('sendTo').textContent=$('wTo').value||'คุณ';setEngrave(engraveText())};
 $('wFrom').oninput=()=>{$('from').value=$('wFrom').value};
 $('remind').onchange=emailHint;
 $('codeBtn').onclick=()=>toast($('code').value.trim()?'ตัวอย่าง: ยังไม่ได้เชื่อมระบบโค้ดส่วนลด':'ใส่โค้ดก่อนกดใช้');
 $('confirmBtn').onclick=()=>{const v=$('wEmail').value.trim(),ok=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
+  if(!$('wTo').value.trim()){toast('ใส่ชื่อผู้รับก่อนนะ');$('wTo').focus();return}
   if((emailHint()&&!ok)||(v&&!ok)){$('emailErr').hidden=false;$('wEmail').focus();return}
   $('whoSheet').hidden=true;send()};
 document.querySelectorAll('.scrim').forEach(s=>s.addEventListener('click',e=>{if(e.target===s||e.target.hasAttribute('data-close'))s.hidden=true}));
