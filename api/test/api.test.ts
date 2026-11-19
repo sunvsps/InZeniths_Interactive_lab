@@ -83,6 +83,7 @@ describe('paying', () => {
     const view = (await ctx.app.inject({ url: `/v1/santa-box/gifts/${box.slug}` })).json();
     expect(view.voice.playableSeconds).toBe(40);
     expect(ctx.mailer.sent.filter((m) => m.text.includes(box.link))).toHaveLength(1);
+    expect(ctx.mailer.sent.find((m) => m.text.includes(box.link))!.text).toContain('support@inzeniths.com');
   });
 
   it('recipient cannot pay before arrival, can keep forever after, then download', async () => {

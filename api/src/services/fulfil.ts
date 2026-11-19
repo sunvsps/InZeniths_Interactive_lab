@@ -2,6 +2,7 @@
 import type { FastifyInstance } from 'fastify';
 import { onPaid } from '../campaigns/santa-box/rules.js';
 import { giftLink } from '../campaigns/santa-box/routes.js';
+import { SUPPORT_FOOTER } from './mailer.js';
 
 export async function markPaid(app: FastifyInstance, ref: { paymentId: string | null; providerRef: string }, email: string | null, now = new Date()) {
   const db = app.prisma;
@@ -28,8 +29,8 @@ export async function markPaid(app: FastifyInstance, ref: { paymentId: string | 
     const kept = gift.plan === 'FOREVER' ? 'เก็บไว้ได้ตลอดไป' : `เก็บไว้ได้ถึง ${gift.expiresAt?.toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' })}`;
     const text =
       payment.payer === 'SENDER'
-        ? `กล่องของขวัญถึง ${gift.recipientName} พร้อมแล้ว\n\nส่งลิงก์นี้ให้ผู้รับ: ${link}\nกล่องจะเปิดได้ ${gift.deliverAt.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })} และ${kept}\n\nขอบคุณที่ใช้ Santa Box`
-        : `กล่องของขวัญของคุณ${kept}แล้ว\n\nเปิดดูได้ที่: ${link}\n\nขอบคุณที่ใช้ Santa Box`;
+        ? `กล่องของขวัญถึง ${gift.recipientName} พร้อมแล้ว\n\nส่งลิงก์นี้ให้ผู้รับ: ${link}\nกล่องจะเปิดได้ ${gift.deliverAt.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })} และ${kept}\n\nขอบคุณที่ใช้ Santa Box${SUPPORT_FOOTER}`
+        : `กล่องของขวัญของคุณ${kept}แล้ว\n\nเปิดดูได้ที่: ${link}\n\nขอบคุณที่ใช้ Santa Box${SUPPORT_FOOTER}`;
     await app.mailer
       .send({ to: payment.email, subject: payment.payer === 'SENDER' ? 'กล่อง Santa Box ของคุณพร้อมส่งแล้ว' : 'เก็บกล่อง Santa Box ไว้เรียบร้อย', text })
       .catch((e) => app.log.error(e, 'payment email failed'));

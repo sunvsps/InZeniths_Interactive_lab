@@ -3,6 +3,9 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { Env } from '../config/env.js';
 
 export type Mail = { to: string; subject: string; text: string; html?: string };
+
+/** Every email comes from noreply@, so each one says where to reach a person. */
+export const SUPPORT_FOOTER = '\n\n—\nมีปัญหาหรือคำถาม ติดต่อ support@inzeniths.com\nSanta Box by IN ZENITHS';
 export interface Mailer {
   send(mail: Mail): Promise<void>;
 }
