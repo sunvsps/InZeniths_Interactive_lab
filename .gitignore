@@ -1,0 +1,10 @@
+# dependencies and build output
+node_modules/
+dist/
+# secrets and local data (never commit)
+.env
+.env.*
+!.env.example
+.pgdata/
+# OS
+.DS_Store

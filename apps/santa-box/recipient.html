@@ -1,0 +1,849 @@
+<title>Santa Box 3D</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<!-- API address (see santa-api.js). Empty = prototype mode with sample data. Production: https://api.inzeniths.com -->
+<meta name="santa-api" content="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=IBM+Plex+Sans+Thai:wght@300;400;500&family=Noto+Serif+Thai:wght@400;500;600&family=Charm:wght@400;700&family=Mali:wght@400;500&display=swap">
+<style>
+[hidden]{display:none!important}
+body{margin:0}
+/* Layout: one-screen phone app — a 3D gift box on an ivory "table" fills the screen; each step of the opening is a light overlay (top title, bottom actions) */
+:root{
+  --bg:#FBF8F4; --bg2:#F4E8E4; --paper:#FFFFFF; --ink:#2A2420; --muted:#8A7B74; --line:#EEE2DC;
+  --accent:#B3202E; --gold:#B08D57;
+  --f-lat:'Cormorant Garamond','Times New Roman',serif;
+  --f-serif:'Noto Serif Thai','Cormorant Garamond',serif;
+  --f-sans:'IBM Plex Sans Thai','Noto Sans Thai',system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:radial-gradient(120% 70% at 50% 30%,#FFFFFF 0%,var(--bg) 55%,var(--bg2) 100%);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.55;font-weight:400}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+#app{position:relative;height:100%;max-width:480px;margin:0 auto;overflow:hidden}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+
+.hdr{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));padding-block:14px}
+.logo{font-family:var(--f-lat);font-style:italic;font-weight:600;font-size:22px;letter-spacing:.01em;color:var(--accent)}
+.hdr-r{display:flex;gap:6px}
+.pill{border:1px solid var(--line);background:rgba(251,247,240,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:999px;padding:6px 12px;font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.pill[aria-pressed="true"]{color:var(--ink);border-color:var(--ink)}
+.eq{display:inline-flex;gap:2px;align-items:flex-end;height:10px}
+.eq i{width:2px;height:3px;background:currentColor;border-radius:1px}
+.pill[aria-pressed="true"] .eq i{animation:eq .9s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:-.3s!important}.eq i:nth-child(3){animation-delay:-.6s!important}
+@keyframes eq{50%{height:10px}}
+
+.step{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;
+  padding-left:max(22px,env(safe-area-inset-left,0px));padding-right:max(22px,env(safe-area-inset-right,0px));padding-block:66px 22px}
+.step .top,.step .bot{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
+.step .bot{gap:12px;pointer-events:auto}
+.step .top{animation:fadeUp .9s ease both}
+.eyebrow{font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:500}
+.title{font-family:var(--f-serif);font-weight:500;font-size:40px;line-height:1.15;margin:0;text-wrap:balance}
+.title.sm{font-size:26px}
+.sub{margin:0;color:var(--muted);font-size:14px}
+.sub b{color:var(--ink);font-weight:500}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}}
+
+.btn{border:0;border-radius:999px;padding:14px 26px;font-size:15px;font-weight:500;background:var(--accent);color:#fff;min-width:220px;letter-spacing:.01em;box-shadow:0 10px 24px -12px rgba(179,32,46,.55)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink);box-shadow:none;min-width:0}
+.btn.full{width:100%}
+.row{display:flex;gap:10px;width:100%}
+.row .btn{flex:1}
+.link{background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px;padding:4px}
+
+.ways{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.way{border:1px solid var(--line);background:rgba(251,247,240,.7);border-radius:999px;padding:5px 11px 5px 6px;font-size:12px;display:flex;align-items:center;gap:7px;color:var(--muted)}
+.way[aria-checked="true"]{border-color:var(--ink);color:var(--ink)}
+.way span{width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,var(--a) 50%,var(--b) 50%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.caption{font-size:11px;color:var(--muted);margin:0;letter-spacing:.02em}
+
+.drag{display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--muted);font-size:13px}
+.chev{width:22px;height:22px;border-left:1.5px solid var(--ink);border-top:1.5px solid var(--ink);transform:rotate(45deg);animation:chev 1.4s ease-in-out infinite}
+@keyframes chev{0%,100%{transform:translateY(6px) rotate(45deg);opacity:.3}50%{transform:translateY(-4px) rotate(45deg);opacity:1}}
+.track{width:140px;height:2px;background:var(--line);border-radius:2px;overflow:hidden}
+.track i{display:block;height:100%;width:0;background:var(--accent)}
+
+.count{font-family:var(--f-lat);font-weight:500;font-size:54px;letter-spacing:.04em;font-variant-numeric:tabular-nums;line-height:1;margin:8px 0 2px}
+.count small{display:flex;justify-content:space-around;font-family:var(--f-sans);font-size:10px;letter-spacing:.2em;color:var(--muted);margin-top:6px}
+
+.card{position:relative;width:100%;background:var(--paper);border-radius:3px;padding:24px 22px 18px;text-align:left;transform:rotate(-.7deg);
+  box-shadow:0 34px 60px -30px rgba(60,40,20,.55),0 1px 0 rgba(60,40,20,.05);animation:cardIn 1s cubic-bezier(.2,1,.3,1) both}
+@keyframes cardIn{from{opacity:0;transform:translateY(80px) rotate(3deg)}}
+.card::before{content:"";position:absolute;inset:8px;border:1px solid var(--line);pointer-events:none}
+/* card papers (shared by sender preview and recipient card) */
+.paper.cs-0{background:#FBF7F0;color:#2A2420}
+.paper.cs-1{background:radial-gradient(circle,#D5E1EA 1.5px,transparent 2px) 0 0/22px 22px,radial-gradient(circle,#E6ECF1 1px,transparent 1.5px) 11px 11px/22px 22px,#FFFFFF;color:#2A2420}
+.paper.cs-2{background:#FBF7F0;color:#2A2420;border:2px solid #C9A24A;outline:2px solid #B3202E;outline-offset:-9px}
+.paper.cs-3{background:#D9BE93 repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 2px,transparent 2px 5px);color:#3A2716}
+.paper.cs-4{background:#24442F;color:#FFF3DC}
+.paper.cf-0{--cf:'Noto Serif Thai',serif}.paper.cf-1{--cf:'Charm','Noto Serif Thai',cursive}.paper.cf-2{--cf:'Mali','IBM Plex Sans Thai',sans-serif}
+.card .to{font-family:var(--cf,var(--f-serif));font-size:15px;opacity:.7;margin:0 0 8px}
+.card .msg{font-family:var(--cf,var(--f-serif));font-size:18px;line-height:1.75;margin:0}
+.card .sig{font-family:var(--cf,var(--f-serif));text-align:right;margin:12px 0 0;font-size:16px}
+.voice{display:flex;align-items:center;gap:12px;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+.play{width:42px;height:42px;border-radius:50%;border:0;background:var(--accent);color:var(--paper);flex:none;display:grid;place-items:center}
+.play svg{width:14px;height:14px}
+.wave{flex:1;display:flex;align-items:center;gap:2px;height:28px;min-width:0}
+.wave i{flex:1;background:var(--accent);opacity:.35;border-radius:2px;height:var(--h)}
+.voice.on .wave i{animation:wv .8s ease-in-out infinite;opacity:.85}
+@keyframes wv{50%{transform:scaleY(.35)}}
+.vmeta{display:flex;flex-direction:column;font-size:11px;color:var(--muted);text-align:right;flex:none}
+.vmeta b{font-weight:500;color:var(--ink);font-size:12px}
+.vnote{font-size:10.5px;color:var(--muted);margin:8px 0 0}
+
+.meaning{font-family:var(--f-serif);font-size:15px;line-height:1.5;margin:4px 0 0;max-width:30ch;text-wrap:balance}
+.memo{width:132px;aspect-ratio:1;object-fit:cover;border:6px solid #fff;border-bottom-width:18px;border-radius:3px;box-shadow:0 8px 20px -10px rgba(60,40,20,.45);transform:rotate(-2.5deg)}
+.ticket{width:100%;display:flex;align-items:center;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 14px;text-align:left;
+  -webkit-mask:radial-gradient(circle at 0 50%,transparent 8px,#000 8.5px) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent 8px,#000 8.5px) right/51% 100% no-repeat;
+  mask:radial-gradient(circle at 0 50%,transparent 8px,#000 8.5px) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent 8px,#000 8.5px) right/51% 100% no-repeat}
+.ticket small{display:block;font-size:9.5px;letter-spacing:.22em;color:var(--accent);font-weight:500}
+.ticket p{margin:0;font-family:var(--f-serif);font-size:15px}
+.ticket .k{font-family:var(--f-lat);font-style:italic;font-size:28px;color:var(--gold);line-height:1;padding-right:12px;border-right:1px dashed var(--line)}
+.expire{font-size:11.5px;color:var(--muted);margin:0}
+.expire b{color:var(--accent);font-weight:500}
+
+#santa{position:fixed;left:0;top:0;width:78px;color:var(--ink);opacity:.82;pointer-events:none;z-index:2;transform:translate(-200px,90px)}
+#santa svg{display:block;width:100%;height:auto;overflow:visible}
+.leg{transform-box:fill-box;transform-origin:top center;animation:gallop .34s ease-in-out infinite alternate}
+.leg.b{animation-delay:-.17s}
+@keyframes gallop{from{transform:rotate(26deg)}to{transform:rotate(-22deg)}}
+
+.scrim{position:fixed;inset:0;z-index:20;background:rgba(42,36,32,.35);display:flex;align-items:flex-end;justify-content:center;animation:fade .3s ease}
+@keyframes fade{from{opacity:0}}
+.sheet{width:100%;max-width:480px;max-height:92%;overflow-y:auto;background:var(--paper);border-radius:22px 22px 0 0;display:flex;flex-direction:column;gap:14px;align-items:center;
+  padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));padding-block:20px calc(20px + env(safe-area-inset-bottom,0px));animation:up .45s cubic-bezier(.2,1,.3,1)}
+@keyframes up{from{transform:translateY(60%)}}
+.sheet h2{font-family:var(--f-serif);font-weight:500;font-size:21px;margin:0;text-align:center}
+.sheet .sub{text-align:center}
+.grab{width:38px;height:4px;border-radius:4px;background:var(--line)}
+#shotImg{height:min(50vh,440px);aspect-ratio:9/16;max-width:100%;object-fit:cover;border-radius:12px;box-shadow:0 20px 40px -20px rgba(60,40,20,.5);background:var(--bg)}
+.check{display:flex;align-items:center;gap:8px;font-size:13px}
+.check input{width:18px;height:18px;accent-color:var(--accent)}
+.plans{display:flex;flex-direction:column;gap:10px;width:100%}
+.plan{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:14px;padding:14px 16px;text-align:left;background:#fff}
+.plan[aria-checked="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.plan div{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0}
+.plan b{font-weight:500;font-family:var(--f-serif);font-size:16px}
+.plan small{color:var(--muted);font-size:12px}
+.plan .price{font-family:var(--f-lat);font-size:28px;font-weight:600;line-height:1}
+.plan .price span{font-family:var(--f-sans);font-size:11px;font-weight:400;color:var(--muted);margin-left:2px}
+.badge{align-self:flex-start;font-size:10px;letter-spacing:.12em;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:1px 7px;margin-bottom:3px}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;background:var(--ink);color:var(--paper);font-size:13px;padding:10px 16px;border-radius:12px;width:max-content;max-width:calc(100% - 32px);text-align:center;animation:fade .25s}
+.nogl{position:absolute;top:42%;left:0;right:0;text-align:center;color:var(--muted);font-size:13px;padding:0 24px}
+
+/* short screens (landscape phones, small laptop windows): tighten type and spacing so the box keeps room */
+@media (max-height:680px){
+  .step{padding-block:54px 12px}
+  .title{font-size:30px}.title.sm{font-size:21px}.sub{font-size:13px}
+  .meaning{font-size:13.5px;line-height:1.45}
+  .count{font-size:42px;margin:4px 0 0}
+  .step .bot{gap:8px}
+  .btn{padding:11px 20px;font-size:14px}
+  .ticket{padding:6px 12px}.ticket .k{font-size:22px}.ticket p{font-size:14px}
+  .card{padding:16px 18px 12px}.card .msg{font-size:15.5px;line-height:1.6}.card .to{margin-bottom:4px}
+  .voice{margin-top:10px;padding-top:10px}.vnote{display:none}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important}
+  #santa{display:none}
+}
+</style>
+
+<div id="app">
+  <canvas id="gl" aria-label="กล่องของขวัญสามมิติ"></canvas>
+
+  <header class="hdr">
+    <span class="logo">Santa Box</span>
+    <div class="hdr-r">
+      <button class="pill" id="transitBtn">หน้ารอส่ง</button>
+      <button class="pill" id="musicBtn" aria-pressed="false"><span class="eq"><i></i><i></i><i></i></span>Silent Night</button>
+    </div>
+  </header>
+
+  <!-- 0. transit (free delivery, 25 h) -->
+  <section class="step" id="s-transit" hidden>
+    <div class="top">
+      <p class="eyebrow">On the way</p>
+      <h1 class="title sm">ซานต้ากำลังเดินทาง<br>มาหาคุณ</h1>
+      <div class="count" id="count">18:42:10<small><span>ชม.</span><span>นาที</span><span>วินาที</span></small></div>
+    </div>
+    <div class="bot">
+      <p class="sub">กล่องจาก <b>ลูกคนเล็ก</b> จะถึงเวลา 00:00 คืนวันคริสต์มาส</p>
+      <button class="link" id="skipBtn">ข้ามเวลา (ตัวอย่าง)</button>
+    </div>
+  </section>
+
+  <!-- 1. landing -->
+  <section class="step" id="s-land">
+    <div class="top">
+      <p class="eyebrow">A gift for</p>
+      <h1 class="title">แม่</h1>
+      <p class="sub">จาก <b>ลูกคนเล็ก</b></p>
+      <p class="caption" id="spinHint">↻ ลากที่กล่องเพื่อหมุนดู 360°</p>
+    </div>
+    <div class="bot">
+      <button class="btn" id="openBtn">เปิดกล่องของขวัญ</button>
+    </div>
+  </section>
+
+  <!-- 2. untie -->
+  <section class="step" id="s-untie" hidden>
+    <div class="top" style="pointer-events:none">
+      <p class="eyebrow">Untie the ribbon</p>
+      <h1 class="title sm">แกะริบบิ้น</h1>
+    </div>
+    <div class="bot drag" style="pointer-events:none">
+      <div class="chev"></div>
+      <span>ลากขึ้นบนกล่องเพื่อดึงริบบิ้น หรือแตะกล่อง</span>
+      <div class="track"><i id="trackBar"></i></div>
+    </div>
+  </section>
+
+  <!-- 3. card + voice -->
+  <section class="step" id="s-card" hidden>
+    <div></div>
+    <div class="bot">
+      <article class="card paper cs-0 cf-1" id="cardEl">
+        <p class="to">ถึง แม่</p>
+        <p class="msg">ปีนี้เหนื่อยมาเยอะ ขอบคุณที่อยู่ข้างกันเสมอนะ คริสต์มาสนี้ขอให้แม่ได้พักบ้าง รักแม่ที่สุดเลย</p>
+        <p class="sig">— ลูกคนเล็ก</p>
+        <div class="voice" id="voice">
+          <button class="play" id="playBtn" aria-label="ฟังเสียงอวยพร"><svg viewBox="0 0 14 14"><path id="playIcon" d="M3 1.5 L12 7 L3 12.5 Z" fill="currentColor"/></svg></button>
+          <div class="wave" id="wave"></div>
+          <div class="vmeta"><b>เสียงอวยพร</b><span>0:18</span></div>
+        </div>
+        <p class="vnote">ตัวอย่างใช้เสียงสังเคราะห์ ในเว็บจริงเป็นเสียงที่ผู้ส่งอัดเอง</p>
+      </article>
+      <button class="btn full" id="giftBtn">ดูของในกล่อง</button>
+    </div>
+  </section>
+
+  <!-- 4. gift -->
+  <section class="step" id="s-gift" hidden>
+    <div class="top">
+      <p class="eyebrow">Inside your box</p>
+      <h1 class="title sm" id="giftName">ลูกแก้วสลักชื่อ</h1>
+      <p class="sub" id="giftSub">สลักชื่อ “แม่ · Christmas 2026”</p>
+      <p class="meaning" id="giftMeaning"></p>
+    </div>
+    <div class="bot">
+      <img class="memo" id="memoImg" alt="รูปความทรงจำจากผู้ส่ง" hidden>
+      <div class="ticket" id="ticket"><span class="k">IOU</span><div><small>คูปองสัญญา</small><p>พาไปกินข้าวร้านโปรด 1 มื้อ</p></div></div>
+      <div class="row">
+        <button class="btn ghost" id="shareBtn">แชร์รูปนี้</button>
+        <button class="btn ghost" id="keepBtn">เก็บไว้</button>
+      </div>
+      <button class="btn full" id="backBtn">ส่งกล่องกลับให้ ลูกคนเล็ก</button>
+      <p class="expire">กล่องนี้เปิดดูได้อีก <b>6 วัน 23 ชม.</b> · <button class="link" id="replayBtn" style="padding:0">เปิดอีกครั้ง</button></p>
+    </div>
+  </section>
+</div>
+
+<div id="santa" aria-hidden="true">
+  <svg viewBox="0 0 150 62" fill="currentColor">
+    <path d="M44 30 C70 22 92 26 104 24" stroke="currentColor" stroke-width="1" fill="none" opacity=".6"/>
+    <g class="leg"><rect x="100" y="34" width="2.6" height="16" rx="1.3"/></g>
+    <g class="leg b"><rect x="106" y="34" width="2.6" height="16" rx="1.3"/></g>
+    <g class="leg b"><rect x="119" y="33" width="2.6" height="16" rx="1.3"/></g>
+    <g class="leg"><rect x="125" y="33" width="2.6" height="16" rx="1.3"/></g>
+    <ellipse cx="113" cy="30" rx="17" ry="8"/>
+    <path d="M124 27 L131 14 L137 18 L130 30 Z"/>
+    <ellipse cx="136" cy="14" rx="7" ry="5"/>
+    <path d="M131 10 l-3 -8 M130 6 l-5 -1 M134 9 l1 -8 M134.5 4 l4 -2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+    <circle cx="143" cy="15" r="2.6" fill="#7A1F2B"/>
+    <path d="M96 28 q-6 -2 -7 2" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <circle cx="20" cy="22" r="9"/>
+    <circle cx="34" cy="21" r="9.5"/>
+    <circle cx="39" cy="10" r="5"/>
+    <path d="M33 8 q6 -9 13 -1 q-6 -2 -13 1z"/>
+    <path d="M33 8 q-3 -1 -5 4" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="M6 26 h44 q8 0 6 10 q-2 6 -10 6 H16 Q6 42 6 32 Z"/>
+    <path d="M2 48 H50 q8 0 10 -6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M14 42 v6 M44 42 v6" stroke="currentColor" stroke-width="2"/>
+  </svg>
+</div>
+
+<div class="scrim" id="shareSheet" hidden>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>แชร์ไป IG · TikTok</h2>
+    <img id="shotImg" alt="ภาพแชร์แนวตั้ง 9:16">
+    <label class="check"><input type="checkbox" id="incMsg"> ใส่ข้อความในการ์ดด้วย</label>
+    <p class="sub">กดค้างที่รูปเพื่อบันทึก แล้วโพสต์ลงสตอรี่ ในเว็บจริงปุ่มแชร์จะเปิดเมนูแชร์ของมือถือ</p>
+    <button class="btn full" data-close>เสร็จแล้ว</button>
+  </div>
+</div>
+
+<div class="scrim" id="keepSheet" hidden>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>เก็บเสียงและคำอวยพรนี้ไว้</h2>
+    <p class="sub">จ่ายครั้งเดียว ไม่มีรายเดือน</p>
+    <div class="plans" role="radiogroup">
+      <button class="plan" role="radio" aria-checked="false" data-p="25"><div><b>เก็บไว้ 1 ปี</b><small>เปิดฟังได้ถึงคริสต์มาสหน้า</small></div><span class="price">25<span>บาท</span></span></button>
+      <button class="plan" role="radio" aria-checked="true" data-p="125"><div><span class="badge">ดาวน์โหลดได้</span><b>เก็บไว้ตลอดไป</b><small>ดาวน์โหลดไฟล์เสียงและการ์ดเก็บไว้ในเครื่อง</small></div><span class="price">125<span>บาท</span></span></button>
+    </div>
+    <button class="btn full" id="payBtn">ชำระด้วย PromptPay · 125 บาท</button>
+    <button class="link" data-close>ไว้ทีหลัง</button>
+  </div>
+</div>
+
+<script src="/santa-api.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+// a real box from the API when the page is opened as /b/<slug>; otherwise the self-contained prototype
+const API=window.SantaAPI&&SantaAPI.enabled?SantaAPI:null,SLUG=API&&SantaAPI.slugFromUrl();
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const DATA={to:'แม่',from:'ลูกคนเล็ก',msg:'ปีนี้เหนื่อยมาเยอะ ขอบคุณที่อยู่ข้างกันเสมอนะ คริสต์มาสนี้ขอให้แม่ได้พักบ้าง รักแม่ที่สุดเลย'};
+
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),2800)}
+
+/* ---- box design catalog: colour, ribbon, accents (shared by sender and recipient) ---- */
+const BOX_COLORS=[
+  {n:'ขาวหิมะ',c:'#F4F1EC'},{n:'แดงคลาสสิก',c:'#A3202B'},{n:'เขียวสน',c:'#2F5D46'},
+  {n:'ทองอร่าม',c:'#C9A24A',metal:.45},{n:'ขนมปังขิง',c:'#A8714B'},{n:'กรมท่าคืนหนาว',c:'#1F2B45'}];
+const RIBBONS=[
+  {n:'แดงซาติน',c:'#9E1B27',r:.3,m:.15},{n:'ทองซาติน',c:'#D4AF5A',r:.28,m:.55},{n:'แคนดี้เคน',c:'#FFFFFF',r:.35,m:.05,stripe:true},
+  {n:'ไหมมรกต',c:'#2E6B4F',r:.3,m:.2},{n:'กำมะหยี่แดง',c:'#7A1420',r:.95,m:0},{n:'เงินประกาย',c:'#D9DBE0',r:.25,m:.7}];
+const ACCENTS=[{id:'b',n:'กระดิ่ง',e:'🔔'},{id:'p',n:'ลูกสน',e:'🌰'},{id:'h',n:'ฮอลลี่',e:'🌿'},{id:'c',n:'อบเชย',e:'🪵'},{id:'l',n:'ไฟกะพริบ',e:'✨'}];
+let DESIGN={box:0,rib:0,acc:['b']};
+var setDesign=function(){};
+/* ================= THREE ================= */
+let renderer;
+try{renderer=new THREE.WebGLRenderer({canvas:$('gl'),antialias:true,alpha:true,preserveDrawingBuffer:true})}
+catch(e){const n=document.createElement('p');n.className='nogl';n.textContent='เครื่องนี้แสดงภาพ 3D ไม่ได้ ลองเปิดด้วย Safari หรือ Chrome';$('app').append(n)}
+const C=h=>new THREE.Color(h).convertSRGBToLinear();
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(32,1,.1,100);
+const A={untie:0,bowGone:0,ribbonDrop:0,lidOpen:0,glow:0,orn:0,cam:0};
+// camera fit: the box is framed inside the empty band between this step's top text and bottom controls
+let F={top:80,bottom:600},FIT=null,cur=null;
+function fitView(){
+  if(!renderer)return;const ar=$('app').getBoundingClientRect(),H=ar.height;if(!H)return;
+  let top=64,bottom=H-16;const sec=$('s-'+step);
+  if(sec){const t=sec.querySelector('.top'),b=sec.querySelector('.bot');
+    if(t&&t.offsetHeight)top=Math.max(top,t.getBoundingClientRect().bottom-ar.top+20);
+    if(b&&b.offsetHeight)bottom=Math.min(bottom,b.getBoundingClientRect().top-ar.top-12)}
+  if(bottom-top<110)top=Math.max(40,bottom-110);
+  F={top,bottom};
+  const tall=step==='card'||step==='gift',lo=-.1,hi=tall?2.95:2.1,ext=hi-lo,cy=(hi+lo)/2;
+  const t=Math.tan(camera.fov*Math.PI/360),band=(bottom-top)/H;
+  const d=Math.max(ext*1.4/(band*2*t),4.2/(2*t*camera.aspect),6);
+  const visH=2*t*d,f=((top+bottom)/2-H/2)/H;
+  FIT={d,ty:cy+f*visH};if(!cur)cur={...FIT};
+}
+let root,lid,bow,orn,boxMat,lidMat,ribBody,ribLid,bowMat,ornMat,glowSprite,inLight,pts,ptsData,emitting=false;
+
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t}
+function roundedBox(W,H,D,r,b){
+  const w=W-2*b,d=D-2*b,x=-w/2,y=-d/2,s=new THREE.Shape();
+  s.moveTo(x+r,y);s.lineTo(x+w-r,y);s.quadraticCurveTo(x+w,y,x+w,y+r);s.lineTo(x+w,y+d-r);s.quadraticCurveTo(x+w,y+d,x+w-r,y+d);
+  s.lineTo(x+r,y+d);s.quadraticCurveTo(x,y+d,x,y+d-r);s.lineTo(x,y+r);s.quadraticCurveTo(x,y,x+r,y);
+  const g=new THREE.ExtrudeGeometry(s,{depth:H-2*b,bevelEnabled:true,bevelThickness:b,bevelSize:b,bevelSegments:4,curveSegments:8});
+  g.rotateX(-Math.PI/2);g.translate(0,b,0);g.computeVertexNormals();return g;
+}
+function shadowed(m){m.castShadow=true;m.receiveShadow=true;return m}
+
+if(renderer){
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+
+  // soft studio environment for satin + glass reflections
+  const envTex=canvasTex(512,256,(g,w,h)=>{
+    const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#FFFBF3');gr.addColorStop(.5,'#F1E6D3');gr.addColorStop(1,'#B9A586');
+    g.fillStyle=gr;g.fillRect(0,0,w,h);
+    g.fillStyle='#FFFFFF';g.filter='blur(6px)';g.fillRect(60,30,110,60);g.fillRect(330,40,90,50);g.fillStyle='#FFE6C4';g.fillRect(220,20,60,30);
+  });
+  const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromEquirectangular(envTex).texture;
+
+  scene.add(new THREE.HemisphereLight(0xfff4e2,0xcbb89a,.3));
+  const key=new THREE.DirectionalLight(0xfff1dc,.75);key.position.set(3.5,7,4.5);key.castShadow=true;
+  key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-4,right:4,top:4,bottom:-4,near:1,far:20});key.shadow.bias=-.0006;
+  scene.add(key);
+  const rim=new THREE.DirectionalLight(0xffe0bd,.35);rim.position.set(-4,3,-3);scene.add(rim);
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.ShadowMaterial({opacity:.14}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+
+  const paper=canvasTex(256,256,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);
+    for(let i=0;i<5000;i++){g.fillStyle=`rgba(90,70,50,${Math.random()*.05})`;g.fillRect(Math.random()*w,Math.random()*h,1,1)}
+    for(let y=0;y<h;y+=3){g.fillStyle='rgba(90,70,50,.018)';g.fillRect(0,y,w,1)}});
+  paper.wrapS=paper.wrapT=THREE.RepeatWrapping;
+
+  root=new THREE.Group();scene.add(root);
+  boxMat=new THREE.MeshStandardMaterial({map:paper,roughness:.8,metalness:0,envMapIntensity:.35});
+  lidMat=boxMat.clone();lidMat.transparent=true;
+  ribBody=new THREE.MeshStandardMaterial({roughness:.3,metalness:.18,transparent:true,envMapIntensity:1.1});
+  ribLid=ribBody.clone();bowMat=ribBody.clone();
+
+  root.add(shadowed(new THREE.Mesh(roundedBox(2,1.4,2,.06,.025),boxMat)));
+  const r1=new THREE.Mesh(new THREE.BoxGeometry(.3,1.404,2.014),ribBody),r2=new THREE.Mesh(new THREE.BoxGeometry(2.014,1.404,.3),ribBody);
+  r1.position.y=r2.position.y=.702;root.add(shadowed(r1),shadowed(r2));
+  // box opening: a shaded inner floor laid over the solid top so the open box reads hollow
+  const cav=canvasTex(128,128,(g,w,h)=>{g.fillStyle="#6E5A44";g.fillRect(0,0,w,h);const gr=g.createRadialGradient(w/2,h/2,8,w/2,h/2,w*.75);gr.addColorStop(0,"rgba(255,226,170,.55)");gr.addColorStop(1,"rgba(40,28,18,.6)");g.fillStyle=gr;g.fillRect(0,0,w,h)});
+  const hole=new THREE.Mesh(new THREE.PlaneGeometry(1.88,1.88),new THREE.MeshBasicMaterial({map:cav}));hole.rotation.x=-Math.PI/2;hole.position.y=1.406;root.add(hole);
+
+  lid=new THREE.Group();root.add(lid);
+  const lm=shadowed(new THREE.Mesh(roundedBox(2.14,.4,2.14,.07,.025),lidMat));lm.position.y=1.32;lid.add(lm);
+  const l1=new THREE.Mesh(new THREE.BoxGeometry(.32,.406,2.154),ribLid),l2=new THREE.Mesh(new THREE.BoxGeometry(2.154,.406,.32),ribLid);
+  l1.position.y=l2.position.y=1.52;lid.add(shadowed(l1),shadowed(l2));
+
+  bow=new THREE.Group();bow.position.y=1.72;root.add(bow);
+  // satin bow: two flat ribbon loops, a wrapped knot and two tails lying on the lid
+  const strip=(curve,w,dir,seg)=>{const pos=[],uv=[],idx=[];for(let i=0;i<=seg;i++){const t=i/seg,p=curve.getPoint(t),d=dir(t,curve.getTangent(t)).normalize().multiplyScalar(w/2);
+      pos.push(p.x-d.x,p.y-d.y,p.z-d.z,p.x+d.x,p.y+d.y,p.z+d.z);uv.push(t*3,0,t*3,1);if(i<seg){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();return g};
+  bowMat.side=THREE.DoubleSide;
+  const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+  const loopC=new THREE.CatmullRomCurve3([V3(0,.06,0),V3(-.16,.24,0),V3(-.4,.34,0),V3(-.58,.24,0),V3(-.56,.07,0),V3(-.36,.02,0),V3(-.14,.03,0)],true,'centripetal');
+  [-1,1].forEach(s=>{const m=new THREE.Mesh(strip(loopC,.26,()=>V3(0,0,1),90),bowMat);m.scale.x=s;m.rotation.y=s*.28;m.rotation.z=s*-.08;bow.add(shadowed(m))});
+  const knot=new THREE.Mesh(roundedBox(.18,.16,.28,.05,.025),bowMat);knot.position.y=-.01;bow.add(shadowed(knot));
+  [-1,1].forEach(s=>{const c=new THREE.CatmullRomCurve3([V3(0,.03,.05),V3(s*.1,.03,.28),V3(s*.2,.02,.52),V3(s*.27,.012,.74)]);
+    bow.add(shadowed(new THREE.Mesh(strip(c,.17,(t,tan)=>V3(-tan.z,0,tan.x),40),bowMat)))});
+
+  // gift inside: engraved glass bauble
+  orn=new THREE.Group();orn.visible=false;root.add(orn);
+  ornMat=new THREE.MeshPhysicalMaterial({metalness:.5,roughness:.14,clearcoat:1,clearcoatRoughness:.06,envMapIntensity:1.4});
+  const gold=new THREE.MeshStandardMaterial({color:C('#C7A15A'),metalness:1,roughness:.28,envMapIntensity:1.3});
+  orn.add(shadowed(new THREE.Mesh(new THREE.SphereGeometry(.44,48,32),ornMat)));
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.1,.115,.15,28),gold);cap.position.y=.47;orn.add(cap);
+  const hook=new THREE.Mesh(new THREE.TorusGeometry(.06,.014,10,24),gold);hook.position.y=.58;orn.add(hook);
+  [.18,-.18].forEach((y,i)=>{const rr=Math.sqrt(.44*.44-y*y)+.004;const b=new THREE.Mesh(new THREE.TorusGeometry(rr,.005,8,96),gold);b.rotation.x=Math.PI/2;b.position.y=y;orn.add(b)});
+  /* ---- gift models: one group per gift inside `orn`, shown one at a time ---- */
+  var MODELS={};
+  var setEngrave=function(){};
+  var showGift=function(id){Object.keys(MODELS).forEach(k=>{MODELS[k].visible=(k===id)})};
+  (function(){
+    const om=new THREE.Group();[...orn.children].forEach(c=>om.add(c));orn.add(om);MODELS.orn=om;
+    // engraving: a thin gold-lettered band laid over the bauble's equator, text centred on the side facing the viewer
+    const ec=document.createElement('canvas');ec.width=2048;ec.height=256;
+    const etex=new THREE.CanvasTexture(ec);etex.encoding=THREE.sRGBEncoding;etex.anisotropy=4;
+    const band=new THREE.Mesh(new THREE.SphereGeometry(.446,96,16,0,Math.PI*2,Math.PI/2-.3,.6),
+      new THREE.MeshStandardMaterial({map:etex,transparent:true,metalness:.6,roughness:.3,envMapIntensity:1.3,depthWrite:false}));
+    band.renderOrder=1;om.add(band);
+    setEngrave=function(text){const g=ec.getContext('2d');g.clearRect(0,0,2048,256);text=(text||'').trim();
+      if(text){const fam='"Noto Serif Thai","Cormorant Garamond",serif';let fs=150;g.font=`600 ${fs}px ${fam}`;
+        const w=g.measureText(text).width;if(w>640){fs=Math.max(64,fs*640/w);g.font=`600 ${fs}px ${fam}`}
+        g.textAlign='center';g.textBaseline='middle';g.fillStyle='rgba(50,25,10,.35)';g.fillText(text,514,135);g.fillStyle='#F0CF86';g.fillText(text,512,132)}
+      etex.needsUpdate=true};
+    const M=(c,r,m)=>new THREE.MeshStandardMaterial({color:C(c),roughness:r,metalness:m||0,envMapIntensity:.8});
+    const add=(g,geo,mat,x,y,z,sx,sy,sz)=>{const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.position.set(x||0,y||0,z||0);m.scale.set(sx||1,sy||sx||1,sz||sx||1);g.add(m);return m};
+    const SPH=new THREE.SphereGeometry(1,32,24);
+    const dark=M('#2A1A12',.4),red=M('#B3202E',.55),white=M('#FFFDF8',.6);
+    // teddy bear
+    {const g=new THREE.Group(),fur=new THREE.MeshPhysicalMaterial({color:C('#B9875A'),roughness:1,envMapIntensity:.6}),muz=M('#EBD3B2',.9);fur.sheen=C('#F2D7B0');
+      add(g,SPH,fur,0,-.17,0,.33,.36,.3);add(g,SPH,fur,0,.27,0,.27,.25,.25);
+      add(g,SPH,fur,-.2,.47,0,.09,.09,.06);add(g,SPH,fur,.2,.47,0,.09,.09,.06);
+      add(g,SPH,muz,-.2,.47,.03,.05,.05,.04);add(g,SPH,muz,.2,.47,.03,.05,.05,.04);
+      add(g,SPH,muz,0,.22,.22,.12,.09,.09);add(g,SPH,dark,0,.27,.3,.045,.035,.035);
+      add(g,SPH,dark,-.09,.34,.235,.03,.03,.025);add(g,SPH,dark,.09,.34,.235,.03,.03,.025);
+      add(g,SPH,muz,0,-.15,.25,.18,.2,.08);
+      add(g,SPH,fur,-.31,-.08,.06,.1,.17,.1).rotation.z=-.5;add(g,SPH,fur,.31,-.08,.06,.1,.17,.1).rotation.z=.5;
+      add(g,SPH,fur,-.17,-.45,.12,.12,.09,.14);add(g,SPH,fur,.17,-.45,.12,.12,.09,.14);add(g,SPH,muz,-.17,-.45,.25,.07,.06,.02);add(g,SPH,muz,.17,-.45,.25,.07,.06,.02);
+      add(g,new THREE.TorusGeometry(1,.2,12,40),red,0,.06,0,.26,.26,.26).rotation.x=Math.PI/2;
+      MODELS.bear=g}
+    // gingerbread man
+    {const g=new THREE.Group(),ck=M('#B8733A',.85);
+      const disc=new THREE.CylinderGeometry(1,1,1,40);disc.rotateX(Math.PI/2);
+      add(g,disc,ck,0,.3,0,.19,.19,.1);add(g,disc,ck,0,-.02,0,.22,.27,.1);
+      const limb=new THREE.CylinderGeometry(.075,.075,.36,16);
+      add(g,limb,ck,-.27,.06,0,1,1,.65).rotation.z=1.2;add(g,limb,ck,.27,.06,0,1,1,.65).rotation.z=-1.2;
+      add(g,limb,ck,-.11,-.33,0,1.1,1,.65).rotation.z=-.3;add(g,limb,ck,.11,-.33,0,1.1,1,.65).rotation.z=.3;
+      [[.05,'#C1121F'],[-.07,'#2F6B3A'],[-.19,'#C1121F']].forEach(([y,c])=>add(g,SPH,M(c,.25),0,y,.06,.035,.035,.02));
+      add(g,SPH,dark,-.06,.34,.055,.022,.022,.01);add(g,SPH,dark,.06,.34,.055,.022,.022,.01);
+      add(g,new THREE.TorusGeometry(.06,.012,8,20,Math.PI),white,0,.28,.055).rotation.z=Math.PI;
+      const zig=(cx,cy,w,h,n,vert)=>{const p=[];for(let i=0;i<=n;i++){const a=-w/2+i*w/n,b=(i%2?h:-h)/2;p.push(new THREE.Vector3(vert?cx+b:cx+a,vert?cy+a:cy+b,.053))}
+        g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p),40,.009,6),white))};
+      zig(-.39,.12,.13,.04,5,true);zig(.39,.12,.13,.04,5,true);zig(-.16,-.45,.12,.035,5,false);zig(.16,-.45,.12,.035,5,false);
+      add(g,SPH,red,-.04,.14,.06,.045,.03,.015);add(g,SPH,red,.04,.14,.06,.045,.03,.015);
+      MODELS.ginger=g}
+    // chocolate bar in red wrapper
+    {const g=new THREE.Group(),ch=M('#4A2717',.35);
+      add(g,new THREE.BoxGeometry(.62,.86,.08),ch);
+      const sq=new THREE.BoxGeometry(.17,.17,.05);
+      for(let r=0;r<2;r++)for(let c=0;c<3;c++)add(g,sq,ch,-.2+c*.2,.32-r*.2,.05);
+      add(g,new THREE.BoxGeometry(.66,.5,.11),red,0,-.19,0);
+      add(g,new THREE.BoxGeometry(.665,.05,.115),gold,0,.05,0);
+      g.rotation.z=-.12;MODELS.choco=g}
+    // snow globe with a little snowman inside
+    {const g=new THREE.Group(),snow=M('#F7F5F2',.95),coal=M('#2A2420',.5),wood=M('#6B4A2E',.9);
+      add(g,new THREE.CylinderGeometry(.3,.36,.2,40),M('#9E1B27',.5),0,-.42,0);
+      add(g,new THREE.TorusGeometry(.31,.02,8,48),gold,0,-.32,0).rotation.x=Math.PI/2;
+      add(g,new THREE.CylinderGeometry(.26,.26,.05,40),white,0,-.3,0);
+      const sm=new THREE.Group();
+      add(sm,SPH,snow,0,-.28,0,.3);add(sm,SPH,snow,0,.08,0,.22);add(sm,SPH,snow,0,.36,0,.16);
+      const nose=new THREE.ConeGeometry(.035,.16,16);nose.rotateX(Math.PI/2);add(sm,nose,M('#E07A2E',.6),0,.36,.22);
+      add(sm,SPH,coal,-.055,.41,.14,.022);add(sm,SPH,coal,.055,.41,.14,.022);
+      [.15,.06,-.03].forEach(y=>add(sm,SPH,coal,0,y,Math.sqrt(Math.max(0,.22*.22-(y-.08)*(y-.08)))+.005,.022));
+      add(sm,new THREE.TorusGeometry(.14,.04,12,32),red,0,.23,0).rotation.x=Math.PI/2;
+      const stick=new THREE.CylinderGeometry(.014,.014,.34,8);
+      add(sm,stick,wood,-.32,.14,0).rotation.z=1.05;add(sm,stick,wood,.32,.14,0).rotation.z=-1.05;
+      add(sm,new THREE.CylinderGeometry(.17,.17,.02,32),coal,0,.5,0);add(sm,new THREE.CylinderGeometry(.11,.11,.16,32),coal,0,.59,0);
+      add(sm,new THREE.CylinderGeometry(.112,.112,.03,32),red,0,.53,0);
+      sm.scale.setScalar(.36);sm.position.y=-.07;g.add(sm);
+      for(let i=0;i<14;i++){const a=i*2.4,r=.12+((i*37)%17)/17*.16,y=-.18+((i*53)%23)/23*.45;add(g,SPH,white,Math.cos(a)*r,y,Math.sin(a)*r,.016)}
+      const gl=new THREE.Mesh(new THREE.SphereGeometry(.38,40,28),new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.05,transparent:true,opacity:.22,clearcoat:1,envMapIntensity:1.6,depthWrite:false}));
+      gl.position.y=-.02;gl.renderOrder=2;g.add(gl);
+      MODELS.globe=g}
+    // christmas stocking
+    {const g=new THREE.Group(),sock=M('#B3202E',.9),cuff=M('#EDE4D6',1);
+      const s=new THREE.Shape();
+      s.moveTo(-.2,.3);s.lineTo(.12,.3);s.lineTo(.12,-.08);s.quadraticCurveTo(.14,-.16,.26,-.2);s.quadraticCurveTo(.4,-.26,.36,-.38);
+      s.quadraticCurveTo(.32,-.46,.12,-.46);s.lineTo(-.05,-.46);s.quadraticCurveTo(-.22,-.46,-.22,-.28);s.lineTo(-.2,.3);
+      const geo=new THREE.ExtrudeGeometry(s,{depth:.12,bevelEnabled:true,bevelThickness:.05,bevelSize:.04,bevelSegments:4,curveSegments:12});geo.translate(0,0,-.06);
+      add(g,geo,sock);add(g,new THREE.BoxGeometry(.44,.17,.24),cuff,-.04,.36,0);for(let i=0;i<36;i++){add(g,SPH,cuff,-.24+(i%9)*.05+((i*7)%3)*.008,.29+Math.floor(i/9)*.045,.12+((i*13)%5)*.004,.036)}
+      add(g,SPH,cuff,-.15,-.37,.1,.09,.08,.03);add(g,SPH,cuff,.28,-.36,.1,.09,.08,.03);
+      add(g,new THREE.TorusGeometry(.05,.012,8,20),gold,-.2,.47,0);add(g,SPH,gold,.12,.3,.15,.04);
+      g.position.x=-.07;MODELS.stock=g}
+    Object.keys(MODELS).forEach(k=>orn.add(MODELS[k]));showGift('orn');
+  })();
+
+
+  const dot=canvasTex(64,64,(g)=>{const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,236,190,1)');gr.addColorStop(.35,'rgba(255,214,150,.6)');gr.addColorStop(1,'rgba(255,214,150,0)');g.fillStyle=gr;g.fillRect(0,0,64,64)});
+  glowSprite=new THREE.Sprite(new THREE.SpriteMaterial({map:dot,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending}));
+  glowSprite.position.y=1.7;root.add(glowSprite);
+  inLight=new THREE.PointLight(0xffd59a,0,5,1.5);inLight.position.set(0,1.6,0);root.add(inLight);
+
+  const N=140,pos=new Float32Array(N*3).fill(-50);
+  const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  pts=new THREE.Points(pg,new THREE.PointsMaterial({size:.12,map:dot,color:C('#D9B36C'),transparent:true,depthWrite:false}));
+  root.add(pts);ptsData=Array.from({length:N},()=>({v:[0,0,0],life:2}));
+
+  /* ---- box design in 3D: colours, ribbon styles and accents on the lid ---- */
+  (function(){
+    const RIB_MATS=(typeof ribBody!=='undefined')?[ribBody,ribLid,bowMat]:[ribMat];
+    const stripe=canvasTex(64,64,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#B3202E';
+      for(let x=-64;x<128;x+=16){g.beginPath();g.moveTo(x,0);g.lineTo(x+8,0);g.lineTo(x+72,64);g.lineTo(x+64,64);g.closePath();g.fill()}});
+    stripe.wrapS=stripe.wrapT=THREE.RepeatWrapping;stripe.repeat.set(2,2);
+    const AM=(c,r,m)=>new THREE.MeshStandardMaterial({color:C(c),roughness:r,metalness:m||0,envMapIntensity:.9});
+    const SP=new THREE.SphereGeometry(1,20,14);
+    const mk=(g,geo,mat,x,y,z,sx,sy,sz)=>{const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.position.set(x||0,y||0,z||0);m.scale.set(sx||1,sy==null?(sx||1):sy,sz==null?(sx||1):sz);g.add(m);return m};
+    const goldA=AM('#D4AF5A',.3,.9),ACC={};
+    // bells
+    {const g=new THREE.Group(),V=(x,y)=>new THREE.Vector2(x,y);
+      const bellG=new THREE.LatheGeometry([V(.001,.1),V(.03,.098),V(.05,.07),V(.058,.03),V(.07,-.02),V(.095,-.06),V(.09,-.07)],28);
+      const bm=goldA.clone();bm.side=THREE.DoubleSide;
+      [-1,1].forEach(s=>{const b=new THREE.Group();mk(b,bellG,bm);mk(b,SP,goldA,0,-.07,0,.022);mk(b,new THREE.TorusGeometry(.02,.006,6,14),goldA,0,.11,0);
+        b.position.set(s*.17,1.8,.56);b.rotation.z=s*.35;b.rotation.x=.25;g.add(b)});
+      lid.add(g);ACC.b=g}
+    // pinecones
+    {const g=new THREE.Group(),pm=AM('#6B4423',.9);
+      [[-.62,.48,0],[-.42,.66,.9]].forEach(([x,z,ry])=>{const c=new THREE.Group();
+        for(let i=0;i<6;i++){mk(c,new THREE.ConeGeometry(.1-i*.013,.07,10),pm,0,i*.045,0)}
+        c.rotation.z=Math.PI/2;c.rotation.y=ry;c.position.set(x,1.79,z);g.add(c)});
+      lid.add(g);ACC.p=g}
+    // holly
+    {const g=new THREE.Group(),lm=AM('#2F6B3A',.45),bm=AM('#C1121F',.35);
+      [0,2.1,4.2].forEach(a=>{const l=mk(g,SP,lm,Math.cos(a)*.11,0,Math.sin(a)*.11,.15,.018,.065);l.rotation.y=-a});
+      [[0,.03,0],[.05,.03,.035],[-.04,.03,.04]].forEach(([x,y,z])=>mk(g,SP,bm,x,y,z,.04));
+      g.position.set(.62,1.74,.55);lid.add(g);ACC.h=g}
+    // cinnamon sticks tied with twine
+    {const g=new THREE.Group(),cm=AM('#8B4A2B',.9),cyl=new THREE.CylinderGeometry(.035,.035,.5,14);
+      [[0,0,-.05],[0,0,.05],[0,.055,0]].forEach(([x,y,z])=>mk(g,cyl,cm,x,y,z).rotation.z=Math.PI/2);
+      mk(g,new THREE.TorusGeometry(.085,.012,8,24),AM('#CDB78E',.9),0,.025,0).rotation.y=Math.PI/2;
+      g.position.set(.5,1.76,-.55);g.rotation.y=.4;lid.add(g);ACC.c=g}
+    // fairy lights around the box body
+    {const g=new THREE.Group(),bulbs=[],pts=[];
+      for(let side=0;side<4;side++)for(let i=0;i<8;i++){const t=-.9+i*(1.8/7),y=.5+Math.sin(i*1.1+side)*.06;
+        const p=[[t,1.04],[1.04,-t],[-t,-1.04],[-1.04,t]][side];pts.push(new THREE.Vector3(p[0],y,p[1]));
+        const m=new THREE.MeshStandardMaterial({color:C('#FFE9B0'),emissive:C('#FFD27A'),emissiveIntensity:.8,roughness:.3});
+        const b=new THREE.Mesh(SP,m);b.scale.setScalar(.032);b.position.set(p[0],y,p[1]);g.add(b);bulbs.push(b)}
+      pts.push(pts[0].clone());g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x3a3a3a})));
+      root.add(g);ACC.l=g;
+      (function twinkle(){const t=performance.now()/1000;if(g.visible)bulbs.forEach((b,i)=>{b.material.emissiveIntensity=.4+.9*Math.max(0,Math.sin(t*2.2+i*1.7))});requestAnimationFrame(twinkle)})()}
+    setDesign=function(d){const bc=BOX_COLORS[d.box]||BOX_COLORS[0],rb=RIBBONS[d.rib]||RIBBONS[0];
+      [boxMat,lidMat].forEach(m=>{m.color=C(bc.c);m.metalness=bc.metal||0;m.roughness=bc.metal?.45:.8;m.needsUpdate=true});
+      RIB_MATS.forEach(m=>{m.color=C(rb.c);m.roughness=rb.r;m.metalness=rb.m;m.map=rb.stripe?stripe:null;m.needsUpdate=true});
+      ornMat.color=C(d.box===1?'#C7A15A':'#B3202E');
+      Object.keys(ACC).forEach(k=>{ACC[k].visible=d.acc.includes(k)})};
+  })();
+  applyWay();
+}
+function applyWay(){setDesign(DESIGN)}
+
+/* camera fit for any phone aspect */
+const target=new THREE.Vector3();let baseY=0,visH=6,dist=10;
+function resize(){
+  const app=$('app'),w=app.clientWidth,h=app.clientHeight;if(!renderer)return;
+  renderer.setSize(w,h,false);camera.aspect=w/h;
+  const t=Math.tan(camera.fov*Math.PI/360);
+  dist=Math.max(8.6,4.3/(2*t*camera.aspect));visH=2*t*dist;baseY=.9-visH*.1;setTimeout(fitView,0);
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize);resize();if(window.ResizeObserver)new ResizeObserver(()=>resize()).observe($('app'));
+
+/* tween values in A */
+const tws=[];
+const eio=p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+const eback=p=>{const c1=1.5,c3=c1+1;return 1+c3*Math.pow(p-1,3)+c1*Math.pow(p-1,2)};
+function tw(k,to,dur,delay=0,ease=eio){for(let i=tws.length-1;i>=0;i--)if(tws[i].k===k)tws.splice(i,1);tws.push({k,to,dur:reduce?.01:dur,t:-(reduce?0:delay),from:null,ease})}
+
+let last=performance.now(),T=0;
+function frame(now){
+  const dt=Math.max(0,Math.min(.05,(now-last)/1000));last=now;T+=dt;
+  for(let i=tws.length-1;i>=0;i--){const w=tws[i];w.t+=dt;if(w.t<0)continue;if(w.from===null)w.from=A[w.k];const p=Math.min(1,w.t/w.dur);A[w.k]=w.from+(w.to-w.from)*w.ease(p);if(p>=1)tws.splice(i,1)}
+  if(renderer){
+    if(FIT){cur.d+=(FIT.d-cur.d)*.08;cur.ty+=(FIT.ty-cur.ty)*.08;dist=cur.d;target.set(0,cur.ty,0)}else target.set(0,baseY,0);
+    const pp=.34+pitch;camera.position.set(0,target.y+dist*Math.sin(pp),dist*Math.cos(pp));camera.lookAt(target);
+    if(!spin){spinY+=spinV;spinV*=.94;pitch+=(0-pitch)*.04}
+    root.rotation.y=spinY+(reduce||touched?0:Math.sin(T*.35)*.32)+A.untie*.25;
+    root.position.y=reduce?0:Math.sin(T*1.1)*.03;
+    const bs=Math.max(.001,(1-.3*A.untie)*(1-A.bowGone));
+    bow.scale.setScalar(bs);bow.rotation.y=A.untie*1.2+A.bowGone*3.2;bow.position.y=1.72+A.untie*.18+A.bowGone*1.6;
+    bowMat.opacity=1-A.bowGone;
+    ribBody.opacity=1-A.ribbonDrop;
+    lid.position.set(A.lidOpen*.7,A.lidOpen*1.7,-A.lidOpen*1.1);lid.rotation.set(-A.lidOpen*.8,0,A.lidOpen*.35);
+    const lo=1-Math.max(0,(A.lidOpen-.55)/.45);lidMat.opacity=lo;ribLid.opacity=lo;lid.visible=lo>.01;
+    glowSprite.material.opacity=A.glow*.45;glowSprite.scale.setScalar(1+A.glow*1.7);inLight.intensity=A.glow*2.2;
+    orn.visible=A.orn>.005;orn.position.y=.7+A.orn*1.55;orn.scale.setScalar(.25+.75*A.orn);orn.rotation.y=-root.rotation.y+Math.sin(T*.6)*.35;orn.rotation.z=Math.sin(T*.9)*.06;
+    // sparkles
+    const p=pts.geometry.attributes.position.array;
+    ptsData.forEach((d,i)=>{
+      d.life+=dt*.55;
+      if(d.life>1){ if(emitting&&Math.random()<.25){d.life=0;p[i*3]=(Math.random()-.5)*1.6;p[i*3+1]=1.4;p[i*3+2]=(Math.random()-.5)*1.6;d.v=[(Math.random()-.5)*.5,.9+Math.random()*1.3,(Math.random()-.5)*.5]} else {p[i*3+1]=-50;return} }
+      p[i*3]+=d.v[0]*dt;p[i*3+1]+=d.v[1]*dt;p[i*3+2]+=d.v[2]*dt;d.v[1]*=.985;
+    });
+    pts.geometry.attributes.position.needsUpdate=true;
+    renderer.render(scene,camera);
+  }
+  $('trackBar').style.width=(A.untie*100)+'%';
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ================= steps ================= */
+let step='land',untied=false;
+function go(s){step=s;['transit','land','untie','card','gift'].forEach(k=>$('s-'+k).hidden=k!==s);fitView();setTimeout(fitView,120);setTimeout(fitView,1100)}
+if(document.fonts)document.fonts.ready.then(()=>setTimeout(fitView,0));
+
+// colourways
+// box design arrives in the link from the sender (see applyGift)
+
+$('openBtn').onclick=()=>{startMusic();go('untie')};
+
+// drag up to untie
+let drag=null;
+$('gl').addEventListener('pointerdown',e=>{if(step!=='untie'||untied)return;drag={y:e.clientY,moved:0};$('gl').setPointerCapture(e.pointerId)});
+$('gl').addEventListener('pointermove',e=>{if(!drag)return;const dy=drag.y-e.clientY;drag.moved=Math.max(drag.moved,Math.abs(dy));A.untie=Math.min(1,Math.max(0,dy/170));if(A.untie>=1){drag=null;untie()}});
+$('gl').addEventListener('pointerup',()=>{if(!drag)return;const m=drag.moved;drag=null;if(m<8)untie();else if(!untied)tw('untie',0,.4)});
+
+// drag anywhere on the box (except while untying) to spin it all the way round and tilt the view
+let spin=null,spinY=0,spinV=0,pitch=0,touched=false;
+$('gl').addEventListener('pointerdown',e=>{if(step==='untie')return;spin={x:e.clientX,y:e.clientY,y0:spinY,p0:pitch};touched=true;$('spinHint').hidden=true;$('gl').setPointerCapture(e.pointerId)});
+$('gl').addEventListener('pointermove',e=>{if(!spin)return;const ny=spin.y0+(e.clientX-spin.x)*.012;spinV=Math.max(-.2,Math.min(.2,ny-spinY));spinY=ny;pitch=Math.min(.7,Math.max(-.25,spin.p0+(e.clientY-spin.y)*.006))});
+addEventListener('pointerup',()=>{spin=null});addEventListener('pointercancel',()=>{spin=null});
+
+function untie(){
+  if(untied)return;untied=true;chime();
+  if(SLUG&&BOX&&!BOX.openedAt)API.open(SLUG).then(v=>{BOX=v;renderExpire()}).catch(()=>{});
+  tw('untie',1,.35);tw('bowGone',1,.9,.2);tw('lidOpen',1,1.3,.8);tw('glow',1,1,1.1);
+  setTimeout(()=>{emitting=true},1100);
+  setTimeout(()=>{tw('cam',1,1);go('card')},2300);
+}
+
+// voice (demo with speech synthesis)
+const wave=$('wave');for(let i=0;i<34;i++){const b=document.createElement('i');b.style.setProperty('--h',(18+Math.abs(Math.sin(i*1.7))*70+Math.random()*12)+'%');b.style.animationDelay=(-i*.07)+'s';wave.append(b)}
+let vTimer=null,vOn=false;
+function setVoice(on){vOn=on;$('voice').classList.toggle('on',on);$('playIcon').setAttribute('d',on?'M3 2h3v10H3zM8 2h3v10H8z':'M3 1.5 L12 7 L3 12.5 Z');duck(on)}
+let voiceEl=null;
+function stopVoice(){if(voiceEl){voiceEl.pause();voiceEl=null}try{speechSynthesis.cancel()}catch(e){}clearTimeout(vTimer);setVoice(false)}
+$('playBtn').onclick=()=>{
+  if(vOn){stopVoice();return}
+  if(BOX&&BOX.voice){const lim=BOX.voice.playableSeconds||60;setVoice(true);voiceEl=new Audio(BOX.voice.url);
+    voiceEl.ontimeupdate=()=>{if(voiceEl&&voiceEl.currentTime>=lim)stopVoice()};voiceEl.onended=stopVoice;voiceEl.play().catch(()=>{stopVoice();toast('เล่นเสียงไม่ได้ ลองแตะอีกครั้ง')});return}
+  setVoice(true);
+  try{const u=new SpeechSynthesisUtterance(DATA.msg);u.lang='th-TH';u.rate=.9;u.onend=()=>{clearTimeout(vTimer);setVoice(false)};speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}
+  vTimer=setTimeout(()=>{try{speechSynthesis.cancel()}catch(e){}setVoice(false)},18000);
+};
+
+$('giftBtn').onclick=()=>{stopVoice();go('gift');tw('cam',0,1);tw('glow',.55,1.2);tw('orn',1,1.6,.1,eback);setTimeout(()=>{emitting=false},2500)};
+$('replayBtn').onclick=()=>{untied=false;emitting=false;Object.keys(A).forEach(k=>tw(k,0,.6));go('land')};
+const SENDER_PAGE='/sender.html';
+const sendBack=()=>{location.href=SENDER_PAGE+(BOX&&BOX.senderName?'?to='+encodeURIComponent(BOX.senderName):'')};
+$('backBtn').onclick=()=>SLUG?sendBack():toast('เว็บจริงจะพาไปหน้าห่อกล่อง โดยใส่ "ลูกคนเล็ก" เป็นผู้รับไว้ให้แล้ว');
+
+// transit demo
+let left=18*3600+42*60+10,cdTimer=null;
+function renderCount(){const h=Math.floor(left/3600),m=Math.floor(left%3600/60),s=left%60,f=n=>String(n).padStart(2,'0');$('count').firstChild.nodeValue=`${f(h)}:${f(m)}:${f(s)}`}
+$('transitBtn').onclick=()=>{untied=false;emitting=false;Object.keys(A).forEach(k=>tw(k,0,.5));go('transit');clearInterval(cdTimer);cdTimer=setInterval(()=>{left=Math.max(0,left-1);renderCount()},1000)};
+$('skipBtn').onclick=()=>{clearInterval(cdTimer);go('land')};
+
+// sheets
+function openSheet(id){$(id).hidden=false}
+document.querySelectorAll('.scrim').forEach(s=>{s.addEventListener('click',e=>{if(e.target===s||e.target.hasAttribute('data-close'))s.hidden=true})});
+$('shareBtn').onclick=async()=>{await makeShot();openSheet('shareSheet')};
+$('incMsg').onchange=makeShot;
+$('keepBtn').onclick=async()=>{
+  if(!(BOX&&BOX.plan==='FOREVER'))return openSheet('keepSheet');
+  try{const d=await API.download(SLUG);[d.voiceUrl,d.photoUrl].filter(Boolean).forEach((u,i)=>setTimeout(()=>{const a=document.createElement('a');a.href=u;a.rel='noopener';document.body.append(a);a.click();a.remove()},i*800))}
+  catch(e){toast('ดาวน์โหลดไม่สำเร็จ ลองใหม่อีกครั้ง')}
+};
+document.querySelectorAll('.plan').forEach(p=>p.onclick=()=>{document.querySelectorAll('.plan').forEach(x=>x.setAttribute('aria-checked',x===p));$('payBtn').textContent=`ชำระด้วย PromptPay · ${p.dataset.p} บาท`});
+$('payBtn').onclick=async()=>{
+  if(!SLUG)return toast('หน้าตัวอย่าง ยังไม่ได้เชื่อมระบบชำระเงิน');
+  const sel=document.querySelector('.plan[aria-checked="true"]'),btn=$('payBtn'),label=btn.textContent;btn.disabled=true;btn.textContent='กำลังไปหน้าชำระเงิน…';
+  try{const c=await API.checkout(SLUG,{plan:sel&&sel.dataset.p==='25'?'YEAR':'FOREVER',payer:'RECIPIENT',returnPath:location.pathname});location.href=c.checkoutUrl}
+  catch(e){btn.disabled=false;btn.textContent=label;toast(e.code==='ALREADY_HAS_PLAN'?'กล่องนี้เก็บไว้แล้ว':'เริ่มชำระเงินไม่สำเร็จ ลองใหม่อีกครั้ง')}
+};
+
+/* 9:16 share image */
+function wrapText(g,text,maxW){
+  let segs;try{segs=[...new Intl.Segmenter('th',{granularity:'word'}).segment(text)].map(s=>s.segment)}catch(e){segs=Array.from(text)}
+  const lines=[];let cur='';segs.forEach(s=>{if(g.measureText(cur+s).width>maxW&&cur){lines.push(cur.trim());cur=s}else cur+=s});if(cur.trim())lines.push(cur.trim());return lines;
+}
+async function makeShot(){
+  try{await document.fonts.ready}catch(e){}
+  const W=1080,H=1920,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  const bg=g.createRadialGradient(W/2,H*.38,50,W/2,H*.45,H*.75);bg.addColorStop(0,'#FFFFFF');bg.addColorStop(.6,'#FBF6F2');bg.addColorStop(1,'#F1E2DD');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  const withMsg=$('incMsg').checked;
+  if(renderer){renderer.render(scene,camera);const src=renderer.domElement,s=(W*1.25)/src.width,dh=src.height*s;g.drawImage(src,(W-W*1.25)/2,(withMsg?900:1120)-dh*.42,W*1.25,dh)}
+  g.fillStyle='#8C8176';g.textAlign='center';g.font='500 30px "IBM Plex Sans Thai"';
+  g.save();g.letterSpacing='12px';g.fillText('A GIFT FOR',W/2+6,210);g.restore();
+  g.fillStyle='#2A2420';g.font='500 120px "Noto Serif Thai"';g.fillText(DATA.to,W/2,350);
+  g.fillStyle='#8C8176';g.font='400 40px "IBM Plex Sans Thai"';g.fillText('จาก '+DATA.from,W/2,425);
+  if(withMsg){
+    g.save();g.translate(W/2,1440);g.rotate(-.012);g.shadowColor='rgba(60,40,20,.25)';g.shadowBlur=50;g.shadowOffsetY=24;g.fillStyle='#FBF7F0';g.fillRect(-420,-190,840,380);g.restore();
+    g.strokeStyle='#E1D6C6';g.lineWidth=2;g.strokeRect(W/2-400,1440-170,800,340);
+    g.fillStyle='#2A2420';g.font='400 40px "Noto Serif Thai"';g.textAlign='left';
+    wrapText(g,DATA.msg,700).slice(0,4).forEach((l,i)=>g.fillText(l,W/2-350,1340+i*66));
+    g.textAlign='right';g.font='400 36px "Noto Serif Thai"';g.fillText('— '+DATA.from,W/2+350,1590);g.textAlign='center';
+  }
+  g.fillStyle='#B3202E';g.font='italic 600 58px "Cormorant Garamond"';g.fillText('Santa Box',W/2,1760);
+  g.fillStyle='#8C8176';g.font='400 30px "IBM Plex Sans Thai"';g.fillText('ห่อเสียงอวยพรใส่กล่อง ส่งให้คนที่คุณรัก',W/2,1818);
+  $('shotImg').src=c.toDataURL('image/jpeg',.9);
+}
+
+const GIFTS=[
+  {id:'bear',n:'ตุ๊กตาหมี',e:'🧸',m:'สัญลักษณ์แห่งความอบอุ่นและความปลอดภัย - ช่วยปกป้องและมอบความอุ่นใจให้เจ้าของ'},
+  {id:'ginger',n:'ขนมปังขิง',e:'🍪',m:'สัญลักษณ์แห่งโชคดีและความรัก - ช่วยเสริมโชคลาภให้ได้พบคู่ครอง'},
+  {id:'choco',n:'ช็อกโกแลต',e:'🍫',m:'สัญลักษณ์แห่งความรักและความปรารถนาดี - ช่วยให้ความสัมพันธ์หวานชื่น'},
+  {id:'orn',n:'ลูกแก้วสลักชื่อ',e:'🔴',m:'สัญลักษณ์แห่งความทรงจำล้ำค่า - ช่วยเก็บช่วงเวลาดีๆ ของปีนี้ไว้ตลอดไป'},
+  {id:'globe',n:'ลูกโลกหิมะ',e:'❄️',m:'สัญลักษณ์แห่งความบริสุทธิ์และการเริ่มต้นใหม่ - ช่วยให้ปีใหม่เริ่มต้นอย่างสดใส'},
+  {id:'stock',n:'ถุงเท้าคริสต์มาส',e:'🧦',m:'สัญลักษณ์แห่งการรอคอยสิ่งดีๆ - ช่วยเรียกโชคและของขวัญให้มาเต็มถุง'}];
+// which gift is inside comes from the link: #bear, #ginger, #choco, #orn, #globe, #stock
+function applyGift(){const parts=(location.hash||'').slice(1).split('-'),h=parts[0];
+  parts.slice(1).forEach(p=>{if(/^b\d+$/.test(p))DESIGN.box=Math.min(+p.slice(1),BOX_COLORS.length-1);else if(/^r\d+$/.test(p))DESIGN.rib=Math.min(+p.slice(1),RIBBONS.length-1);else if(/^a[a-z0]*$/.test(p))DESIGN.acc=p.slice(1).split('').filter(k=>ACCENTS.some(a=>a.id===k));else if(/^c[0-4][0-2]$/.test(p))$('cardEl').className=`card paper cs-${p[1]} cf-${p[2]}`});
+  setDesign(DESIGN);const d=GIFTS.find(g=>g.id===h)||GIFTS.find(g=>g.id==='orn');
+  $('giftName').textContent=d.n;$('giftMeaning').textContent='“'+d.m+'”';$('giftSub').hidden=d.id!=='orn';if(typeof showGift==='function')showGift(d.id)}
+addEventListener('hashchange',applyGift);applyGift();
+const ENGRAVE=$('giftSub').textContent.replace(/^สลักชื่อ\s*/,'').replace(/[“”]/g,'');setEngrave(ENGRAVE);if(document.fonts)document.fonts.ready.then(()=>setEngrave(ENGRAVE));
+
+/* ================= real box (API) ================= */
+let BOX=null;
+const THM=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const thaiWhen=iso=>{const d=new Date(iso);return `${d.getDate()} ${THM[d.getMonth()]} เวลา ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
+function setText(sel,text){const el=document.querySelector(sel);if(el)el.textContent=text}
+function renderExpire(){
+  const ex=document.querySelector('.expire'),b=ex.querySelector('b');if(!BOX)return;
+  if(BOX.plan==='FOREVER'){ex.firstChild.nodeValue='กล่องนี้เก็บไว้ ';b.textContent='ตลอดไป';$('keepBtn').textContent='ดาวน์โหลด';return}
+  if(!BOX.expiresAt)return;const ms=new Date(BOX.expiresAt)-Date.now(),d=Math.floor(ms/864e5),h=Math.floor(ms%864e5/36e5);
+  ex.firstChild.nodeValue='กล่องนี้เปิดดูได้อีก ';b.textContent=d>0?`${d} วัน ${h} ชม.`:`${Math.max(h,0)} ชม.`;
+  // already kept for a year: only the upgrade to forever is left (pay the difference)
+  const p25=document.querySelector('.plan[data-p="25"]'),p125=document.querySelector('.plan[data-p="125"]');
+  if(BOX.plan==='YEAR'){p25.hidden=true;p125.setAttribute('aria-checked','true');p125.querySelector('.price').firstChild.nodeValue='100';$('payBtn').textContent='ชำระด้วย PromptPay · 100 บาท'}
+}
+function showBox(v){
+  BOX=v;const from=v.senderName||'',to=v.recipientName;
+  DATA.to=to;DATA.from=from||'ใครบางคน';
+  setText('#s-land .title',to);document.querySelector('#s-land .sub').hidden=!from;setText('#s-land .sub b',from);
+  $('backBtn').textContent=from?'ส่งกล่องกลับให้ '+from:'ห่อกล่องให้คนที่คุณรักบ้าง';
+  if(v.phase!=='ready')return;
+  const P=v.payload;DATA.msg=P.card.message;
+  DESIGN.box=P.design.box;DESIGN.rib=P.design.ribbon;DESIGN.acc=P.design.accents.slice();setDesign(DESIGN);
+  $('cardEl').className=`card paper cs-${P.design.paper} cf-${P.design.font}`;
+  setText('#cardEl .to','ถึง '+to);setText('#cardEl .msg',P.card.message);setText('#cardEl .sig',from?'— '+from:'');
+  const d=GIFTS.find(g=>g.id===P.gift.item)||GIFTS[0];
+  $('giftName').textContent=d.n;$('giftMeaning').textContent='“'+d.m+'”';$('giftSub').hidden=d.id!=='orn';
+  if(d.id==='orn'){const e=P.gift.engraving||to;$('giftSub').textContent='สลักชื่อ “'+e+'”';setEngrave(e);if(document.fonts)document.fonts.ready.then(()=>setEngrave(e))}
+  if(typeof showGift==='function')showGift(d.id);
+  $('ticket').hidden=!P.gift.coupon;if(P.gift.coupon)$('ticket').querySelector('p').textContent=P.gift.coupon;
+  $('memoImg').hidden=!v.photoUrl;if(v.photoUrl)$('memoImg').src=v.photoUrl;
+  $('voice').hidden=!v.voice;if(v.voice){const n=v.voice.playableSeconds||0;setText('#voice .vmeta span',`${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`)}
+  SONG_ID=P.music;$('musicBtn').hidden=!SONGS[SONG_ID];if(SONGS[SONG_ID])$('musicBtn').lastChild.nodeValue=SONGS[SONG_ID].n;
+  renderExpire();
+}
+function showGone(title,sub){
+  setText('#s-land .eyebrow','Santa Box');const t=document.querySelector('#s-land .title');t.textContent=title;t.classList.add('sm');
+  setText('#s-land .sub',sub);document.querySelector('#s-land .sub').hidden=false;
+  $('openBtn').textContent='ห่อกล่องให้คนที่คุณรัก';$('openBtn').onclick=sendBack;$('spinHint').hidden=true;$('musicBtn').hidden=true;go('land');
+}
+async function loadBox(){
+  let v;
+  try{v=await API.get(SLUG)}catch(e){showGone(e.status===404?'ไม่พบกล่องนี้':'เปิดกล่องไม่ได้ตอนนี้',e.status===404?'ลิงก์อาจไม่ครบ ลองขอลิงก์จากผู้ส่งอีกครั้ง':'ตรวจอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง');return}
+  showBox(v);
+  if(v.phase==='expired')return showGone('กล่องนี้หายไปแล้ว','ห่อกล่องให้คนที่คุณรักบ้างไหม');
+  if(v.phase==='in_transit'){
+    const sub=document.querySelector('#s-transit .sub');sub.textContent='';
+    if(v.senderName){sub.append('กล่องจาก ');const b=document.createElement('b');b.textContent=v.senderName;sub.append(b,' ')}
+    sub.append('จะถึง '+thaiWhen(v.deliverAt));
+    const end=new Date(v.deliverAt).getTime();clearInterval(cdTimer);
+    const t=()=>{left=Math.max(0,Math.ceil((end-Date.now())/1000));renderCount();if(!left){clearInterval(cdTimer);loadBox()}};t();cdTimer=setInterval(t,1000);
+    go('transit');return;
+  }
+  go('land');
+}
+if(SLUG){
+  // hide the prototype's demo controls, show nothing sample while loading
+  ['transitBtn','skipBtn'].forEach(id=>$(id).hidden=true);document.querySelector('.vnote').hidden=true;
+  ['s-land','s-transit'].forEach(id=>$(id).hidden=true);
+  loadBox().then(async()=>{
+    // back from paying to keep the box: wait for the payment to be confirmed
+    let q;try{q=new URLSearchParams(location.search)}catch(e){return}
+    if(!q.has('paid'))return;history.replaceState(null,'',location.pathname);toast('ขอบคุณ กำลังยืนยันการชำระเงิน…');
+    const before=BOX&&BOX.plan;
+    for(let i=0;i<15;i++){await new Promise(r=>setTimeout(r,2000));try{const v=await API.get(SLUG);if(v.plan&&v.plan!==before){showBox(v);toast(v.plan==='FOREVER'?'เก็บกล่องไว้ตลอดไปแล้ว ดาวน์โหลดได้ที่ปุ่มดาวน์โหลด':'เก็บกล่องไว้ 1 ปีแล้ว');return}}catch(e){}}
+    toast('ยังไม่ได้รับยืนยันการชำระเงิน ถ้าจ่ายแล้วจะอัปเดตภายในไม่กี่นาที');
+  });
+}
+
+/* ================= sound ================= */
+let ctx=null,master=null,mTimer=null,musicOn=false;
+const freq=n=>{const m={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[n[0]];return 440*Math.pow(2,(m+12*(+n.slice(-1)+1)-69)/12)};
+const SILENT='G4 1.5,A4 .5,G4 1,E4 3,G4 1.5,A4 .5,G4 1,E4 3,D5 2,D5 1,B4 3,C5 2,C5 1,G4 3,A4 2,A4 1,C5 1.5,B4 .5,A4 1,G4 1.5,A4 .5,G4 1,E4 3,A4 2,A4 1,C5 1.5,B4 .5,A4 1,G4 1.5,A4 .5,G4 1,E4 3,D5 2,D5 1,F5 1.5,D5 .5,B4 1,C5 3,E5 3,C5 1.5,G4 .5,E4 1,G4 1.5,F4 .5,D4 1,C4 6'.split(',').map(x=>x.trim().split(' '));
+const SONGS={silent:{n:'Silent Night',bpm:140,s:SILENT},
+  wish:{n:'We Wish You a Merry Christmas',bpm:165,s:'G4 1,C5 1,C5 .5,D5 .5,C5 .5,B4 .5,A4 1,A4 1,A4 1,D5 1,D5 .5,E5 .5,D5 .5,C5 .5,B4 1,G4 1,G4 1,E5 1,E5 .5,F5 .5,E5 .5,D5 .5,C5 1,A4 1,G4 .5,G4 .5,A4 1,D5 1,B4 1,C5 2'.split(',').map(x=>x.trim().split(' '))},
+  jingle:{n:'Jingle Bells',bpm:150,s:'E4 1,E4 1,E4 2,E4 1,E4 1,E4 2,E4 1,G4 1,C4 1.5,D4 .5,E4 4,F4 1,F4 1,F4 1.5,F4 .5,F4 1,E4 1,E4 1,E4 .5,E4 .5,E4 1,D4 1,D4 1,E4 1,D4 2,G4 2'.split(',').map(x=>x.trim().split(' '))}};
+let SONG_ID='silent';
+function ac(){try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();ctx.resume();return ctx}catch(e){return null}}
+function bell(out,f,t,d,vol=1){
+  const g=ctx.createGain();g.connect(out);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.8*vol,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+Math.max(d,.6)*1.8);
+  [[1,'sine',1],[2,'sine',.3],[4.1,'sine',.05]].forEach(([m,ty,v])=>{const o=ctx.createOscillator(),og=ctx.createGain();o.type=ty;o.frequency.value=f*m;og.gain.value=v;o.connect(og);og.connect(g);o.start(t);o.stop(t+Math.max(d,.6)*1.9)});
+}
+function startMusic(){
+  const song=SONGS[SONG_ID];if(musicOn||!song||!ac())return;
+  master=ctx.createGain();master.gain.value=.13;master.connect(ctx.destination);const me=master,beat=60/song.bpm,SONG=song.s;
+  let t=ctx.currentTime+.1;
+  const loop=()=>{if(master!==me)return;let tt=t;SONG.forEach(([n,d])=>{d=+d*beat;bell(me,freq(n),tt,d);tt+=d});t=tt+beat*3;mTimer=setTimeout(loop,(t-ctx.currentTime-.5)*1000)};
+  loop();musicOn=true;$('musicBtn').setAttribute('aria-pressed','true');
+}
+function stopMusic(){clearTimeout(mTimer);if(master){const m=master;m.gain.setTargetAtTime(0,ctx.currentTime,.08);setTimeout(()=>m.disconnect(),500)}master=null;musicOn=false;$('musicBtn').setAttribute('aria-pressed','false')}
+function duck(on){if(master)master.gain.setTargetAtTime(on?.03:.13,ctx.currentTime,.2)}
+$('musicBtn').onclick=()=>musicOn?stopMusic():startMusic();
+function chime(){if(!ac())return;const o=ctx.createGain();o.gain.value=.16;o.connect(ctx.destination);['C5','E5','G5','C6'].forEach((n,i)=>bell(o,n==='C6'?1046.5:freq(n),ctx.currentTime+i*.09,.8,.9))}
+
+/* ================= santa crossing ================= */
+if(!reduce){
+  const sa=$('santa');let x=-120,dir=1,ph=0,base=96,wait=0;
+  (function step(){
+    const W=innerWidth;
+    if(wait>0){wait--;}else{
+      x+=dir*1.25;ph+=.05;
+      if((dir>0&&x>W+20)||(dir<0&&x<-120)){dir*=-1;base=F.top+Math.random()*Math.max(10,Math.min(60,(F.bottom-F.top)*.25));wait=240+Math.random()*300}
+      sa.style.transform=`translate(${x}px,${base+Math.sin(ph)*14}px) scaleX(${dir}) rotate(${Math.cos(ph)*-4*dir}deg)`;
+    }
+    requestAnimationFrame(step);
+  })();
+}
+})();
+</script>

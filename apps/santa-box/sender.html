@@ -1,0 +1,936 @@
+<title>Santa Box Wrap</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<!-- API address (see santa-api.js). Empty = prototype mode with sample data. Production: https://api.inzeniths.com -->
+<meta name="santa-api" content="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=IBM+Plex+Sans+Thai:wght@300;400;500&family=Noto+Serif+Thai:wght@400;500;600&family=Charm:wght@400;700&family=Mali:wght@400;500&family=Kanit:wght@600;700&family=Anuphan:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+body{margin:0}
+/* Layout: one-screen phone app — live 3D box on top (~40%), a paper panel below holding the current wrapping step, Back/Next pinned at the bottom */
+:root{
+  --bg:#FBF8F4; --bg2:#F4E8E4; --paper:#FFFFFF; --card:#FFFFFF; --ink:#2A2420; --muted:#8A7B74; --line:#EEE2DC;
+  --accent:#B3202E; --gold:#B08D57; --ok:#3E6B4E;
+  --f-lat:'Cormorant Garamond','Times New Roman',serif;
+  --f-serif:'Noto Serif Thai','Cormorant Garamond',serif;
+  --f-sans:'IBM Plex Sans Thai','Noto Sans Thai',system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:radial-gradient(120% 60% at 50% 18%,#FFFFFF 0%,var(--bg) 55%,var(--bg2) 100%);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.55}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+#app{position:relative;height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden}
+.stage{position:relative;flex:0 0 40%;min-height:240px}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.spin-hint{position:absolute;right:max(18px,env(safe-area-inset-right,0px));top:18px;z-index:5;font-size:11.5px;color:var(--muted);border:1px solid var(--line);background:rgba(255,255,255,.75);border-radius:999px;padding:5px 11px;pointer-events:none;transition:opacity .4s}
+.spin-hint.gone{opacity:0}
+
+.hdr{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));padding-block:14px}
+.logo{font-family:var(--f-lat);font-style:italic;font-weight:600;font-size:22px;color:var(--accent)}
+.brand{display:flex;flex-direction:column;line-height:1.1}
+.counter{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.stage-tag{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);z-index:2}
+
+.panel{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--paper);border-radius:24px 24px 0 0;box-shadow:0 -12px 30px -18px rgba(60,40,20,.35);position:relative;z-index:3}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));padding-block:16px 4px}
+.steps button{border:0;background:none;padding:0;display:flex;flex-direction:column;gap:6px;align-items:flex-start;font-size:11.5px;color:var(--muted);min-width:0}
+.steps button i{display:block;width:100%;height:2px;border-radius:2px;background:var(--line)}
+.steps button.done i,.steps button[aria-current="step"] i{background:var(--accent)}
+.steps button[aria-current="step"]{color:var(--ink);font-weight:500}
+.body{flex:1;min-height:0;overflow-y:auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));padding-block:12px 20px}
+.pane{display:flex;flex-direction:column;gap:18px;animation:fadeUp .45s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}}
+.h{font-family:var(--f-serif);font-weight:500;font-size:22px;margin:0;line-height:1.3}
+.lead{margin:-12px 0 0;color:var(--muted);font-size:13.5px}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.lbl{font-size:12.5px;font-weight:500;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.lbl em{font-style:normal;font-weight:400;color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
+input[type=text],input[type=email],input[type=datetime-local],textarea{width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:11px 13px;outline:none}
+input:focus,textarea:focus{border-color:var(--ink)}
+textarea{resize:none;min-height:118px;font-family:var(--f-serif);font-size:16.5px;line-height:1.7}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:12.5px;color:var(--ink)}
+.note{font-size:11.5px;color:var(--muted);margin:0}
+
+.ways{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.way{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:12px;text-align:left;font-size:13px;min-width:0}
+.way span{flex:none;width:30px;height:30px;border-radius:8px;background:linear-gradient(90deg,var(--a) 0 38%,var(--b) 38% 62%,var(--a) 62%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.way[aria-checked="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:11px 6px 9px;font-size:12px;min-width:0}
+.tile[aria-checked="true"],.tile[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.tile .sw{width:40px;height:40px;border-radius:10px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.tile .dot{width:34px;height:34px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.tile .ico{font-size:24px;line-height:34px;height:34px}
+.tile .t{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lbl em.pick{color:var(--accent);font-weight:500}
+/* card papers (shared by sender preview and recipient card) */
+.paper.cs-0{background:#FBF7F0;color:#2A2420}
+.paper.cs-1{background:radial-gradient(circle,#D5E1EA 1.5px,transparent 2px) 0 0/22px 22px,radial-gradient(circle,#E6ECF1 1px,transparent 1.5px) 11px 11px/22px 22px,#FFFFFF;color:#2A2420}
+.paper.cs-2{background:#FBF7F0;color:#2A2420;border:2px solid #C9A24A;outline:2px solid #B3202E;outline-offset:-9px}
+.paper.cs-3{background:#D9BE93 repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 2px,transparent 2px 5px);color:#3A2716}
+.paper.cs-4{background:#24442F;color:#FFF3DC}
+.paper.cf-0{--cf:'Noto Serif Thai',serif}.paper.cf-1{--cf:'Charm','Noto Serif Thai',cursive}.paper.cf-2{--cf:'Mali','IBM Plex Sans Thai',sans-serif}
+.cstyles{display:flex;gap:12px;overflow-x:auto;padding:4px 2px;scrollbar-width:none}
+.cst{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:none;font-size:11.5px;color:var(--muted);padding:0}
+.cst i{display:block;width:46px;height:58px;border-radius:6px;box-shadow:0 0 0 1px var(--line),0 6px 12px -8px rgba(60,40,20,.4)}
+.cst[aria-checked="true"]{color:var(--ink);font-weight:500}.cst[aria-checked="true"] i{box-shadow:0 0 0 2px var(--accent),0 6px 12px -8px rgba(60,40,20,.4)}
+.fonts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fnt{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:9px 4px;font-size:15px;color:var(--ink)}
+.fnt[aria-checked="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.wcard{border-radius:4px;padding:22px 20px 16px;box-shadow:0 22px 40px -24px rgba(60,40,20,.5),0 0 0 1px rgba(60,40,20,.06);display:flex;flex-direction:column;gap:10px;transform:rotate(-.6deg)}
+.wcard input,.wcard textarea{background:transparent;border:0;border-radius:0;padding:0;color:inherit;font-family:var(--cf);outline:none;box-shadow:none}
+.wcard .wto{display:flex;align-items:baseline;gap:6px;font-family:var(--cf);font-size:15px}
+.wcard .wto input{font-size:17px;border-bottom:1px dashed currentColor;flex:1;min-width:0}
+.wcard textarea{min-height:150px;font-size:18px;line-height:1.75;resize:none;width:100%;cursor:text}
+.wcard textarea::placeholder{color:inherit;opacity:.45}
+.wfoot{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.wfoot em{font-style:normal;font-size:11.5px;opacity:.6;font-family:var(--f-sans)}
+.wfrom{display:flex;align-items:baseline;gap:4px;font-family:var(--cf);font-size:16px}
+.wfrom input{font-size:16px;border-bottom:1px dashed currentColor;width:8.5em;text-align:right}
+.editsheet .wcard{transform:none}.editsheet .wcard textarea{min-height:46vh;font-size:19px}
+/* IN ZENITH promo card: company theme (IN ZENITH Night) with Christmas lights and light snow */
+.izp{width:100%;position:relative;overflow:hidden;text-align:left;display:flex;flex-direction:column;gap:5px;margin-top:4px;background:#0C0C10;color:#F5F5F7;border-radius:16px;padding:28px 14px 13px;font-family:'Anuphan','IBM Plex Sans Thai',sans-serif;box-shadow:0 18px 34px -22px rgba(12,12,16,.7)}
+.izp .lights{position:absolute;top:0;left:0;width:100%;height:24px}
+.izp .lights circle{animation:izTw 2.4s ease-in-out infinite}
+.izp .lights circle:nth-of-type(3n){animation-delay:-.8s}.izp .lights circle:nth-of-type(3n+1){animation-delay:-1.6s}
+@keyframes izTw{50%{opacity:.35}}
+.izp::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,.35) 1px,transparent 1.5px) 0 0/22px 22px;opacity:.4}
+.izp .k{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#A1A1A6;font-weight:600;position:relative}
+.izp h3{margin:0;font-family:'Kanit','Anuphan',sans-serif;font-weight:600;font-size:15.5px;line-height:1.35;position:relative}
+.izp h3 i{font-style:normal;white-space:nowrap;background:linear-gradient(90deg,#2997FF,#A972FF 55%,#FF5C8A);-webkit-background-clip:text;background-clip:text;color:transparent}
+.izp p{margin:0;font-size:11.5px;line-height:1.5;color:#A1A1A6;position:relative}
+.izp .r{display:flex;gap:8px;flex-wrap:wrap;margin-top:3px;position:relative;z-index:1}
+.izp a{font-size:12px;font-weight:600;padding:6px 14px;border-radius:999px;text-decoration:none;display:inline-block}
+.izp .l{background:#C8FF4D;color:#141A00}.izp .g{border:1px solid rgba(255,255,255,.28);color:#F5F5F7}
+.izp a:focus-visible{outline:2px solid #C8FF4D;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.izp .lights circle{animation:none}}
+.rec{display:flex;align-items:center;gap:14px;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:12px 14px}
+.recbtn{width:52px;height:52px;border-radius:50%;border:0;background:var(--accent);color:var(--paper);flex:none;display:grid;place-items:center;box-shadow:0 0 0 4px rgba(122,31,43,.12)}
+.recbtn svg{width:18px;height:18px}
+.rec.on .recbtn{animation:ring 1.2s ease-in-out infinite}
+@keyframes ring{50%{box-shadow:0 0 0 10px rgba(122,31,43,.08)}}
+.rec .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.rec .mid b{font-weight:500;font-size:14px}
+.rec .mid small{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.bars{display:flex;align-items:center;gap:2px;height:22px}
+.bars i{flex:1;background:var(--accent);opacity:.3;border-radius:2px;height:var(--h)}
+.rec.on .bars i,.rec.play .bars i{opacity:.85;animation:wv .7s ease-in-out infinite}
+@keyframes wv{50%{transform:scaleY(.3)}}
+.vtrack{position:relative;height:3px;background:var(--line);border-radius:3px;margin-top:2px}
+.vtrack i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--accent);border-radius:3px;transition:width .9s linear}
+.vtrack b{position:absolute;left:25%;top:-3px;width:1.5px;height:9px;background:var(--ink)}
+.rec.over .mid small{color:var(--accent)}
+.redo{border:0;background:none;color:var(--muted);font-size:12px;text-decoration:underline;text-underline-offset:3px;flex:none}
+
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:14px;text-align:left;width:100%}
+.opt[aria-checked="true"],.opt[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.opt .ic{flex:none;width:40px;height:40px;border-radius:12px;background:var(--bg);display:grid;place-items:center;font-family:var(--f-lat);font-style:italic;font-size:20px;color:var(--gold)}
+.opt .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.opt .tx b{font-weight:500;font-family:var(--f-serif);font-size:15.5px}
+.opt .tx small{color:var(--muted);font-size:12px}
+.opt .tick{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;margin-top:2px}
+.opt[aria-pressed="true"] .tick,.opt[aria-checked="true"] .tick{background:var(--ink);border-color:var(--ink)}
+.opt[aria-pressed="true"] .tick::after,.opt[aria-checked="true"] .tick::after{content:"";width:6px;height:10px;border:solid var(--paper);border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.sub{padding:0 0 4px 52px;margin-top:-4px}
+.photo{display:flex;align-items:center;gap:12px}
+.photo label{border:1px solid var(--ink);border-radius:999px;padding:7px 14px;font-size:13px;background:var(--card)}
+.photo img{width:48px;height:48px;object-fit:cover;border-radius:6px;border:3px solid #fff;box-shadow:0 2px 8px rgba(60,40,20,.2)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.price{flex:none;font-family:var(--f-lat);font-weight:600;font-size:26px;line-height:1}
+.price span{font-family:var(--f-sans);font-size:11px;font-weight:400;color:var(--muted);margin-left:2px}
+.badge{align-self:flex-start;font-size:10px;letter-spacing:.12em;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:1px 7px;margin-bottom:3px}
+.when{display:flex;flex-direction:column;gap:8px}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:none;padding:10px;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+.nav{display:flex;gap:10px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));padding-block:12px 16px;border-top:1px solid var(--line);background:var(--paper)}
+.btn{border:0;border-radius:999px;padding:14px 22px;font-size:15px;font-weight:500;background:var(--accent);color:#fff;flex:1;box-shadow:0 10px 24px -12px rgba(179,32,46,.55)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none;flex:0 0 auto}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.done{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px}
+.eyebrow{font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:500}
+.done .h{font-size:26px}
+.status{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ok);background:rgba(62,107,78,.08);border-radius:999px;padding:6px 12px}
+.status i{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.3}}
+.link{display:flex;width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;overflow:hidden}
+.link code{flex:1;min-width:0;padding:12px;font-size:13px;font-family:ui-monospace,Menlo,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;user-select:all}
+.link button{border:0;border-left:1px solid var(--line);background:none;padding:0 16px;font-size:13px;font-weight:500}
+.row{display:flex;gap:10px;width:100%}
+.row .btn{flex:1}
+a.textlink{color:var(--muted);font-size:13px;text-underline-offset:3px}
+
+#santa{position:fixed;left:0;top:0;width:70px;color:var(--ink);opacity:.8;pointer-events:none;z-index:2;transform:translate(-200px,80px)}
+#santa svg{display:block;width:100%;height:auto;overflow:visible}
+.leg{transform-box:fill-box;transform-origin:top center;animation:gallop .34s ease-in-out infinite alternate}
+.leg.b{animation-delay:-.17s}
+@keyframes gallop{from{transform:rotate(26deg)}to{transform:rotate(-22deg)}}
+
+.scrim{position:fixed;inset:0;z-index:20;background:rgba(42,36,32,.35);display:flex;align-items:flex-end;justify-content:center;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.sheet{width:100%;max-width:480px;max-height:92%;overflow-y:auto;background:var(--paper);border-radius:22px 22px 0 0;display:flex;flex-direction:column;gap:14px;align-items:center;
+  padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));padding-block:20px calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet h2{font-family:var(--f-serif);font-weight:500;font-size:20px;margin:0}
+#shotImg{height:min(52vh,440px);aspect-ratio:9/16;max-width:100%;object-fit:cover;border-radius:12px;box-shadow:0 20px 40px -20px rgba(60,40,20,.5)}
+.sheet.left{align-items:stretch}
+.sheet-head{display:flex;justify-content:space-between;align-items:center}
+.x{border:0;background:none;font-size:26px;color:var(--muted);line-height:1;padding:2px 6px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;text-align:left}
+.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--ink);flex:none}
+.check span{display:flex;flex-direction:column}
+.check b{font-weight:500}
+.check small{color:var(--muted);font-size:12px}
+.codeRow{display:flex;gap:8px}
+.codeRow input{flex:1;min-width:0}
+.codeRow .btn{flex:none;padding:10px 16px;font-size:13px}
+.summary{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-top:1px solid var(--line);padding-top:12px}
+.summary b{font-family:var(--f-lat);font-size:26px;font-weight:600;flex:none}
+.err{color:var(--accent);font-size:12px;margin:0}
+.note.center{text-align:center}
+.btn.full{width:100%;flex:none}
+a.btn{display:block;text-align:center;text-decoration:none}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;background:var(--ink);color:var(--paper);font-size:13px;padding:10px 16px;border-radius:12px;width:max-content;max-width:calc(100% - 32px);text-align:center;animation:fade .25s}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important}
+  #santa{display:none}
+}
+</style>
+
+<div id="app">
+  <div class="stage">
+    <canvas id="gl" aria-label="ตัวอย่างกล่องของขวัญสามมิติ"></canvas>
+    <span class="spin-hint" id="spinHint">↻ ลากเพื่อหมุนดู 360°</span>
+    <header class="hdr"><div class="brand"><span class="logo">Santa Box</span><span class="counter">กล่องที่ 12,345</span></div></header>
+    <p class="stage-tag" id="stageTag">A gift for แม่</p>
+  </div>
+
+  <section class="panel">
+    <nav class="steps" id="steps" aria-label="ขั้นตอนห่อกล่อง">
+      <button data-i="0"><i></i>กล่อง</button>
+      <button data-i="1"><i></i>การ์ด + เสียง</button>
+      <button data-i="2"><i></i>ของในกล่อง</button>
+      <button data-i="3"><i></i>เพลง</button>
+    </nav>
+
+    <div class="body" id="body">
+      <!-- 1. box -->
+      <div class="pane" id="p0">
+        <h2 class="h">เลือกกล่อง</h2>
+        <p class="lead">ลากที่กล่องด้านบนเพื่อหมุนดูรอบด้าน</p>
+        <div class="field"><div class="lbl">สีตัวกล่อง <em class="pick" id="boxName"></em></div><div class="tiles" id="boxTiles" role="radiogroup" aria-label="สีตัวกล่อง"></div></div>
+        <div class="field"><div class="lbl">ริบบิ้นและโบว์ <em class="pick" id="ribName"></em></div><div class="tiles" id="ribTiles" role="radiogroup" aria-label="ริบบิ้นและโบว์"></div></div>
+        <div class="field"><div class="lbl">ของประดับบนกล่อง <em class="pick" id="accName"></em></div><div class="tiles" id="accTiles" aria-label="ของประดับบนกล่อง"></div></div>
+      </div>
+
+      <!-- 2. card + voice -->
+      <div class="pane" id="p1" hidden>
+        <h2 class="h">ออกแบบการ์ด</h2>
+        <div class="field"><div class="lbl">กระดาษการ์ด</div><div class="cstyles" id="cardStyles" role="radiogroup" aria-label="กระดาษการ์ด"></div></div>
+        <div class="field"><div class="lbl">ลายมือ</div><div class="fonts" id="cardFonts" role="radiogroup" aria-label="แบบตัวอักษร"></div></div>
+        <article class="wcard paper cs-0 cf-1" id="wcard">
+          <label class="wto">ถึง <input type="text" id="to" maxlength="30" value="แม่" aria-label="ชื่อผู้รับ"></label>
+          <textarea id="msg" maxlength="280" placeholder="เขียนถึงเขาสักหน่อย..." aria-label="ข้อความในการ์ด">ปีนี้เหนื่อยมาเยอะ ขอบคุณที่อยู่ข้างกันเสมอนะ คริสต์มาสนี้ขอให้แม่ได้พักบ้าง รักแม่ที่สุดเลย</textarea>
+          <div class="wfoot"><em id="msgCount"></em><label class="wfrom">— <input type="text" id="from" maxlength="30" value="ลูกคนเล็ก" aria-label="ชื่อผู้ส่ง"></label></div>
+        </article>
+        <div class="field"><div class="lbl">ไม่รู้จะเริ่มยังไง <em>แตะเพื่อเติมคำ</em></div><div class="chips" id="prompts"></div></div>
+        <div class="field">
+          <div class="lbl">เสียงอวยพร <em>ฟรี 15 วินาที · แพ็กเกจเสียเงิน 1 นาที</em></div>
+          <div class="rec" id="rec">
+            <button class="recbtn" id="recBtn" aria-label="เริ่มอัดเสียง"><svg viewBox="0 0 18 18" id="recIcon"><circle cx="9" cy="9" r="6" fill="currentColor"/></svg></button>
+            <div class="mid"><b id="recTitle">แตะเพื่อเริ่มอัด</b><div class="bars" id="bars"></div><div class="vtrack" aria-hidden="true"><i id="vfill"></i><b></b></div><small id="recTime">0:00 / 1:00</small></div>
+            <button class="redo" id="redo" hidden>อัดใหม่</button>
+          </div>
+          <p class="note">ตัวอย่างนี้จำลองการอัด ยังไม่ได้ใช้ไมโครโฟนจริง</p>
+        </div>
+      </div>
+
+      <!-- 3. gift -->
+      <div class="pane" id="p2" hidden>
+        <h2 class="h">ใส่ของในกล่อง</h2>
+        <p class="lead">เลือกของขวัญได้ 1 ชิ้น ทุกกล่องมีคูปองกับรูปให้ด้วย</p>
+        <div class="opts" id="gifts" role="radiogroup" aria-label="ของขวัญ"></div>
+        <div class="sub field" id="ornField"><input type="text" id="engrave" maxlength="24" value="แม่ · Christmas 2026" aria-label="ข้อความที่สลักบนลูกแก้ว"></div>
+        <div class="lbl" style="margin-top:6px">มีให้ทุกกล่อง</div>
+        <div class="opts">
+          <button class="opt" id="couponOpt" aria-pressed="true"><span class="ic">IOU</span><span class="tx"><b>คูปองสัญญา</b><small>สัญญาที่ผู้รับเอาไปแลกได้จริง แตะเพื่อเอาออก</small></span><span class="tick"></span></button>
+          <div class="sub field" id="couponField"><input type="text" id="coupon" maxlength="80" value="พาไปกินข้าวร้านโปรด 1 มื้อ" aria-label="ข้อความคูปอง"></div>
+          <div class="opt" style="cursor:default"><span class="ic">◻</span><span class="tx"><b>รูปความทรงจำ</b><small>ไม่บังคับ ถ้าไม่ใส่รูป ผู้รับจะไม่เห็นช่องนี้</small></span></div>
+          <div class="sub photo" id="photoField"><label for="photo">เลือกรูป</label><input class="sr" type="file" id="photo" accept="image/*"><img id="thumb" alt="" hidden><span class="note" id="photoNote">ยังไม่ได้เลือกรูป</span></div>
+        </div>
+      </div>
+
+      <!-- 4. music -->
+      <div class="pane" id="p3" hidden>
+        <h2 class="h">เพลงตอนเปิดกล่อง</h2>
+        <p class="lead">แตะเพื่อฟังตัวอย่าง เล่นเป็นเสียงกล่องดนตรี</p>
+        <div class="opts" id="songs" role="radiogroup"></div>
+        <p class="note">เพลงในรายการเป็นเพลงคริสต์มาสที่หมดลิขสิทธิ์แล้ว เพลงจะเบาลงอัตโนมัติตอนเสียงอวยพรเล่น</p>
+      </div>
+
+      <!-- 5. delivery -->
+      <div class="pane" id="p4" hidden>
+        <h2 class="h">ส่งกล่องให้ <span id="sendTo">แม่</span></h2>
+        <div class="opts" id="plans" role="radiogroup">
+          <button class="opt" role="radio" data-p="0" aria-checked="false"><span class="tx"><b>ส่งธรรมดา</b><small>ซานต้าใช้เวลาเดินทาง 25 ชม. · เปิดดูได้ 7 วัน</small></span><span class="price">ฟรี</span></button>
+          <button class="opt" role="radio" data-p="25" aria-checked="true"><span class="tx"><b>ส่งด่วน · เก็บไว้ 1 ปี</b><small>ถึงทันทีหรือตามเวลาที่ตั้ง · เสียงอวยพร 1 นาที · เปิดฟังได้ถึงคริสต์มาสหน้า</small></span><span class="price">25<span>บาท</span></span></button>
+          <button class="opt" role="radio" data-p="125" aria-checked="false"><span class="tx"><span class="badge">ดาวน์โหลดได้</span><b>ส่งด่วน · เก็บไว้ตลอดไป</b><small>เสียงอวยพร 1 นาที · ผู้รับดาวน์โหลดเสียงและการ์ดเก็บไว้ในเครื่องได้</small></span><span class="price">125<span>บาท</span></span></button>
+        </div>
+        <div class="when" id="when">
+          <div class="lbl">ให้กล่องถึงเมื่อไหร่</div>
+          <div class="seg"><button id="nowBtn" aria-pressed="false">ทันที</button><button id="schedBtn" aria-pressed="true">ตั้งเวลา</button></div>
+          <div class="chips" id="presets"></div>
+          <input type="datetime-local" id="whenAt" value="2026-12-25T00:00" aria-label="วันและเวลาที่ให้กล่องถึง">
+        </div>
+        <p class="note center">จ่ายครั้งเดียว ไม่ใช่รายเดือน ไม่ตัดเงินซ้ำ</p>
+        <a class="btn ghost" id="recvPreview" href="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75#orn" target="_blank" rel="noopener">ดูแบบที่ผู้รับจะเห็น</a>
+      </div>
+
+      <!-- 6. sent -->
+      <div class="pane done" id="p5" hidden>
+        <p class="eyebrow">Wrapped &amp; sent</p>
+        <h2 class="h">ส่งกล่องให้ <span id="doneTo">แม่</span> แล้ว</h2>
+        <span class="status" id="doneStatus"><i></i>จะเด้งถึงแม่ 25 ธ.ค. เวลา 00:00</span>
+        <div class="link"><code id="linkText">santabox.app/b/x7k2p9</code><button id="copyBtn">คัดลอก</button></div>
+        <p class="note">ลิงก์นี้เป็นตัวอย่าง ส่งให้ผู้รับทาง LINE หรือแชตไหนก็ได้</p>
+        <div class="row"><button class="btn ghost" id="teaserBtn">แชร์ภาพทีเซอร์</button><button class="btn ghost" id="againBtn">ห่อกล่องใหม่</button></div>
+        <a class="textlink" href="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75" target="_blank" rel="noopener">ดูตัวอย่างตอนผู้รับเปิดกล่อง</a>
+        <!-- IN ZENITH promo: แทน [IN-ZENITH-URL] ด้วยโดเมนจริงของเว็บ IN ZENITH -->
+        <aside class="izp" aria-label="IN ZENITH Interactive Lab">
+          <svg class="lights" viewBox="0 0 320 24" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 6Q40 26 80 10T160 10T240 10T320 6" fill="none" stroke="#3A3A44" stroke-width="1.5"/>
+            <circle cx="22" cy="14" r="3" fill="#C8FF4D"/><circle cx="56" cy="19" r="3" fill="#2997FF"/><circle cx="92" cy="12" r="3" fill="#FF5C8A"/>
+            <circle cx="126" cy="17" r="3" fill="#A972FF"/><circle cx="160" cy="11" r="3" fill="#C8FF4D"/><circle cx="196" cy="18" r="3" fill="#2997FF"/>
+            <circle cx="232" cy="12" r="3" fill="#FF5C8A"/><circle cx="268" cy="17" r="3" fill="#A972FF"/><circle cx="302" cy="10" r="3" fill="#C8FF4D"/>
+          </svg>
+          <span class="k">IN ZENITH Interactive Lab</span>
+          <h3>อยากได้แคมเปญแบบ <i>Santa Box</i> ให้แบรนด์คุณ?</h3>
+          <p>Santa Box เป็นแคมเปญของ IN ZENITH เรารับทำ interactive experience เว็บไซต์ และระบบอีเวนต์</p>
+          <div class="r"><a class="l" href="[IN-ZENITH-URL]/interactive.html" target="_blank" rel="noopener">ดูผลงาน</a><a class="g" href="[IN-ZENITH-URL]/#contact" target="_blank" rel="noopener">คุยกับเรา</a></div>
+        </aside>
+      </div>
+    </div>
+
+    <div class="nav" id="nav">
+      <button class="btn ghost" id="backBtn">ย้อนกลับ</button>
+      <button class="btn" id="nextBtn">ถัดไป</button>
+    </div>
+  </section>
+</div>
+
+<div id="santa" aria-hidden="true">
+  <svg viewBox="0 0 150 62" fill="currentColor">
+    <path d="M44 30 C70 22 92 26 104 24" stroke="currentColor" stroke-width="1" fill="none" opacity=".6"/>
+    <g class="leg"><rect x="100" y="34" width="2.6" height="16" rx="1.3"/></g>
+    <g class="leg b"><rect x="106" y="34" width="2.6" height="16" rx="1.3"/></g>
+    <g class="leg b"><rect x="119" y="33" width="2.6" height="16" rx="1.3"/></g>
+    <g class="leg"><rect x="125" y="33" width="2.6" height="16" rx="1.3"/></g>
+    <ellipse cx="113" cy="30" rx="17" ry="8"/>
+    <path d="M124 27 L131 14 L137 18 L130 30 Z"/>
+    <ellipse cx="136" cy="14" rx="7" ry="5"/>
+    <path d="M131 10 l-3 -8 M130 6 l-5 -1 M134 9 l1 -8 M134.5 4 l4 -2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+    <circle cx="143" cy="15" r="2.6" fill="#7A1F2B"/>
+    <path d="M96 28 q-6 -2 -7 2" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <circle cx="20" cy="22" r="9"/><circle cx="34" cy="21" r="9.5"/><circle cx="39" cy="10" r="5"/>
+    <path d="M33 8 q6 -9 13 -1 q-6 -2 -13 1z"/>
+    <path d="M33 8 q-3 -1 -5 4" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="M6 26 h44 q8 0 6 10 q-2 6 -10 6 H16 Q6 42 6 32 Z"/>
+    <path d="M2 48 H50 q8 0 10 -6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M14 42 v6 M44 42 v6" stroke="currentColor" stroke-width="2"/>
+  </svg>
+</div>
+
+<div class="scrim" id="shareSheet" hidden>
+  <div class="sheet">
+    <h2>ภาพทีเซอร์ 9:16</h2>
+    <img id="shotImg" alt="ภาพทีเซอร์แนวตั้ง">
+    <label class="check"><input type="checkbox" id="qrOn" checked><span><b>ใส่ QR ในรูป</b><small>คนที่เห็นสตอรี่สแกนมาห่อกล่องของตัวเองได้</small></span></label>
+    <p class="note" style="text-align:center">กดค้างที่รูปเพื่อบันทึก แล้วโพสต์ลงสตอรี่ IG หรือ TikTok ในเว็บจริงปุ่มแชร์จะเปิดเมนูแชร์ของมือถือ</p>
+    <button class="btn" data-close style="width:100%">เสร็จแล้ว</button>
+  </div>
+</div>
+
+<div class="scrim" id="cardEdit" hidden>
+  <div class="sheet left editsheet">
+    <div class="sheet-head"><h2>การ์ดข้อความ</h2><button class="x" data-close aria-label="ปิด">×</button></div>
+    <div class="wcard paper cs-0 cf-1" id="wcardBig"><textarea id="msgBig" maxlength="280" placeholder="เขียนถึงเขาสักหน่อย..." aria-label="ข้อความในการ์ด"></textarea>
+      <div class="wfoot"><em id="msgBigCount"></em><button class="btn" id="msgDone" style="flex:none;padding:10px 24px">เสร็จ</button></div></div>
+  </div>
+</div>
+
+<div class="scrim" id="whoSheet" hidden>
+  <div class="sheet left">
+    <div class="sheet-head"><h2>ส่งให้ใคร?</h2><button class="x" data-close aria-label="ปิด">×</button></div>
+    <p class="note">ผู้รับจะเห็นชื่อตัวเองตอนเปิดลิงก์ และเห็นชื่อคุณบนการ์ด</p>
+    <div class="field"><label class="lbl" for="wTo">ชื่อผู้รับ</label><input type="text" id="wTo" maxlength="30"></div>
+    <div class="field"><label class="lbl" for="wFrom">ชื่อของคุณ <em>ไม่บังคับ</em></label><input type="text" id="wFrom" maxlength="30" placeholder="ให้ผู้รับรู้ว่าใครส่งมา"></div>
+    <div class="field"><label class="lbl" for="wEmail">อีเมลของคุณ <em id="emailHint"></em></label><input type="email" id="wEmail" placeholder="you@example.com" autocomplete="email"><p class="err" id="emailErr" hidden>ใส่อีเมลให้ถูกต้อง เพื่อรับใบเสร็จและกู้ลิงก์คืนได้</p></div>
+    <label class="check"><input type="checkbox" id="remind"><span><b>เตือนก่อนคริสต์มาสปีหน้า</b><small>อีเมลฟรีล่วงหน้า 7 วัน กดเลิกรับในอีเมลได้</small></span></label>
+    <label class="check"><input type="checkbox" id="tree"><span><b>วางกล่องไว้ใต้ต้นคริสต์มาสรวม</b><small>โชว์แค่หน้าตากล่อง ไม่โชว์ชื่อ ข้อความ หรือเสียง</small></span></label>
+    <div class="field"><label class="lbl" for="code">โค้ดส่วนลด <em>ไม่บังคับ</em></label><div class="codeRow"><input type="text" id="code" placeholder="ถ้ามี"><button class="btn ghost" id="codeBtn">ใช้โค้ด</button></div></div>
+    <div class="summary"><span id="sumPlan"></span><b id="sumPrice"></b></div>
+    <p class="note center">จ่ายครั้งเดียว ไม่ใช่รายเดือน ไม่ตัดเงินซ้ำ</p>
+    <button class="btn full" id="confirmBtn"></button>
+  </div>
+</div>
+
+<script src="santa-api.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+// real back end when santa-api.js is configured; otherwise the page is a self-contained prototype
+const API=window.SantaAPI&&SantaAPI.enabled?SantaAPI:null;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SONGS=[
+  {id:'silent',n:'Silent Night',d:'ซึ้ง ช้าๆ',bpm:140,s:'G4 1.5,A4 .5,G4 1,E4 3,G4 1.5,A4 .5,G4 1,E4 3,D5 2,D5 1,B4 3,C5 2,C5 1,G4 3,A4 2,A4 1,C5 1.5,B4 .5,A4 1,G4 1.5,A4 .5,G4 1,E4 3'},
+  {id:'wish',n:'We Wish You a Merry Christmas',d:'อบอุ่น ครอบครัว',bpm:165,s:'G4 1,C5 1,C5 .5,D5 .5,C5 .5,B4 .5,A4 1,A4 1,A4 1,D5 1,D5 .5,E5 .5,D5 .5,C5 .5,B4 1,G4 1,G4 1,E5 1,E5 .5,F5 .5,E5 .5,D5 .5,C5 1,A4 1,G4 .5,G4 .5,A4 1,D5 1,B4 1,C5 2'},
+  {id:'jingle',n:'Jingle Bells',d:'สนุก สดใส',bpm:150,s:'E4 1,E4 1,E4 2,E4 1,E4 1,E4 2,E4 1,G4 1,C4 1.5,D4 .5,E4 4,F4 1,F4 1,F4 1.5,F4 .5,F4 1,E4 1,E4 1,E4 .5,E4 .5,E4 1,D4 1,D4 1,E4 1,D4 2,G4 2'},
+  {id:'none',n:'ไม่ใส่เพลง',d:'ให้เสียงอวยพรเป็นพระเอก'}];
+const PROMPTS=['ปีนี้ขอบคุณเรื่อง…','ปีหน้าอยากให้…','จำได้ไหมตอนที่…','สิ่งที่ไม่เคยได้พูด…'];
+const S={way:0,gift:'orn',coupon:true,song:'silent',plan:'25',sched:true,recorded:false,photo:null};
+let step=0;
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),2600)}
+
+/* ---- box design catalog: colour, ribbon, accents (shared by sender and recipient) ---- */
+const BOX_COLORS=[
+  {n:'ขาวหิมะ',c:'#F4F1EC'},{n:'แดงคลาสสิก',c:'#A3202B'},{n:'เขียวสน',c:'#2F5D46'},
+  {n:'ทองอร่าม',c:'#C9A24A',metal:.45},{n:'ขนมปังขิง',c:'#A8714B'},{n:'กรมท่าคืนหนาว',c:'#1F2B45'}];
+const RIBBONS=[
+  {n:'แดงซาติน',c:'#9E1B27',r:.3,m:.15},{n:'ทองซาติน',c:'#D4AF5A',r:.28,m:.55},{n:'แคนดี้เคน',c:'#FFFFFF',r:.35,m:.05,stripe:true},
+  {n:'ไหมมรกต',c:'#2E6B4F',r:.3,m:.2},{n:'กำมะหยี่แดง',c:'#7A1420',r:.95,m:0},{n:'เงินประกาย',c:'#D9DBE0',r:.25,m:.7}];
+const ACCENTS=[{id:'b',n:'กระดิ่ง',e:'🔔'},{id:'p',n:'ลูกสน',e:'🌰'},{id:'h',n:'ฮอลลี่',e:'🌿'},{id:'c',n:'อบเชย',e:'🪵'},{id:'l',n:'ไฟกะพริบ',e:'✨'}];
+let DESIGN={box:0,rib:0,acc:['b']};
+var setDesign=function(){};
+/* ================= THREE ================= */
+let renderer;
+try{renderer=new THREE.WebGLRenderer({canvas:$('gl'),antialias:true,alpha:true,preserveDrawingBuffer:true})}catch(e){}
+const C=h=>new THREE.Color(h).convertSRGBToLinear();
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(30,1,.1,100);
+const A={lift:0,orn:0,pulse:0,spark:0,bowIn:1,hover:0,drop:0};
+let root,lid,bow,orn,boxMat,lidMat,ribMat,ornMat,pts,ptsData,emitting=false,drag=null,spinY=0,spinV=0,pitch=0,touched=false;
+
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t}
+function roundedBox(W,H,D,r,b){
+  const w=W-2*b,d=D-2*b,x=-w/2,y=-d/2,s=new THREE.Shape();
+  s.moveTo(x+r,y);s.lineTo(x+w-r,y);s.quadraticCurveTo(x+w,y,x+w,y+r);s.lineTo(x+w,y+d-r);s.quadraticCurveTo(x+w,y+d,x+w-r,y+d);
+  s.lineTo(x+r,y+d);s.quadraticCurveTo(x,y+d,x,y+d-r);s.lineTo(x,y+r);s.quadraticCurveTo(x,y,x+r,y);
+  const g=new THREE.ExtrudeGeometry(s,{depth:H-2*b,bevelEnabled:true,bevelThickness:b,bevelSize:b,bevelSegments:4,curveSegments:8});
+  g.rotateX(-Math.PI/2);g.translate(0,b,0);g.computeVertexNormals();return g;
+}
+const sh=m=>{m.castShadow=true;m.receiveShadow=true;return m};
+
+if(renderer){
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  const env=canvasTex(512,256,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#FFFBF3');gr.addColorStop(.5,'#F1E6D3');gr.addColorStop(1,'#B9A586');g.fillStyle=gr;g.fillRect(0,0,w,h);g.fillStyle='#fff';g.filter='blur(6px)';g.fillRect(60,30,110,60);g.fillRect(330,40,90,50)});
+  scene.environment=new THREE.PMREMGenerator(renderer).fromEquirectangular(env).texture;
+  scene.add(new THREE.HemisphereLight(0xfff4e2,0xcbb89a,.3));
+  const key=new THREE.DirectionalLight(0xfff1dc,.75);key.position.set(3.5,7,4.5);key.castShadow=true;key.shadow.mapSize.set(2048,2048);
+  Object.assign(key.shadow.camera,{left:-4,right:4,top:4,bottom:-4,near:1,far:20});key.shadow.bias=-.0006;scene.add(key);
+  const rim=new THREE.DirectionalLight(0xffe0bd,.35);rim.position.set(-4,3,-3);scene.add(rim);
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.ShadowMaterial({opacity:.14}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+  const paper=canvasTex(256,256,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);for(let i=0;i<5000;i++){g.fillStyle=`rgba(90,70,50,${Math.random()*.05})`;g.fillRect(Math.random()*w,Math.random()*h,1,1)}});
+  paper.wrapS=paper.wrapT=THREE.RepeatWrapping;
+
+  root=new THREE.Group();scene.add(root);
+  boxMat=new THREE.MeshStandardMaterial({map:paper,roughness:.8,envMapIntensity:.35});lidMat=boxMat;
+  ribMat=new THREE.MeshStandardMaterial({roughness:.3,metalness:.18,envMapIntensity:1.1});
+  root.add(sh(new THREE.Mesh(roundedBox(2,1.4,2,.06,.025),boxMat)));
+  const cav=canvasTex(128,128,(g,w,h)=>{g.fillStyle='#6E5A44';g.fillRect(0,0,w,h);const gr=g.createRadialGradient(w/2,h/2,8,w/2,h/2,w*.75);gr.addColorStop(0,'rgba(255,226,170,.45)');gr.addColorStop(1,'rgba(40,28,18,.6)');g.fillStyle=gr;g.fillRect(0,0,w,h)});
+  const hole=new THREE.Mesh(new THREE.PlaneGeometry(1.88,1.88),new THREE.MeshBasicMaterial({map:cav}));hole.rotation.x=-Math.PI/2;hole.position.y=1.406;root.add(hole);
+  const r1=new THREE.Mesh(new THREE.BoxGeometry(.3,1.404,2.014),ribMat),r2=new THREE.Mesh(new THREE.BoxGeometry(2.014,1.404,.3),ribMat);r1.position.y=r2.position.y=.702;root.add(sh(r1),sh(r2));
+  lid=new THREE.Group();root.add(lid);
+  const lm=sh(new THREE.Mesh(roundedBox(2.14,.4,2.14,.07,.025),lidMat));lm.position.y=1.32;lid.add(lm);
+  const l1=new THREE.Mesh(new THREE.BoxGeometry(.32,.406,2.154),ribMat),l2=new THREE.Mesh(new THREE.BoxGeometry(2.154,.406,.32),ribMat);l1.position.y=l2.position.y=1.52;lid.add(sh(l1),sh(l2));
+  bow=new THREE.Group();bow.position.y=1.72;lid.add(bow);
+  // satin bow: two flat ribbon loops, a wrapped knot and two tails lying on the lid
+  const strip=(curve,w,dir,seg)=>{const pos=[],uv=[],idx=[];for(let i=0;i<=seg;i++){const t=i/seg,p=curve.getPoint(t),d=dir(t,curve.getTangent(t)).normalize().multiplyScalar(w/2);
+      pos.push(p.x-d.x,p.y-d.y,p.z-d.z,p.x+d.x,p.y+d.y,p.z+d.z);uv.push(t*3,0,t*3,1);if(i<seg){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();return g};
+  ribMat.side=THREE.DoubleSide;
+  const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+  const loopC=new THREE.CatmullRomCurve3([V3(0,.06,0),V3(-.16,.24,0),V3(-.4,.34,0),V3(-.58,.24,0),V3(-.56,.07,0),V3(-.36,.02,0),V3(-.14,.03,0)],true,'centripetal');
+  [-1,1].forEach(s=>{const m=new THREE.Mesh(strip(loopC,.26,()=>V3(0,0,1),90),ribMat);m.scale.x=s;m.rotation.y=s*.28;m.rotation.z=s*-.08;bow.add(sh(m))});
+  const knot=new THREE.Mesh(roundedBox(.18,.16,.28,.05,.025),ribMat);knot.position.y=-.01;bow.add(sh(knot));
+  [-1,1].forEach(s=>{const c=new THREE.CatmullRomCurve3([V3(0,.03,.05),V3(s*.1,.03,.28),V3(s*.2,.02,.52),V3(s*.27,.012,.74)]);
+    bow.add(sh(new THREE.Mesh(strip(c,.17,(t,tan)=>V3(-tan.z,0,tan.x),40),ribMat)))});
+
+  orn=new THREE.Group();orn.visible=false;root.add(orn);
+  ornMat=new THREE.MeshPhysicalMaterial({metalness:.5,roughness:.14,clearcoat:1,clearcoatRoughness:.06,envMapIntensity:1.4});
+  const gold=new THREE.MeshStandardMaterial({color:C('#C7A15A'),metalness:1,roughness:.28,envMapIntensity:1.3});
+  orn.add(sh(new THREE.Mesh(new THREE.SphereGeometry(.44,48,32),ornMat)));
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.1,.115,.15,28),gold);cap.position.y=.47;orn.add(cap);
+  const hook=new THREE.Mesh(new THREE.TorusGeometry(.06,.014,10,24),gold);hook.position.y=.58;orn.add(hook);
+  [.18,-.18].forEach((y,i)=>{const b=new THREE.Mesh(new THREE.TorusGeometry(Math.sqrt(.44*.44-y*y)+.004,.005,8,96),gold);b.rotation.x=Math.PI/2;b.position.y=y;orn.add(b)});
+  /* ---- gift models: one group per gift inside `orn`, shown one at a time ---- */
+  var MODELS={};
+  var setEngrave=function(){};
+  var showGift=function(id){Object.keys(MODELS).forEach(k=>{MODELS[k].visible=(k===id)})};
+  (function(){
+    const om=new THREE.Group();[...orn.children].forEach(c=>om.add(c));orn.add(om);MODELS.orn=om;
+    // engraving: a thin gold-lettered band laid over the bauble's equator, text centred on the side facing the viewer
+    const ec=document.createElement('canvas');ec.width=2048;ec.height=256;
+    const etex=new THREE.CanvasTexture(ec);etex.encoding=THREE.sRGBEncoding;etex.anisotropy=4;
+    const band=new THREE.Mesh(new THREE.SphereGeometry(.446,96,16,0,Math.PI*2,Math.PI/2-.3,.6),
+      new THREE.MeshStandardMaterial({map:etex,transparent:true,metalness:.6,roughness:.3,envMapIntensity:1.3,depthWrite:false}));
+    band.renderOrder=1;om.add(band);
+    setEngrave=function(text){const g=ec.getContext('2d');g.clearRect(0,0,2048,256);text=(text||'').trim();
+      if(text){const fam='"Noto Serif Thai","Cormorant Garamond",serif';let fs=150;g.font=`600 ${fs}px ${fam}`;
+        const w=g.measureText(text).width;if(w>640){fs=Math.max(64,fs*640/w);g.font=`600 ${fs}px ${fam}`}
+        g.textAlign='center';g.textBaseline='middle';g.fillStyle='rgba(50,25,10,.35)';g.fillText(text,514,135);g.fillStyle='#F0CF86';g.fillText(text,512,132)}
+      etex.needsUpdate=true};
+    const M=(c,r,m)=>new THREE.MeshStandardMaterial({color:C(c),roughness:r,metalness:m||0,envMapIntensity:.8});
+    const add=(g,geo,mat,x,y,z,sx,sy,sz)=>{const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.position.set(x||0,y||0,z||0);m.scale.set(sx||1,sy||sx||1,sz||sx||1);g.add(m);return m};
+    const SPH=new THREE.SphereGeometry(1,32,24);
+    const dark=M('#2A1A12',.4),red=M('#B3202E',.55),white=M('#FFFDF8',.6);
+    // teddy bear
+    {const g=new THREE.Group(),fur=new THREE.MeshPhysicalMaterial({color:C('#B9875A'),roughness:1,envMapIntensity:.6}),muz=M('#EBD3B2',.9);fur.sheen=C('#F2D7B0');
+      add(g,SPH,fur,0,-.17,0,.33,.36,.3);add(g,SPH,fur,0,.27,0,.27,.25,.25);
+      add(g,SPH,fur,-.2,.47,0,.09,.09,.06);add(g,SPH,fur,.2,.47,0,.09,.09,.06);
+      add(g,SPH,muz,-.2,.47,.03,.05,.05,.04);add(g,SPH,muz,.2,.47,.03,.05,.05,.04);
+      add(g,SPH,muz,0,.22,.22,.12,.09,.09);add(g,SPH,dark,0,.27,.3,.045,.035,.035);
+      add(g,SPH,dark,-.09,.34,.235,.03,.03,.025);add(g,SPH,dark,.09,.34,.235,.03,.03,.025);
+      add(g,SPH,muz,0,-.15,.25,.18,.2,.08);
+      add(g,SPH,fur,-.31,-.08,.06,.1,.17,.1).rotation.z=-.5;add(g,SPH,fur,.31,-.08,.06,.1,.17,.1).rotation.z=.5;
+      add(g,SPH,fur,-.17,-.45,.12,.12,.09,.14);add(g,SPH,fur,.17,-.45,.12,.12,.09,.14);add(g,SPH,muz,-.17,-.45,.25,.07,.06,.02);add(g,SPH,muz,.17,-.45,.25,.07,.06,.02);
+      add(g,new THREE.TorusGeometry(1,.2,12,40),red,0,.06,0,.26,.26,.26).rotation.x=Math.PI/2;
+      MODELS.bear=g}
+    // gingerbread man
+    {const g=new THREE.Group(),ck=M('#B8733A',.85);
+      const disc=new THREE.CylinderGeometry(1,1,1,40);disc.rotateX(Math.PI/2);
+      add(g,disc,ck,0,.3,0,.19,.19,.1);add(g,disc,ck,0,-.02,0,.22,.27,.1);
+      const limb=new THREE.CylinderGeometry(.075,.075,.36,16);
+      add(g,limb,ck,-.27,.06,0,1,1,.65).rotation.z=1.2;add(g,limb,ck,.27,.06,0,1,1,.65).rotation.z=-1.2;
+      add(g,limb,ck,-.11,-.33,0,1.1,1,.65).rotation.z=-.3;add(g,limb,ck,.11,-.33,0,1.1,1,.65).rotation.z=.3;
+      [[.05,'#C1121F'],[-.07,'#2F6B3A'],[-.19,'#C1121F']].forEach(([y,c])=>add(g,SPH,M(c,.25),0,y,.06,.035,.035,.02));
+      add(g,SPH,dark,-.06,.34,.055,.022,.022,.01);add(g,SPH,dark,.06,.34,.055,.022,.022,.01);
+      add(g,new THREE.TorusGeometry(.06,.012,8,20,Math.PI),white,0,.28,.055).rotation.z=Math.PI;
+      const zig=(cx,cy,w,h,n,vert)=>{const p=[];for(let i=0;i<=n;i++){const a=-w/2+i*w/n,b=(i%2?h:-h)/2;p.push(new THREE.Vector3(vert?cx+b:cx+a,vert?cy+a:cy+b,.053))}
+        g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p),40,.009,6),white))};
+      zig(-.39,.12,.13,.04,5,true);zig(.39,.12,.13,.04,5,true);zig(-.16,-.45,.12,.035,5,false);zig(.16,-.45,.12,.035,5,false);
+      add(g,SPH,red,-.04,.14,.06,.045,.03,.015);add(g,SPH,red,.04,.14,.06,.045,.03,.015);
+      MODELS.ginger=g}
+    // chocolate bar in red wrapper
+    {const g=new THREE.Group(),ch=M('#4A2717',.35);
+      add(g,new THREE.BoxGeometry(.62,.86,.08),ch);
+      const sq=new THREE.BoxGeometry(.17,.17,.05);
+      for(let r=0;r<2;r++)for(let c=0;c<3;c++)add(g,sq,ch,-.2+c*.2,.32-r*.2,.05);
+      add(g,new THREE.BoxGeometry(.66,.5,.11),red,0,-.19,0);
+      add(g,new THREE.BoxGeometry(.665,.05,.115),gold,0,.05,0);
+      g.rotation.z=-.12;MODELS.choco=g}
+    // snow globe with a little snowman inside
+    {const g=new THREE.Group(),snow=M('#F7F5F2',.95),coal=M('#2A2420',.5),wood=M('#6B4A2E',.9);
+      add(g,new THREE.CylinderGeometry(.3,.36,.2,40),M('#9E1B27',.5),0,-.42,0);
+      add(g,new THREE.TorusGeometry(.31,.02,8,48),gold,0,-.32,0).rotation.x=Math.PI/2;
+      add(g,new THREE.CylinderGeometry(.26,.26,.05,40),white,0,-.3,0);
+      const sm=new THREE.Group();
+      add(sm,SPH,snow,0,-.28,0,.3);add(sm,SPH,snow,0,.08,0,.22);add(sm,SPH,snow,0,.36,0,.16);
+      const nose=new THREE.ConeGeometry(.035,.16,16);nose.rotateX(Math.PI/2);add(sm,nose,M('#E07A2E',.6),0,.36,.22);
+      add(sm,SPH,coal,-.055,.41,.14,.022);add(sm,SPH,coal,.055,.41,.14,.022);
+      [.15,.06,-.03].forEach(y=>add(sm,SPH,coal,0,y,Math.sqrt(Math.max(0,.22*.22-(y-.08)*(y-.08)))+.005,.022));
+      add(sm,new THREE.TorusGeometry(.14,.04,12,32),red,0,.23,0).rotation.x=Math.PI/2;
+      const stick=new THREE.CylinderGeometry(.014,.014,.34,8);
+      add(sm,stick,wood,-.32,.14,0).rotation.z=1.05;add(sm,stick,wood,.32,.14,0).rotation.z=-1.05;
+      add(sm,new THREE.CylinderGeometry(.17,.17,.02,32),coal,0,.5,0);add(sm,new THREE.CylinderGeometry(.11,.11,.16,32),coal,0,.59,0);
+      add(sm,new THREE.CylinderGeometry(.112,.112,.03,32),red,0,.53,0);
+      sm.scale.setScalar(.36);sm.position.y=-.07;g.add(sm);
+      for(let i=0;i<14;i++){const a=i*2.4,r=.12+((i*37)%17)/17*.16,y=-.18+((i*53)%23)/23*.45;add(g,SPH,white,Math.cos(a)*r,y,Math.sin(a)*r,.016)}
+      const gl=new THREE.Mesh(new THREE.SphereGeometry(.38,40,28),new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.05,transparent:true,opacity:.22,clearcoat:1,envMapIntensity:1.6,depthWrite:false}));
+      gl.position.y=-.02;gl.renderOrder=2;g.add(gl);
+      MODELS.globe=g}
+    // christmas stocking
+    {const g=new THREE.Group(),sock=M('#B3202E',.9),cuff=M('#EDE4D6',1);
+      const s=new THREE.Shape();
+      s.moveTo(-.2,.3);s.lineTo(.12,.3);s.lineTo(.12,-.08);s.quadraticCurveTo(.14,-.16,.26,-.2);s.quadraticCurveTo(.4,-.26,.36,-.38);
+      s.quadraticCurveTo(.32,-.46,.12,-.46);s.lineTo(-.05,-.46);s.quadraticCurveTo(-.22,-.46,-.22,-.28);s.lineTo(-.2,.3);
+      const geo=new THREE.ExtrudeGeometry(s,{depth:.12,bevelEnabled:true,bevelThickness:.05,bevelSize:.04,bevelSegments:4,curveSegments:12});geo.translate(0,0,-.06);
+      add(g,geo,sock);add(g,new THREE.BoxGeometry(.44,.17,.24),cuff,-.04,.36,0);for(let i=0;i<36;i++){add(g,SPH,cuff,-.24+(i%9)*.05+((i*7)%3)*.008,.29+Math.floor(i/9)*.045,.12+((i*13)%5)*.004,.036)}
+      add(g,SPH,cuff,-.15,-.37,.1,.09,.08,.03);add(g,SPH,cuff,.28,-.36,.1,.09,.08,.03);
+      add(g,new THREE.TorusGeometry(.05,.012,8,20),gold,-.2,.47,0);add(g,SPH,gold,.12,.3,.15,.04);
+      g.position.x=-.07;MODELS.stock=g}
+    Object.keys(MODELS).forEach(k=>orn.add(MODELS[k]));showGift('orn');
+  })();
+
+
+  const dot=canvasTex(64,64,g=>{const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,236,190,1)');gr.addColorStop(.35,'rgba(255,214,150,.6)');gr.addColorStop(1,'rgba(255,214,150,0)');g.fillStyle=gr;g.fillRect(0,0,64,64)});
+  const N=120,pos=new Float32Array(N*3).fill(-50),pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  pts=new THREE.Points(pg,new THREE.PointsMaterial({size:.12,map:dot,color:C('#D9B36C'),transparent:true,depthWrite:false}));root.add(pts);
+  ptsData=Array.from({length:N},()=>({v:[0,0,0],life:2}));
+  /* ---- box design in 3D: colours, ribbon styles and accents on the lid ---- */
+  (function(){
+    const RIB_MATS=(typeof ribBody!=='undefined')?[ribBody,ribLid,bowMat]:[ribMat];
+    const stripe=canvasTex(64,64,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#B3202E';
+      for(let x=-64;x<128;x+=16){g.beginPath();g.moveTo(x,0);g.lineTo(x+8,0);g.lineTo(x+72,64);g.lineTo(x+64,64);g.closePath();g.fill()}});
+    stripe.wrapS=stripe.wrapT=THREE.RepeatWrapping;stripe.repeat.set(2,2);
+    const AM=(c,r,m)=>new THREE.MeshStandardMaterial({color:C(c),roughness:r,metalness:m||0,envMapIntensity:.9});
+    const SP=new THREE.SphereGeometry(1,20,14);
+    const mk=(g,geo,mat,x,y,z,sx,sy,sz)=>{const m=new THREE.Mesh(geo,mat);m.castShadow=true;m.position.set(x||0,y||0,z||0);m.scale.set(sx||1,sy==null?(sx||1):sy,sz==null?(sx||1):sz);g.add(m);return m};
+    const goldA=AM('#D4AF5A',.3,.9),ACC={};
+    // bells
+    {const g=new THREE.Group(),V=(x,y)=>new THREE.Vector2(x,y);
+      const bellG=new THREE.LatheGeometry([V(.001,.1),V(.03,.098),V(.05,.07),V(.058,.03),V(.07,-.02),V(.095,-.06),V(.09,-.07)],28);
+      const bm=goldA.clone();bm.side=THREE.DoubleSide;
+      [-1,1].forEach(s=>{const b=new THREE.Group();mk(b,bellG,bm);mk(b,SP,goldA,0,-.07,0,.022);mk(b,new THREE.TorusGeometry(.02,.006,6,14),goldA,0,.11,0);
+        b.position.set(s*.17,1.8,.56);b.rotation.z=s*.35;b.rotation.x=.25;g.add(b)});
+      lid.add(g);ACC.b=g}
+    // pinecones
+    {const g=new THREE.Group(),pm=AM('#6B4423',.9);
+      [[-.62,.48,0],[-.42,.66,.9]].forEach(([x,z,ry])=>{const c=new THREE.Group();
+        for(let i=0;i<6;i++){mk(c,new THREE.ConeGeometry(.1-i*.013,.07,10),pm,0,i*.045,0)}
+        c.rotation.z=Math.PI/2;c.rotation.y=ry;c.position.set(x,1.79,z);g.add(c)});
+      lid.add(g);ACC.p=g}
+    // holly
+    {const g=new THREE.Group(),lm=AM('#2F6B3A',.45),bm=AM('#C1121F',.35);
+      [0,2.1,4.2].forEach(a=>{const l=mk(g,SP,lm,Math.cos(a)*.11,0,Math.sin(a)*.11,.15,.018,.065);l.rotation.y=-a});
+      [[0,.03,0],[.05,.03,.035],[-.04,.03,.04]].forEach(([x,y,z])=>mk(g,SP,bm,x,y,z,.04));
+      g.position.set(.62,1.74,.55);lid.add(g);ACC.h=g}
+    // cinnamon sticks tied with twine
+    {const g=new THREE.Group(),cm=AM('#8B4A2B',.9),cyl=new THREE.CylinderGeometry(.035,.035,.5,14);
+      [[0,0,-.05],[0,0,.05],[0,.055,0]].forEach(([x,y,z])=>mk(g,cyl,cm,x,y,z).rotation.z=Math.PI/2);
+      mk(g,new THREE.TorusGeometry(.085,.012,8,24),AM('#CDB78E',.9),0,.025,0).rotation.y=Math.PI/2;
+      g.position.set(.5,1.76,-.55);g.rotation.y=.4;lid.add(g);ACC.c=g}
+    // fairy lights around the box body
+    {const g=new THREE.Group(),bulbs=[],pts=[];
+      for(let side=0;side<4;side++)for(let i=0;i<8;i++){const t=-.9+i*(1.8/7),y=.5+Math.sin(i*1.1+side)*.06;
+        const p=[[t,1.04],[1.04,-t],[-t,-1.04],[-1.04,t]][side];pts.push(new THREE.Vector3(p[0],y,p[1]));
+        const m=new THREE.MeshStandardMaterial({color:C('#FFE9B0'),emissive:C('#FFD27A'),emissiveIntensity:.8,roughness:.3});
+        const b=new THREE.Mesh(SP,m);b.scale.setScalar(.032);b.position.set(p[0],y,p[1]);g.add(b);bulbs.push(b)}
+      pts.push(pts[0].clone());g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x3a3a3a})));
+      root.add(g);ACC.l=g;
+      (function twinkle(){const t=performance.now()/1000;if(g.visible)bulbs.forEach((b,i)=>{b.material.emissiveIntensity=.4+.9*Math.max(0,Math.sin(t*2.2+i*1.7))});requestAnimationFrame(twinkle)})()}
+    setDesign=function(d){const bc=BOX_COLORS[d.box]||BOX_COLORS[0],rb=RIBBONS[d.rib]||RIBBONS[0];
+      [boxMat,lidMat].forEach(m=>{m.color=C(bc.c);m.metalness=bc.metal||0;m.roughness=bc.metal?.45:.8;m.needsUpdate=true});
+      RIB_MATS.forEach(m=>{m.color=C(rb.c);m.roughness=rb.r;m.metalness=rb.m;m.map=rb.stripe?stripe:null;m.needsUpdate=true});
+      ornMat.color=C(d.box===1?'#C7A15A':'#B3202E');
+      Object.keys(ACC).forEach(k=>{ACC[k].visible=d.acc.includes(k)})};
+  })();
+  applyWay();
+
+  // drag to spin the box
+  const cv=$('gl');
+  cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,y0:spinY,p0:pitch};touched=true;document.getElementById('spinHint').classList.add('gone');cv.setPointerCapture(e.pointerId)});
+  cv.addEventListener('pointermove',e=>{if(!drag)return;const ny=drag.y0+(e.clientX-drag.x)*.012;spinV=Math.max(-.2,Math.min(.2,ny-spinY));spinY=ny;pitch=Math.min(.7,Math.max(-.25,drag.p0+(e.clientY-drag.y)*.006))});
+  cv.addEventListener('pointerup',()=>{drag=null});
+}else{const n=document.createElement('p');n.className='note';n.style.cssText='position:absolute;top:45%;width:100%;text-align:center';n.textContent='เครื่องนี้แสดงภาพ 3D ไม่ได้';$('gl').after(n)}
+
+function applyWay(){setDesign(DESIGN)}
+
+let dist=10,tY=1;
+function resize(){
+  if(!renderer)return;const st=document.querySelector('.stage'),w=st.clientWidth,h=st.clientHeight;
+  renderer.setSize(w,h,false);camera.aspect=w/h;const t=Math.tan(camera.fov*Math.PI/360);
+  dist=Math.max(4.8/(2*t*camera.aspect),4.4/(2*t),8);camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize);resize();if(window.ResizeObserver)new ResizeObserver(()=>resize()).observe(document.querySelector('.stage'));
+
+const tws=[];const eio=p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;const eback=p=>{const c=1.6;return 1+(c+1)*Math.pow(p-1,3)+c*Math.pow(p-1,2)};const ebounce=p=>{const n=7.5625,d=2.75;if(p<1/d)return n*p*p;if(p<2/d)return n*(p-=1.5/d)*p+.75;if(p<2.5/d)return n*(p-=2.25/d)*p+.9375;return n*(p-=2.625/d)*p+.984375};
+function tw(k,to,dur,delay=0,ease=eio){for(let i=tws.length-1;i>=0;i--)if(tws[i].k===k)tws.splice(i,1);tws.push({k,to,dur:reduce?.01:dur,t:-(reduce?0:delay),from:null,ease})}
+let last=performance.now(),T=0;
+function frame(now){
+  const dt=Math.max(0,Math.min(.05,(now-last)/1000));last=now;T+=dt;
+  for(let i=tws.length-1;i>=0;i--){const w=tws[i];w.t+=dt;if(w.t<0)continue;if(w.from===null)w.from=A[w.k];const p=Math.min(1,w.t/w.dur);A[w.k]=w.from+(w.to-w.from)*w.ease(p);if(p>=1)tws.splice(i,1)}
+  if(renderer){
+    const ty=.95+A.lift*.35,pp=.34+pitch;camera.position.set(0,ty+dist*Math.sin(pp),dist*Math.cos(pp));camera.lookAt(0,ty,0);
+    if(!drag){spinY+=spinV;spinV*=.94;pitch+=(0-pitch)*.04}
+    root.rotation.y=spinY+(reduce||touched?0:Math.sin(T*.35)*.25);
+    const H=1.1*A.hover*(1-A.drop);lid.position.set(.85*A.lift,.6*A.lift+H,-1.25*A.lift);lid.rotation.set(-.55*A.lift,0,-.12*A.lift);
+    const pl=1+Math.sin(Math.min(1,A.pulse)*Math.PI)*.25;bow.scale.setScalar(Math.max(.001,A.bowIn)*pl);
+    orn.visible=A.orn>.01;orn.position.y=1.1+A.orn*.75;orn.scale.setScalar(.15+.55*A.orn);orn.rotation.y=-root.rotation.y+Math.sin(T*.6)*.35;
+    const p=pts.geometry.attributes.position.array;
+    ptsData.forEach((d,i)=>{d.life+=dt*.6;
+      if(d.life>1){if(emitting&&Math.random()<.3){d.life=0;const a=Math.random()*6.28;p[i*3]=Math.cos(a)*1.2;p[i*3+1]=.4+Math.random()*1.4;p[i*3+2]=Math.sin(a)*1.2;d.v=[Math.cos(a)*.4,.6+Math.random(),Math.sin(a)*.4]}else{p[i*3+1]=-50;return}}
+      p[i*3]+=d.v[0]*dt;p[i*3+1]+=d.v[1]*dt;p[i*3+2]+=d.v[2]*dt});
+    pts.geometry.attributes.position.needsUpdate=true;
+    renderer.render(scene,camera);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ================= steps ================= */
+const LABELS=['กล่อง','การ์ด + เสียง','ของในกล่อง','เพลง'];
+function go(i){
+  const prev=step;step=i;for(let k=0;k<6;k++)$('p'+k).hidden=k!==i;$('body').scrollTop=0;
+  document.querySelectorAll('#steps button').forEach((b,k)=>{b.classList.toggle('done',k<i);if(k===i)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});
+  $('steps').hidden=i>=4;
+  $('backBtn').hidden=i===0||i===5;$('nav').hidden=i===5;
+  $('nextBtn').textContent=i<3?'ถัดไป · '+LABELS[i+1]:i===3?'ห่อเสร็จแล้ว':'ต่อไป · ส่งให้ใคร';
+  if(i===2){A.hover=0;A.drop=0;tw('lift',1,.9);tw('bowIn',1,.3);tw('orn',1,.8,.5,eback)}   // lid off: put the gift in
+  else if(prev===2&&i>2)wrapUp();                                         // close the lid and tie the bow
+  else{tw('lift',0,.6);tw('orn',0,.4);tw('bowIn',1,.4)}
+  $('sendTo').textContent=$('doneTo').textContent=$('to').value||'คุณ';
+  $('stageTag').textContent=i===5?'On its way':'A gift for '+($('to').value||'…');
+  if(i===4){const sm=document.querySelector('#plans .opt[data-p="0"] small');sm.textContent='ซานต้าใช้เวลาเดินทาง 25 ชม. · เปิดดูได้ 7 วัน · '+(S.recorded&&recT>15?`เสียงจะเหลือ 15 วินาทีแรก (อัดไว้ ${fmt(recT)})`:'เสียงอวยพร 15 วินาที')}
+  if(i!==3)stopMusic();
+}
+document.querySelectorAll('#steps button').forEach(b=>b.onclick=()=>go(+b.dataset.i));
+$('backBtn').onclick=()=>go(Math.max(0,step-1));
+$('nextBtn').onclick=()=>{if(step<4)go(step+1);else openWho()};
+
+// box colourways
+// box design: colour (one), ribbon (one), accents (any)
+function tile(parent,kind,html,label,fn){const b=document.createElement('button');b.className='tile';if(kind==='radio')b.setAttribute('role','radio');
+  b.innerHTML=html+'<span class="t"></span>';b.querySelector('.t').textContent=label;b.onclick=fn;$(parent).append(b)}
+BOX_COLORS.forEach((c,i)=>tile('boxTiles','radio',`<span class="sw" style="background:${c.c}"></span>`,c.n,()=>{DESIGN.box=i;designChanged()}));
+RIBBONS.forEach((r,i)=>tile('ribTiles','radio',`<span class="dot" style="background:${r.stripe?'repeating-linear-gradient(45deg,#B3202E 0 5px,#fff 5px 10px)':r.c}"></span>`,r.n,()=>{DESIGN.rib=i;designChanged()}));
+ACCENTS.forEach(a=>tile('accTiles','toggle',`<span class="ico">${a.e}</span>`,a.n,()=>{const k=DESIGN.acc.indexOf(a.id);if(k>-1)DESIGN.acc.splice(k,1);else DESIGN.acc.push(a.id);designChanged()}));
+function markDesign(){[...$('boxTiles').children].forEach((b,i)=>b.setAttribute('aria-checked',i===DESIGN.box));
+  [...$('ribTiles').children].forEach((b,i)=>b.setAttribute('aria-checked',i===DESIGN.rib));
+  [...$('accTiles').children].forEach((b,i)=>b.setAttribute('aria-pressed',DESIGN.acc.includes(ACCENTS[i].id)));
+  $('boxName').textContent=BOX_COLORS[DESIGN.box].n;$('ribName').textContent=RIBBONS[DESIGN.rib].n;
+  $('accName').textContent=DESIGN.acc.length?ACCENTS.filter(a=>DESIGN.acc.includes(a.id)).map(a=>a.n).join(' · '):'เลือกได้หลายอย่าง'}
+function designHash(){return `${S.gift}-b${DESIGN.box}-r${DESIGN.rib}-a${DESIGN.acc.join('')||'0'}-c${S.cs||0}${S.cf==null?1:S.cf}`}
+function updatePreviewLink(){const pl=document.getElementById('recvPreview');if(pl)pl.href=pl.href.split('#')[0]+'#'+designHash()}
+function designChanged(){setDesign(DESIGN);spinV=.1;markDesign();updatePreviewLink()}
+markDesign();updatePreviewLink();
+
+// card
+const msg=$('msg');const count=()=>$('msgCount').textContent=msg.value.length+'/280';msg.oninput=count;count();
+// card design: paper + handwriting, written in a focused full-size card
+const CARD_STYLES=['ครีม','หิมะ','แดงทอง','คราฟท์','เขียวสน'],CARD_FONTS=[['ตัวเชิง',"'Noto Serif Thai'"],['ลายมือหรู',"'Charm'"],['ลายมือน่ารัก',"'Mali'"]];
+S.cs=0;S.cf=1;
+CARD_STYLES.forEach((n,i)=>{const b=document.createElement('button');b.className='cst';b.setAttribute('role','radio');b.innerHTML=`<i class="paper cs-${i}"></i>`;b.append(n);b.onclick=()=>{S.cs=i;markCard()};$('cardStyles').append(b)});
+CARD_FONTS.forEach(([n,ff],i)=>{const b=document.createElement('button');b.className='fnt';b.setAttribute('role','radio');b.style.fontFamily=ff;b.textContent=n;b.onclick=()=>{S.cf=i;markCard()};$('cardFonts').append(b)});
+function markCard(){[...$('cardStyles').children].forEach((b,i)=>b.setAttribute('aria-checked',i===S.cs));[...$('cardFonts').children].forEach((b,i)=>b.setAttribute('aria-checked',i===S.cf));
+  const c=`paper cs-${S.cs} cf-${S.cf}`;$('wcard').className='wcard '+c;$('wcardBig').className='wcard '+c;if(typeof updatePreviewLink==='function'&&$('recvPreview'))updatePreviewLink()}
+markCard();
+const openEditor=()=>{if(!$('cardEdit').hidden)return;$('msgBig').value=msg.value;$('msgBigCount').textContent=msg.value.length+'/280';$('cardEdit').hidden=false;msg.blur();setTimeout(()=>$('msgBig').focus(),60)};
+msg.addEventListener('focus',openEditor);msg.addEventListener('click',openEditor);
+$('msgBig').oninput=()=>{msg.value=$('msgBig').value;count();$('msgBigCount').textContent=msg.value.length+'/280'};
+$('msgDone').onclick=()=>{$('cardEdit').hidden=true};
+['to','from'].forEach(id=>$(id).oninput=()=>{$('stageTag').textContent='A gift for '+($('to').value||'…')});
+PROMPTS.forEach(p=>{const b=document.createElement('button');b.className='chip';b.textContent=p;b.onclick=()=>{msg.value=(msg.value?msg.value.trimEnd()+'\n':'')+p.replace('…','');msg.focus();count()};$('prompts').append(b)});
+
+// voice: a real recording (MediaRecorder). Without a microphone the prototype falls back to a simulated one.
+for(let i=0;i<30;i++){const b=document.createElement('i');b.style.setProperty('--h',(20+Math.abs(Math.sin(i*1.9))*70)+'%');b.style.animationDelay=(-i*.06)+'s';$('bars').append(b)}
+let recT=0,recTimer=null,mode='idle',rec=null,recChunks=[],voiceBlob=null,voiceUrl=null,player=null,simulated=false;
+function vfill(){$('vfill').style.width=(recT/60*100)+'%';$('rec').classList.toggle('over',recT>15)}
+const fmt=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+const ICON={rec:'<circle cx="9" cy="9" r="6" fill="currentColor"/>',stop:'<rect x="4" y="4" width="10" height="10" rx="2" fill="currentColor"/>',play:'<path d="M5 3 L15 9 L5 15 Z" fill="currentColor"/>',pause:'<path d="M4 3h3.5v12H4zM10.5 3H14v12h-3.5z" fill="currentColor"/>'};
+function setRec(m){mode=m;const r=$('rec');r.classList.toggle('on',m==='rec');r.classList.toggle('play',m==='play');
+  $('recIcon').innerHTML=ICON[m==='idle'?'rec':m==='rec'?'stop':m==='play'?'pause':'play'];
+  $('recTitle').textContent={idle:'แตะเพื่อเริ่มอัด',rec:'กำลังอัด…',ready:'อัดแล้ว แตะเพื่อฟัง',play:'กำลังเล่น'}[m];
+  $('redo').hidden=!(m==='ready'||m==='play')}
+function pickType(){if(!window.MediaRecorder||!MediaRecorder.isTypeSupported)return '';return ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'].find(t=>MediaRecorder.isTypeSupported(t))||''}
+function tick(){recT++;vfill();if(recT===16)toast('เกิน 15 วินาทีแล้ว ถ้าส่งฟรีจะได้แค่ 15 วินาทีแรก');$('recTime').textContent=fmt(recT)+' / 1:00';if(recT>=60)stopRec()}
+function finishRec(){if(recT<1)recT=1;S.recorded=true;setRec('ready');$('recTime').textContent=fmt(recT)}
+function stopRec(){clearInterval(recTimer);if(rec&&rec.state!=='inactive')rec.stop();else finishRec()}
+async function startRec(){
+  recT=0;voiceBlob=null;vfill();
+  try{
+    if(!navigator.mediaDevices||!window.MediaRecorder)throw new Error('no recorder');
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+    const type=pickType();
+    rec=new MediaRecorder(stream,type?{mimeType:type,audioBitsPerSecond:64000}:{audioBitsPerSecond:64000});recChunks=[];
+    rec.ondataavailable=e=>{if(e.data.size)recChunks.push(e.data)};
+    rec.onstop=()=>{stream.getTracks().forEach(t=>t.stop());voiceBlob=new Blob(recChunks,{type:(rec&&rec.mimeType)||type||'audio/webm'});
+      if(voiceUrl)URL.revokeObjectURL(voiceUrl);voiceUrl=URL.createObjectURL(voiceBlob);rec=null;finishRec()};
+    rec.start(250);simulated=false;
+  }catch(e){
+    if(API){toast('เปิดไมค์ไม่ได้ ลองอนุญาตไมค์ในเบราว์เซอร์ หรือส่งแบบไม่มีเสียงก็ได้');return}
+    simulated=true;
+  }
+  setRec('rec');recTimer=setInterval(tick,1000);
+}
+function playRec(){
+  setRec('play');let p=0;
+  const done=()=>{clearInterval(recTimer);player=null;setRec('ready');$('recTime').textContent=fmt(recT)};
+  if(!simulated&&voiceUrl){player=new Audio(voiceUrl);player.onended=done;player.play().catch(done)}
+  recTimer=setInterval(()=>{p++;$('recTime').textContent=fmt(Math.min(p,recT))+' / '+fmt(recT);if(simulated&&p>=recT)done()},1000);
+}
+function stopPlay(){clearInterval(recTimer);if(player){player.pause();player=null}setRec('ready');$('recTime').textContent=fmt(recT)}
+$('recBtn').onclick=()=>{if(mode==='idle')startRec();else if(mode==='rec')stopRec();else if(mode==='ready'){clearInterval(recTimer);playRec()}else stopPlay()};
+$('redo').onclick=()=>{clearInterval(recTimer);if(player){player.pause();player=null}if(rec&&rec.state!=='inactive'){rec.onstop=null;rec.stream.getTracks().forEach(t=>t.stop());rec.stop();rec=null}
+  S.recorded=false;voiceBlob=null;recT=0;vfill();$('recTime').textContent='0:00 / 1:00';setRec('idle')};
+
+// gifts: pick exactly one, coupon + photo come with every box
+const GIFTS=[
+  {id:'bear',n:'ตุ๊กตาหมี',e:'🧸',m:'สัญลักษณ์แห่งความอบอุ่นและความปลอดภัย - ช่วยปกป้องและมอบความอุ่นใจให้เจ้าของ'},
+  {id:'ginger',n:'ขนมปังขิง',e:'🍪',m:'สัญลักษณ์แห่งโชคดีและความรัก - ช่วยเสริมโชคลาภให้ได้พบคู่ครอง'},
+  {id:'choco',n:'ช็อกโกแลต',e:'🍫',m:'สัญลักษณ์แห่งความรักและความปรารถนาดี - ช่วยให้ความสัมพันธ์หวานชื่น'},
+  {id:'orn',n:'ลูกแก้วสลักชื่อ',e:'🔴',m:'สัญลักษณ์แห่งความทรงจำล้ำค่า - ช่วยเก็บช่วงเวลาดีๆ ของปีนี้ไว้ตลอดไป'},
+  {id:'globe',n:'ลูกโลกหิมะ',e:'❄️',m:'สัญลักษณ์แห่งความบริสุทธิ์และการเริ่มต้นใหม่ - ช่วยให้ปีใหม่เริ่มต้นอย่างสดใส'},
+  {id:'stock',n:'ถุงเท้าคริสต์มาส',e:'🧦',m:'สัญลักษณ์แห่งการรอคอยสิ่งดีๆ - ช่วยเรียกโชคและของขวัญให้มาเต็มถุง'}];
+GIFTS.forEach(g=>{const b=document.createElement('button');b.className='opt';b.setAttribute('role','radio');b.dataset.g=g.id;
+  b.innerHTML='<span class="ic"></span><span class="tx"><b></b><small></small></span><span class="tick"></span>';
+  b.querySelector('.ic').textContent=g.e;b.querySelector('b').textContent=g.n;b.querySelector('small').textContent=g.m;
+  b.onclick=()=>{S.gift=g.id;markGifts()};$('gifts').append(b)});
+function markGifts(){document.querySelectorAll('#gifts .opt').forEach(b=>b.setAttribute('aria-checked',b.dataset.g===S.gift));
+  const og=$('ornField');og.hidden=S.gift!=='orn';const sel=document.querySelector(`#gifts .opt[data-g="${S.gift}"]`);if(sel)sel.after(og);
+  $('couponOpt').setAttribute('aria-pressed',S.coupon);$('couponField').hidden=!S.coupon;
+  if(typeof showGift==='function')showGift(S.gift);tw('orn',step===2?1:0,.8,0,eback);const pl=document.getElementById('recvPreview');if(pl)updatePreviewLink()}
+$('couponOpt').onclick=()=>{S.coupon=!S.coupon;markGifts()};
+$('photo').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{S.photo=r.result;$('thumb').src=r.result;$('thumb').hidden=false;$('photoNote').textContent=f.name};r.readAsDataURL(f)};
+markGifts();
+$('engrave').addEventListener('input',()=>setEngrave($('engrave').value));setEngrave($('engrave').value);
+if(document.fonts)document.fonts.ready.then(()=>setEngrave($('engrave').value));
+
+// music
+let ctx=null,master=null,mTimer=null;
+const freq=n=>{const m={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[n[0]];return 440*Math.pow(2,(m+12*(+n.slice(-1)+1)-69)/12)};
+function ac(){try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();ctx.resume();return ctx}catch(e){return null}}
+function bell(out,f,t,d,vol=1){const g=ctx.createGain();g.connect(out);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.8*vol,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+Math.max(d,.6)*1.8);
+  [[1,1],[2,.3],[4.1,.05]].forEach(([m,v])=>{const o=ctx.createOscillator(),og=ctx.createGain();o.frequency.value=f*m;og.gain.value=v;o.connect(og);og.connect(g);o.start(t);o.stop(t+Math.max(d,.6)*1.9)})}
+function stopMusic(){clearTimeout(mTimer);if(master){const m=master;m.gain.setTargetAtTime(0,ctx.currentTime,.08);setTimeout(()=>m.disconnect(),500)}master=null}
+function playSong(id){stopMusic();const s=SONGS.find(x=>x.id===id);if(!s.s||!ac())return;master=ctx.createGain();master.gain.value=.13;master.connect(ctx.destination);const me=master,beat=60/s.bpm,notes=s.s.split(',').map(x=>x.trim().split(' '));
+  let t=ctx.currentTime+.08;const loop=()=>{if(master!==me)return;let tt=t;notes.forEach(([n,d])=>{d=+d*beat;bell(me,freq(n),tt,d);tt+=d});t=tt+beat*3;mTimer=setTimeout(loop,(t-ctx.currentTime-.5)*1000)};loop()}
+function chime(){if(!ac())return;const o=ctx.createGain();o.gain.value=.16;o.connect(ctx.destination);['C5','E5','G5'].forEach((n,i)=>bell(o,freq(n),ctx.currentTime+i*.09,.8));bell(o,1046.5,ctx.currentTime+.27,.9)}
+SONGS.forEach(s=>{const b=document.createElement('button');b.className='opt';b.setAttribute('role','radio');b.dataset.s=s.id;
+  b.innerHTML=`<span class="ic">♪</span><span class="tx"><b></b><small></small></span><span class="tick"></span>`;b.querySelector('b').textContent=s.n;b.querySelector('small').textContent=s.d;
+  b.onclick=()=>{S.song=s.id;markSongs();playSong(s.id)};$('songs').append(b)});
+function markSongs(){document.querySelectorAll('#songs .opt').forEach(b=>b.setAttribute('aria-checked',b.dataset.s===S.song))}markSongs();
+
+// delivery
+const PRESETS=[['เที่ยงคืนวันคริสต์มาส','2026-12-25T00:00'],['เช้าวันคริสต์มาส 08:00','2026-12-25T08:00'],['เที่ยงคืนวันปีใหม่','2027-01-01T00:00']];
+PRESETS.forEach(([n,v])=>{const b=document.createElement('button');b.className='chip';b.textContent=n;b.onclick=()=>{$('whenAt').value=v};$('presets').append(b)});
+function payLabel(){return S.plan==='0'?'ส่งฟรี':`ชำระ ${S.plan} บาท ด้วย PromptPay`}
+function markPlans(){document.querySelectorAll('#plans .opt').forEach(b=>b.setAttribute('aria-checked',b.dataset.p===S.plan));$('when').hidden=S.plan==='0';
+  $('nowBtn').setAttribute('aria-pressed',!S.sched);$('schedBtn').setAttribute('aria-pressed',S.sched);$('presets').hidden=$('whenAt').hidden=!S.sched;}
+document.querySelectorAll('#plans .opt').forEach(b=>b.onclick=()=>{S.plan=b.dataset.p;markPlans()});
+$('nowBtn').onclick=()=>{S.sched=false;markPlans()};$('schedBtn').onclick=()=>{S.sched=true;markPlans()};markPlans();
+
+function thaiDate(v){const d=new Date(v);if(isNaN(d))return v;const M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];return `${d.getDate()} ${M[d.getMonth()]} เวลา ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
+function wrapUp(){
+  // lid swings back over the box, then drops straight down with a small bounce
+  A.hover=0;A.drop=0;tw('orn',0,.45);tw('lift',0,.5,.1);tw('hover',1,.45,.05);tw('drop',1,.75,.6,ebounce);
+  A.bowIn=0;tw('bowIn',1,.7,1.35,eback);A.pulse=0;tw('pulse',1,.6,1.4);
+  setTimeout(()=>{chime();emitting=true;spinV=.14;setTimeout(()=>{emitting=false},900)},1350);
+}
+let SENT_LINE='';
+function celebrate(){chime();A.pulse=0;tw('pulse',1,.7,.6);emitting=true;setTimeout(()=>emitting=false,1600);spinV=.18}
+function showSent(link,status){
+  SENT_LINE=status;$('doneTo').textContent=$('to').value||'คุณ';$('doneStatus').lastChild.nodeValue=status;
+  if(link){$('linkText').textContent=link.replace(/^https?:\/\//,'');$('linkText').dataset.full=link;
+    $('linkText').closest('.link').nextElementSibling.textContent='ส่งลิงก์นี้ให้ผู้รับทาง LINE หรือแชตไหนก็ได้'}
+  go(5);celebrate();
+}
+function send(){
+  if(API)return sendReal();
+  const to=$('to').value||'คุณ';
+  if(S.plan!=='0')toast('ตัวอย่าง: ข้ามหน้าชำระเงิน PromptPay');
+  showSent(null,S.plan==='0'?`ซานต้าออกเดินทางแล้ว · ถึง${to}ในอีก 25 ชม.`:S.sched?`จะเด้งถึง${to} ${thaiDate($('whenAt').value)}`:`ถึง${to}แล้วตอนนี้`);
+}
+/* ---- real sending (API) ---- */
+function photoBlob(){
+  if(!S.photo)return Promise.resolve(null);
+  return new Promise(res=>{const img=new Image();img.onload=()=>{const k=Math.min(1,1600/Math.max(img.width,img.height)),c=document.createElement('canvas');
+    c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);c.toBlob(b=>res(b),'image/jpeg',.85)};img.onerror=()=>res(null);img.src=S.photo});
+}
+const ERR={SCHEDULE_OUT_OF_RANGE:'เวลาส่งต้องเป็นอนาคต และไม่เกิน 1 ปี',FILE_TOO_LARGE:'ไฟล์ใหญ่เกินไป',UNSUPPORTED_TYPE:'ไฟล์ชนิดนี้ใช้ไม่ได้',VALIDATION_ERROR:'ข้อมูลบางอย่างไม่ถูกต้อง ลองตรวจอีกครั้ง',RATE_LIMITED:'ส่งถี่เกินไป รอสักครู่แล้วลองใหม่'};
+const errText=e=>ERR[e&&e.code]||'ส่งไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง';
+let created=null; // a box already made on this visit (retrying a failed payment must not make a second box)
+async function sendReal(){
+  const btn=$('confirmBtn'),label=btn.textContent;btn.disabled=true;btn.textContent='กำลังห่อกล่อง…';
+  const to=($('to').value||'').trim()||'คุณ',from=($('from').value||'').trim(),email=$('wEmail').value.trim()||undefined;
+  try{
+    if(!created){
+      const voiceKey=voiceBlob?await API.upload('VOICE',voiceBlob):undefined;
+      const pb=await photoBlob(),photoKey=pb?await API.upload('PHOTO',pb):undefined;
+      created=await API.send({
+        recipientName:to,senderName:from||undefined,senderEmail:email,
+        voiceKey,voiceSeconds:voiceKey?Math.max(1,Math.min(60,recT)):undefined,photoKey,
+        remindNextYear:$('remind').checked,showUnderTree:$('tree').checked,
+        payload:{design:{box:DESIGN.box,ribbon:DESIGN.rib,accents:DESIGN.acc.slice(),paper:S.cs||0,font:S.cf==null?1:S.cf},
+          card:{message:$('msg').value.trim()},
+          gift:{item:S.gift,engraving:S.gift==='orn'?($('engrave').value.trim()||undefined):undefined,coupon:S.coupon?($('coupon').value.trim()||null):null},
+          music:S.song}});
+      API.remember(created.slug,{token:created.senderToken,link:created.link,to,design:{box:DESIGN.box,rib:DESIGN.rib,acc:DESIGN.acc.slice()},gift:S.gift});
+    }
+    if(S.plan==='0'){$('whoSheet').hidden=true;btn.disabled=false;btn.textContent=label;showSent(created.link,`ซานต้าออกเดินทางแล้ว · ถึง${to}ในอีก 25 ชม.`);created=null;return}
+    btn.textContent='กำลังไปหน้าชำระเงิน…';
+    const c=await API.checkout(created.slug,{plan:S.plan==='125'?'FOREVER':'YEAR',payer:'SENDER',email,
+      deliverAt:S.sched?new Date($('whenAt').value).toISOString():undefined,returnPath:location.pathname+'?sent='+created.slug},created.senderToken);
+    location.href=c.checkoutUrl;
+  }catch(e){toast(errText(e));btn.disabled=false;btn.textContent=label}
+}
+/* back from the payment page: ?sent=<slug>&paid=<payment> (paid) or ?sent=<slug> (cancelled) */
+async function resumeSent(){
+  let q;try{q=new URLSearchParams(location.search)}catch(e){return}
+  const slug=q.get('sent'),mine=slug&&API&&API.recall(slug);if(!mine)return;
+  history.replaceState(null,'',location.pathname);
+  if(mine.design){Object.assign(DESIGN,mine.design);setDesign(DESIGN);markDesign()}
+  if(mine.gift){S.gift=mine.gift;if(typeof showGift==='function')showGift(S.gift)}
+  $('to').value=mine.to||'';$('sendTo').textContent=mine.to||'คุณ';
+  const to=mine.to||'คุณ',wasPaid=q.has('paid');
+  showSent(mine.link,wasPaid?'กำลังยืนยันการชำระเงิน…':`ยกเลิกการชำระเงินแล้ว · กล่องจะเดินทางแบบธรรมดา ถึง${to}ในอีก 25 ชม.`);
+  if(!wasPaid)return;
+  for(let i=0;i<15;i++){
+    try{const m=await API.manage(slug,mine.token);
+      if(m.payments.some(p=>p.status==='PAID')){const d=new Date(m.deliverAt);
+        $('doneStatus').lastChild.nodeValue=SENT_LINE=d<=new Date()?`ถึง${to}แล้วตอนนี้`:`จะเด้งถึง${to} ${thaiDate(m.deliverAt)}`;return}}catch(e){}
+    await new Promise(r=>setTimeout(r,2000));
+  }
+  $('doneStatus').lastChild.nodeValue=SENT_LINE='ยังไม่ได้รับยืนยันการชำระเงิน ถ้าจ่ายแล้วจะได้อีเมลยืนยัน';
+}
+$('copyBtn').onclick=async()=>{const t=$('linkText').dataset.full||'https://'+$('linkText').textContent;try{await navigator.clipboard.writeText(t);$('copyBtn').textContent='คัดลอกแล้ว'}catch(e){const r=document.createRange();r.selectNodeContents($('linkText'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('copyBtn').textContent='เลือกข้อความแล้ว'}setTimeout(()=>$('copyBtn').textContent='คัดลอก',1800)};
+$('againBtn').onclick=()=>{go(0)};
+// placeholder links until the IN ZENITH domain is set
+document.querySelectorAll('a[href*="[IN-ZENITH-URL]"]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();toast('ลิงก์เว็บ IN ZENITH จะใช้ได้เมื่อใส่โดเมนจริง')}));
+const PLAN_NAME={'0':'ส่งธรรมดา · ถึงใน 25 ชม.','25':'ส่งด่วน · เก็บไว้ 1 ปี','125':'ส่งด่วน · เก็บไว้ตลอดไป'};
+function emailHint(){const need=S.plan!=='0'||$('remind').checked;$('emailHint').textContent=need?'สำหรับใบเสร็จและกู้ลิงก์คืน':'ไม่บังคับ';return need}
+function openWho(){$('wTo').value=$('to').value;$('wFrom').value=$('from').value;$('sumPlan').textContent=PLAN_NAME[S.plan];$('sumPrice').textContent=S.plan==='0'?'ฟรี':S.plan+' บาท';
+  $('confirmBtn').textContent=payLabel();$('emailErr').hidden=true;emailHint();$('whoSheet').hidden=false}
+$('wTo').oninput=()=>{$('to').value=$('wTo').value;$('sendTo').textContent=$('wTo').value||'คุณ'};
+$('wFrom').oninput=()=>{$('from').value=$('wFrom').value};
+$('remind').onchange=emailHint;
+$('codeBtn').onclick=()=>toast($('code').value.trim()?'ตัวอย่าง: ยังไม่ได้เชื่อมระบบโค้ดส่วนลด':'ใส่โค้ดก่อนกดใช้');
+$('confirmBtn').onclick=()=>{const v=$('wEmail').value.trim(),ok=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
+  if((emailHint()&&!ok)||(v&&!ok)){$('emailErr').hidden=false;$('wEmail').focus();return}
+  $('whoSheet').hidden=true;send()};
+document.querySelectorAll('.scrim').forEach(s=>s.addEventListener('click',e=>{if(e.target===s||e.target.hasAttribute('data-close'))s.hidden=true}));
+$('teaserBtn').onclick=async()=>{await makeTeaser();$('shareSheet').hidden=false};
+$('qrOn').onchange=makeTeaser;
+
+async function makeTeaser(){
+  try{await document.fonts.ready}catch(e){}
+  const W=1080,H=1920,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  const bg=g.createRadialGradient(W/2,H*.45,50,W/2,H*.5,H*.75);bg.addColorStop(0,'#FFFFFF');bg.addColorStop(.6,'#FBF6F2');bg.addColorStop(1,'#F1E2DD');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  if(renderer){renderer.render(scene,camera);const src=renderer.domElement,dw=W*1.1,dh=src.height*dw/src.width;g.drawImage(src,(W-dw)/2,1000-dh/2,dw,dh)}
+  const to=$('to').value||'คุณ';
+  g.textAlign='center';g.fillStyle='#8C8176';g.font='500 30px "IBM Plex Sans Thai"';g.fillText('O N   I T S   W A Y',W/2,250);
+  g.fillStyle='#2A2420';g.font='500 92px "Noto Serif Thai"';g.fillText('ส่งกล่องให้'+to+'แล้ว',W/2,390);
+  g.fillStyle='#8C8176';g.font='400 40px "IBM Plex Sans Thai"';g.fillText(API&&SENT_LINE?SENT_LINE.replace(/^ซานต้าออกเดินทางแล้ว · /,''):S.plan==='0'?'ซานต้ากำลังเดินทาง ถึงในอีก 25 ชม.':'จะเด้งถึง '+thaiDate($('whenAt').value),W/2,470);
+  let qr=null;
+  if($('qrOn').checked&&window.QRCode){const d=document.createElement('div');new QRCode(d,{text:API?location.origin+'/':'https://santabox.app',width:180,height:180,colorDark:'#2A2420',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.M});qr=d.querySelector('canvas')}
+  if(qr){
+    g.fillStyle='#FFFFFF';g.fillRect(800,1580,220,220);g.drawImage(qr,820,1600,180,180);
+    g.textAlign='left';g.fillStyle='#B3202E';g.font='italic 600 58px "Cormorant Garamond"';g.fillText('Santa Box',80,1700);
+    g.fillStyle='#8C8176';g.font='400 30px "IBM Plex Sans Thai"';g.fillText('สแกนเพื่อห่อกล่องให้คนที่คุณรัก',80,1756);g.textAlign='center';
+  }else{
+    g.fillStyle='#B3202E';g.font='italic 600 58px "Cormorant Garamond"';g.fillText('Santa Box',W/2,1760);
+    g.fillStyle='#8C8176';g.font='400 30px "IBM Plex Sans Thai"';g.fillText('ห่อเสียงอวยพรใส่กล่อง ส่งให้คนที่คุณรัก',W/2,1818);
+  }
+  $('shotImg').src=c.toDataURL('image/jpeg',.9);
+}
+
+go(0);
+if(API){
+  // real box counter, "send one back" prefill, preview pages on this site, and the return from the payment page
+  API.stats().then(r=>{document.querySelector('.counter').textContent='กล่องที่ '+(r.boxes+1).toLocaleString('en-US')}).catch(()=>{});
+  try{const back=new URLSearchParams(location.search).get('to');if(back){$('to').value=back.slice(0,30);$('sendTo').textContent=$('to').value}}catch(e){}
+  document.querySelectorAll('a[href^="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75"]').forEach(a=>{a.href=a.href.replace('https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75','recipient.html')});
+  resumeSent();
+}
+
+/* santa crossing the stage now and then */
+if(!reduce){const sa=$('santa');let x=-120,dir=1,ph=0,base=70,wait=60;
+  (function stepS(){const W=innerWidth;if(wait>0)wait--;else{x+=dir*1.25;ph+=.05;if((dir>0&&x>W+20)||(dir<0&&x<-120)){dir*=-1;base=56+Math.random()*60;wait=300+Math.random()*300}
+    sa.style.transform=`translate(${x}px,${base+Math.sin(ph)*12}px) scaleX(${dir}) rotate(${Math.cos(ph)*-4*dir}deg)`}requestAnimationFrame(stepS)})();}
+})();
+</script>

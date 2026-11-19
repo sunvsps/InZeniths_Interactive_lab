@@ -1,0 +1,104 @@
+// One database for every IN ZENITH interactive campaign. A "gift" is one thing a sender makes and a recipient opens
+// (a Santa Box today). Campaign-specific content lives in `payload`, checked by that campaign's own schema.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE // arrives 25 h after sending, 15 s voice, lasts 7 days after opening
+  YEAR // 25 THB: now or scheduled, 1 min voice, lasts 1 year from payment
+  FOREVER // 125 THB: never expires, voice and card can be downloaded
+}
+
+enum Payer {
+  SENDER
+  RECIPIENT
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  EXPIRED
+}
+
+enum UploadKind {
+  VOICE
+  PHOTO
+}
+
+model Gift {
+  id            String    @id @default(cuid())
+  /// Box number shown on the site ("กล่องที่ 12,345").
+  number        Int       @default(autoincrement())
+  /// Public, unguessable id used in the share link.
+  slug          String    @unique
+  campaign      String
+  /// SHA-256 of the sender's secret token (the token itself is only ever shown to the sender once).
+  senderTokenHash String
+  /// Campaign content: design, card, gift, music. Wiped when the gift expires.
+  payload       Json
+  recipientName String
+  senderName    String?
+  senderEmail   String?
+  voiceKey      String?
+  /// Length the sender recorded, as reported by the page. Free gifts play only the first 15 s.
+  voiceSeconds  Int?
+  photoKey      String?
+  plan          Plan      @default(FREE)
+  /// The recipient can open the gift from this moment on.
+  deliverAt     DateTime
+  openedAt      DateTime?
+  /// null = never expires (FOREVER).
+  expiresAt     DateTime?
+  remindNextYear Boolean  @default(false)
+  remindedForYear Int?
+  showUnderTree Boolean   @default(false)
+  purgedAt      DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  payments      Payment[]
+  uploads       Upload[]
+
+  @@index([campaign, createdAt])
+  @@index([expiresAt])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  giftId          String
+  gift            Gift          @relation(fields: [giftId], references: [id], onDelete: Cascade)
+  provider        String
+  /// Checkout session id at the payment provider.
+  providerRef     String?       @unique
+  plan            Plan
+  payer           Payer
+  amountSatang    Int
+  /// Sender's chosen delivery time. null = deliver as soon as the payment clears.
+  requestedDeliverAt DateTime?
+  email           String?
+  status          PaymentStatus @default(PENDING)
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+
+  @@index([giftId])
+}
+
+/// A file slot handed to the browser before the gift exists. Unused slots are deleted after a day.
+model Upload {
+  id          String     @id @default(cuid())
+  key         String     @unique
+  kind        UploadKind
+  contentType String
+  bytes       Int
+  giftId      String?
+  gift        Gift?      @relation(fields: [giftId], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
+
+  @@index([giftId, createdAt])
+}
