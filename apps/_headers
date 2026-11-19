@@ -1,0 +1,5 @@
+# Cloudflare Pages headers for play.inzeniths.com (build output directory = apps/).
+# Shared scripts change with the pages: make browsers re-check them on every visit (an unchanged file is a cheap 304),
+# so a new page never runs with yesterday's santa-api.js or i18n.js. Pages also add ?v=<date> to these links.
+/santa-box/*.js
+  Cache-Control: public, max-age=0, must-revalidate
