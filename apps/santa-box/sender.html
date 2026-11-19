@@ -310,7 +310,6 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <p class="note">ลิงก์นี้เป็นตัวอย่าง ส่งให้ผู้รับทาง LINE หรือแชตไหนก็ได้</p>
         <div class="row"><button class="btn ghost" id="teaserBtn">แชร์ภาพทีเซอร์</button><button class="btn ghost" id="againBtn">ห่อกล่องใหม่</button></div>
         <a class="textlink" href="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75" target="_blank" rel="noopener">ดูตัวอย่างตอนผู้รับเปิดกล่อง</a>
-        <!-- IN ZENITH promo: แทน [IN-ZENITH-URL] ด้วยโดเมนจริงของเว็บ IN ZENITH -->
         <aside class="izp" aria-label="IN ZENITH Interactive Lab">
           <svg class="lights" viewBox="0 0 320 24" preserveAspectRatio="none" aria-hidden="true">
             <path d="M0 6Q40 26 80 10T160 10T240 10T320 6" fill="none" stroke="#3A3A44" stroke-width="1.5"/>
@@ -321,7 +320,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
           <span class="k">IN ZENITH Interactive Lab</span>
           <h3>อยากได้แคมเปญแบบ <i>Santa Box</i> ให้แบรนด์คุณ?</h3>
           <p>Santa Box เป็นแคมเปญของ IN ZENITH เรารับทำ interactive experience เว็บไซต์ และระบบอีเวนต์</p>
-          <div class="r"><a class="l" href="[IN-ZENITH-URL]/interactive.html" target="_blank" rel="noopener">ดูผลงาน</a><a class="g" href="[IN-ZENITH-URL]/#contact" target="_blank" rel="noopener">คุยกับเรา</a></div>
+          <div class="r"><a class="l" href="https://inzeniths.com/interactive.html" target="_blank" rel="noopener">ดูผลงาน</a><a class="g" href="https://inzeniths.com/#contact" target="_blank" rel="noopener">คุยกับเรา</a></div>
         </aside>
       </div>
     </div>
@@ -882,8 +881,6 @@ async function resumeSent(){
 }
 $('copyBtn').onclick=async()=>{const t=$('linkText').dataset.full||'https://'+$('linkText').textContent;try{await navigator.clipboard.writeText(t);$('copyBtn').textContent='คัดลอกแล้ว'}catch(e){const r=document.createRange();r.selectNodeContents($('linkText'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('copyBtn').textContent='เลือกข้อความแล้ว'}setTimeout(()=>$('copyBtn').textContent='คัดลอก',1800)};
 $('againBtn').onclick=()=>{go(0)};
-// placeholder links until the IN ZENITH domain is set
-document.querySelectorAll('a[href*="[IN-ZENITH-URL]"]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();toast('ลิงก์เว็บ IN ZENITH จะใช้ได้เมื่อใส่โดเมนจริง')}));
 const PLAN_NAME={'0':'ส่งธรรมดา · ถึงใน 25 ชม.','25':'ส่งด่วน · เก็บไว้ 1 ปี','125':'ส่งด่วน · เก็บไว้ตลอดไป'};
 function emailHint(){const need=S.plan!=='0'||$('remind').checked;$('emailHint').textContent=need?'สำหรับใบเสร็จและกู้ลิงก์คืน':'ไม่บังคับ';return need}
 function openWho(){$('wTo').value=$('to').value;$('wFrom').value=$('from').value;$('sumPlan').textContent=PLAN_NAME[S.plan];$('sumPrice').textContent=S.plan==='0'?'ฟรี':S.plan+' บาท';
