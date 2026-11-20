@@ -479,7 +479,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
   </div>
 </div>
 
-<script src="i18n.js?v=20261121g"></script>
+<script src="i18n.js?v=20261121h"></script>
 <script src="santa-api.js?v=20261121"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -1084,8 +1084,8 @@ async function resumeSent(){
 $('copyBtn').onclick=async()=>{const t=$('linkText').dataset.full||'https://'+$('linkText').textContent;try{await navigator.clipboard.writeText(t);$('copyBtn').textContent='คัดลอกแล้ว'}catch(e){const r=document.createRange();r.selectNodeContents($('linkText'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('copyBtn').textContent='เลือกข้อความแล้ว'}setTimeout(()=>$('copyBtn').textContent='คัดลอก',1800)};
 $('againBtn').onclick=()=>{go(0)};
 const PLAN_NAME={'0':'ส่งธรรมดา · ถึงใน 25 ชม.','25':'ส่งด่วน · เก็บไว้ 1 ปี','125':'ส่งด่วน · เก็บไว้ตลอดไป'};
-/* the email is optional: a paid box gets its receipt at the address typed on the payment page (Stripe asks for it there); only the next-Christmas reminder needs one here */
-function emailHint(){$('emailHint').textContent=S.plan!=='0'?'ไม่บังคับ · สำหรับใบเสร็จและกู้ลิงก์คืน':'ไม่บังคับ';return $('remind').checked}
+/* the email is required for a paid box (receipt and link recovery); optional for a free one unless they ask for the reminder */
+function emailHint(){const need=S.plan!=='0'||$('remind').checked;$('emailHint').textContent=need?'สำหรับใบเสร็จและกู้ลิงก์คืน':'ไม่บังคับ';return need}
 function openWho(){$('wTo').value=$('to').value;$('wFrom').value=$('from').value;$('sumPlan').textContent=PLAN_NAME[S.plan];renderSum();
   $('confirmBtn').textContent=payLabel();$('emailErr').hidden=true;emailHint();$('whoSheet').hidden=false}
 $('wTo').oninput=()=>{$('to').value=$('wTo').value;stepText();setEngrave(engraveText())};

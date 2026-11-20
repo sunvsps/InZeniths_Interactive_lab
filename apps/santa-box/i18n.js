@@ -32,7 +32,6 @@ window.I18N = (function () {
     'ดาวน์โหลดได้': 'Downloadable',
     'เสร็จแล้ว': 'Done',
     'ไม่บังคับ': 'optional',
-    'ไม่บังคับ · สำหรับใบเสร็จและกู้ลิงก์คืน': 'optional · for your receipt and link recovery',
     'เสียงอวยพร': 'Voice message',
     'คูปองสัญญา': 'Promise coupon',
     'คุณ': 'you',
