@@ -1,9 +1,19 @@
-<title>Santa Box 3D</title>
+<title>🎁 กล่องของขวัญจาก Santa Box</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <!-- API address (see santa-api.js). Empty = prototype mode with sample data. Production: https://api.inzeniths.com -->
 <meta name="santa-api" content="https://api.inzeniths.com">
+<meta name="description" content="การ์ดและเสียงอวยพรจากคนที่รักรออยู่ในกล่อง กดเปิดดูได้เลย · Santa Box โดย IN ZENITHS">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Santa Box">
+<meta property="og:title" content="🎁 มีกล่องของขวัญส่งมาให้คุณ · A gift box is waiting for you">
+<meta property="og:description" content="การ์ดและเสียงอวยพรจากคนที่รักรออยู่ในกล่อง กดเปิดดูได้เลย · Santa Box โดย IN ZENITHS">
+<meta property="og:image" content="https://play.inzeniths.com/santa-box/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://play.inzeniths.com/santa-box/">
+<meta name="twitter:card" content="summary_large_image">
 <script>
 /* A box link (/b/<id>) shows a loading screen until the box arrives from the API, never the sample content.
    Runs first, before any of the page is drawn; the class comes off when the box is ready (see unboot). */
@@ -83,6 +93,8 @@ html.night .counter{color:#D6CDD9}
 .title.sm{font-size:26px}
 .sub{margin:0;color:var(--muted);font-size:14px}
 .sub b{color:var(--ink);font-weight:500}
+.what{max-width:300px;padding:10px 16px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.6);font-size:13px;line-height:1.5;color:var(--muted)}
+.what p{margin:0}.what p+p{margin-top:2px}.what b{color:var(--ink);font-weight:500}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}}
 
 .btn{border:0;border-radius:999px;padding:11px 22px;font-size:14px;font-weight:500;background:var(--accent);color:#fff;min-width:180px;letter-spacing:.01em;box-shadow:0 10px 24px -12px rgba(179,32,46,.55)}
@@ -251,6 +263,11 @@ html.night #santa{color:#F6EFE9;opacity:.9}
       <div class="count" id="count">18:42:10<small><span>ชม.</span><span>นาที</span><span>วินาที</span></small></div>
     </div>
     <div class="bot">
+      <div class="what">
+        <p><b>มีของขวัญดิจิทัลรออยู่ในกล่องนี้</b></p>
+        <p>การ์ดและเสียงอวยพรจากผู้ส่ง พร้อมของขวัญ 1 ชิ้น</p>
+        <p>เก็บลิงก์นี้ไว้ แล้วกลับมาเปิดตอนนับถอยหลังจบ</p>
+      </div>
       <p class="sub" id="transitSub" data-no-i18n>กล่องจาก <b>ลูกคนเล็ก</b> จะถึงเวลา 00:00 คืนวันคริสต์มาส</p>
       <button class="link" id="skipBtn">ข้ามเวลา (ตัวอย่าง)</button>
       <a class="sendown" id="sendOwn" href="/santa-box/wrap" data-no-i18n>ห่อกล่องให้คนที่คุณรักบ้าง</a>
@@ -389,7 +406,7 @@ html.night #santa{color:#F6EFE9;opacity:.9}
   </div>
 </div>
 
-<script src="/santa-box/i18n.js?v=20261121b"></script>
+<script src="/santa-box/i18n.js?v=20261121d"></script>
 <script src="/santa-box/santa-api.js?v=20261121"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>

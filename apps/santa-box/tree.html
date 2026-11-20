@@ -5,8 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <!-- API address (see santa-api.js). Empty = prototype mode with sample boxes. Production: https://api.inzeniths.com -->
 <meta name="santa-api" content="https://api.inzeniths.com">
+<meta name="description" content="ห่อการ์ด เสียงอวยพร และของขวัญใส่กล่อง 3D แล้วส่งลิงก์ให้คนที่คุณรัก ดูกล่องจากทุกคนใต้ต้นคริสต์มาสรวม · IN ZENITHS">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Santa Box">
+<meta property="og:title" content="Santa Box · ห่อการ์ดและเสียงอวยพรใส่กล่องของขวัญ">
+<meta property="og:description" content="ห่อการ์ด เสียงอวยพร และของขวัญใส่กล่อง 3D แล้วส่งลิงก์ให้คนที่คุณรัก ดูกล่องจากทุกคนใต้ต้นคริสต์มาสรวม · IN ZENITHS">
+<meta property="og:image" content="https://play.inzeniths.com/santa-box/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://play.inzeniths.com/santa-box/">
+<meta name="twitter:card" content="summary_large_image">
 <title>Santa Box · ห่อกล่องของขวัญให้คนที่คุณรัก</title>
-<meta name="description" content="ต้นคริสต์มาสรวมของ Santa Box: กล่องของขวัญจากทุกคนวางอยู่ใต้ต้นเดียวกัน">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600&family=IBM+Plex+Sans+Thai:wght@400;500&family=Noto+Serif+Thai:wght@500&display=swap">
@@ -48,6 +57,7 @@ a{color:inherit}
 .bot{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;flex-direction:column;align-items:center;gap:10px;
   padding:0 max(18px,env(safe-area-inset-left,0px)) calc(34px + env(safe-area-inset-bottom,0px))}
 .bot .copy{margin-top:4px}
+.what{margin:0;max-width:330px;text-align:center;font-size:13px;line-height:1.45;color:var(--cream);background:rgba(18,26,51,.68);padding:7px 14px;border-radius:14px}
 .hint{font-size:11.5px;color:#4E4866;background:rgba(255,255,255,.55);border-radius:999px;padding:4px 12px;transition:opacity .4s}
 .hint.gone{opacity:0}
 .btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;padding:14px 28px;min-width:220px;font-size:15px;font-weight:500;
@@ -103,12 +113,13 @@ a{color:inherit}
 </div>
 
 <div class="bot">
+  <p class="what">ห่อการ์ด เสียงอวยพร และของขวัญใส่กล่อง แล้วส่งลิงก์ให้คนที่คุณรัก</p>
   <span class="hint" id="hint">↻ ลากเพื่อหมุนรอบต้นไม้ · แตะกล่องเพื่อดูใกล้ๆ</span>
   <a class="btn" href="/santa-box/wrap">ห่อกล่องของคุณ</a>
   <p class="copy">© IN ZENITHS · <a href="/santa-box/privacy">นโยบายความเป็นส่วนตัว</a></p>
 </div>
 
-<script src="/santa-box/i18n.js?v=20261121b"></script>
+<script src="/santa-box/i18n.js?v=20261121d"></script>
 <script src="/santa-box/santa-api.js?v=20261121"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -308,11 +319,11 @@ cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',()=>{dra
 let dist=12;const target=new THREE.Vector3(0,2.9,0);
 function resize(){if(!renderer)return;const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;
   // fit the tree's height; on narrow phones let the outer ring of boxes run off the sides rather than shrinking the tree
-  // the tree must fit between the headline (top ~130px) and the button area (bottom ~170px), whatever the screen shape
-  const tn=Math.tan(camera.fov*Math.PI/360),free=Math.max(.45,(h-300)/h);
+  // the tree must fit between the headline (top ~130px) and the button area (bottom ~200px), whatever the screen shape
+  const tn=Math.tan(camera.fov*Math.PI/360),free=Math.max(.45,(h-330)/h);
   dist=Math.max(8.6/(2*tn*free),5.2/(2*tn*camera.aspect));
   // nudge the tree down a little so it sits in the middle of that free band
-  target.y=2.9+(170-130)/2/h*2*tn*dist;camera.updateProjectionMatrix();
+  target.y=2.9+(200-130)/2/h*2*tn*dist;camera.updateProjectionMatrix();
   scene.fog.near=dist+2;scene.fog.far=dist+22}
 addEventListener('resize',resize);resize();
 let last=performance.now(),T=0;

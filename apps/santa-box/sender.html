@@ -1,9 +1,19 @@
-<title>Santa Box Wrap</title>
+<title>Santa Box · ห่อกล่องของขวัญ</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <!-- API address (see santa-api.js). Empty = prototype mode with sample data. Production: https://api.inzeniths.com -->
 <meta name="santa-api" content="https://api.inzeniths.com">
+<meta name="description" content="ห่อการ์ด เสียงอวยพร และของขวัญใส่กล่อง 3D แล้วส่งลิงก์ให้คนที่คุณรัก · Santa Box โดย IN ZENITHS">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Santa Box">
+<meta property="og:title" content="Santa Box · ห่อการ์ดและเสียงอวยพรใส่กล่องของขวัญ">
+<meta property="og:description" content="ห่อการ์ด เสียงอวยพร และของขวัญใส่กล่อง 3D แล้วส่งลิงก์ให้คนที่คุณรัก · Santa Box โดย IN ZENITHS">
+<meta property="og:image" content="https://play.inzeniths.com/santa-box/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://play.inzeniths.com/santa-box/wrap">
+<meta name="twitter:card" content="summary_large_image">
 <script>
 /* Back from Stripe (?sent=<box>): show the loading screen at once instead of the box designer, until the sent screen is ready. */
 (function(){try{var q=new URLSearchParams(location.search);if(q.has('sent')&&(document.querySelector('meta[name="santa-api"]').content||sessionStorage.getItem('santaApi')))document.documentElement.classList.add('boot','boot-pay')}catch(e){}})();
@@ -375,6 +385,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <span class="status" id="doneStatus"><i></i>จะเด้งถึงแม่ 25 ธ.ค. เวลา 00:00</span>
         <div class="link"><code id="linkText">play.inzeniths.com/santa-box/b/x7k2p9</code><button id="copyBtn">คัดลอก</button></div>
         <p class="note">ลิงก์นี้เป็นตัวอย่าง ส่งให้ผู้รับทาง LINE หรือแชตไหนก็ได้</p>
+        <button class="btn ghost" id="copyMsgBtn" type="button">คัดลอกพร้อมข้อความชวนเปิด</button>
         <div class="row"><button class="btn ghost" id="teaserBtn">แชร์ภาพทีเซอร์</button><button class="btn ghost" id="againBtn">ห่อกล่องใหม่</button></div>
         <a class="textlink" href="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75" target="_blank" rel="noopener">ดูตัวอย่างตอนผู้รับเปิดกล่อง</a>
         <aside class="izp" aria-label="IN ZENITHS Interactive Lab">
@@ -469,7 +480,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
   </div>
 </div>
 
-<script src="i18n.js?v=20261121b"></script>
+<script src="i18n.js?v=20261121d"></script>
 <script src="santa-api.js?v=20261121"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -1072,6 +1083,10 @@ async function resumeSent(){
   setStatus(()=>t('ยังไม่ได้รับยืนยันการชำระเงิน ถ้าจ่ายแล้วจะได้อีเมลยืนยัน'));
 }
 $('copyBtn').onclick=async()=>{const t=$('linkText').dataset.full||'https://'+$('linkText').textContent;try{await navigator.clipboard.writeText(t);$('copyBtn').textContent='คัดลอกแล้ว'}catch(e){const r=document.createRange();r.selectNodeContents($('linkText'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('copyBtn').textContent='เลือกข้อความแล้ว'}setTimeout(()=>$('copyBtn').textContent='คัดลอก',1800)};
+/* link + a short line saying what it is, so the recipient doesn't wonder what this unknown link is */
+$('copyMsgBtn').onclick=async()=>{const link=$('linkText').dataset.full||'https://'+$('linkText').textContent,from=($('from').value||'').trim()||t('ฉัน'),
+  text=t('🎁 มีกล่องของขวัญจาก{from}ส่งมาให้ ข้างในมีการ์ดและเสียงอวยพรรออยู่ กดเปิดดูได้เลย',{from:I18N_SPACE(from)})+'\n'+link,b=$('copyMsgBtn'),old=b.textContent;
+  try{await navigator.clipboard.writeText(text);b.textContent=t('คัดลอกแล้ว')}catch(e){b.textContent=t('คัดลอกไม่สำเร็จ ลองคัดลอกลิงก์ด้านบนแทน')}setTimeout(()=>b.textContent=old,2200)};
 $('againBtn').onclick=()=>{go(0)};
 const PLAN_NAME={'0':'ส่งธรรมดา · ถึงใน 25 ชม.','25':'ส่งด่วน · เก็บไว้ 1 ปี','125':'ส่งด่วน · เก็บไว้ตลอดไป'};
 function emailHint(){const need=S.plan!=='0'||$('remind').checked;$('emailHint').textContent=need?'สำหรับใบเสร็จและกู้ลิงก์คืน':'ไม่บังคับ';return need}
