@@ -57,7 +57,7 @@ a{color:inherit}
 .bot{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;flex-direction:column;align-items:center;gap:10px;
   padding:0 max(18px,env(safe-area-inset-left,0px)) calc(34px + env(safe-area-inset-bottom,0px))}
 .bot .copy{margin-top:4px}
-.what{margin:0;max-width:330px;text-align:center;font-size:13px;line-height:1.45;color:var(--cream);background:rgba(18,26,51,.68);padding:7px 14px;border-radius:14px}
+.what{margin:8px auto 0;max-width:340px;text-wrap:balance;font-size:12.5px;line-height:1.45;color:var(--cream);opacity:.9}
 .hint{font-size:11.5px;color:#4E4866;background:rgba(255,255,255,.55);border-radius:999px;padding:4px 12px;transition:opacity .4s}
 .hint.gone{opacity:0}
 .btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:999px;padding:14px 28px;min-width:220px;font-size:15px;font-weight:500;
@@ -110,10 +110,10 @@ a{color:inherit}
   <p class="eyebrow">ต้นคริสต์มาสของทุกคน</p>
   <h1 id="headline" aria-live="polite">&nbsp;</h1>
   <p class="sub" id="subline"></p>
+  <p class="what">ห่อการ์ด เสียงอวยพร และของขวัญใส่กล่อง แล้วส่งลิงก์ให้คนที่คุณรัก</p>
 </div>
 
 <div class="bot">
-  <p class="what">ห่อการ์ด เสียงอวยพร และของขวัญใส่กล่อง แล้วส่งลิงก์ให้คนที่คุณรัก</p>
   <span class="hint" id="hint">↻ ลากเพื่อหมุนรอบต้นไม้ · แตะกล่องเพื่อดูใกล้ๆ</span>
   <a class="btn" href="/santa-box/wrap">ห่อกล่องของคุณ</a>
   <p class="copy">© IN ZENITHS · <a href="/santa-box/privacy">นโยบายความเป็นส่วนตัว</a></p>
@@ -319,11 +319,11 @@ cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',()=>{dra
 let dist=12;const target=new THREE.Vector3(0,2.9,0);
 function resize(){if(!renderer)return;const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;
   // fit the tree's height; on narrow phones let the outer ring of boxes run off the sides rather than shrinking the tree
-  // the tree must fit between the headline (top ~130px) and the button area (bottom ~200px), whatever the screen shape
-  const tn=Math.tan(camera.fov*Math.PI/360),free=Math.max(.45,(h-330)/h);
+  // the tree must fit between the headline and tagline (top ~170px) and the button area (bottom ~170px), whatever the screen shape
+  const tn=Math.tan(camera.fov*Math.PI/360),free=Math.max(.45,(h-340)/h);
   dist=Math.max(8.6/(2*tn*free),5.2/(2*tn*camera.aspect));
   // nudge the tree down a little so it sits in the middle of that free band
-  target.y=2.9+(200-130)/2/h*2*tn*dist;camera.updateProjectionMatrix();
+  target.y=2.9+(170-170)/2/h*2*tn*dist;camera.updateProjectionMatrix();
   scene.fog.near=dist+2;scene.fog.far=dist+22}
 addEventListener('resize',resize);resize();
 let last=performance.now(),T=0;
