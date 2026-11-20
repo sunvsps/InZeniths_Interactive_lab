@@ -73,7 +73,7 @@ html.night .counter{color:#D6CDD9}
 
 .step{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;
   padding-left:max(22px,env(safe-area-inset-left,0px));padding-right:max(22px,env(safe-area-inset-right,0px));padding-block:66px calc(34px + env(safe-area-inset-bottom,0px))}
-.copy{position:absolute;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:3;margin:0;text-align:center;font-size:10px;letter-spacing:.04em;color:var(--muted);pointer-events:none}
+.copy{position:absolute;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:3;margin:0;text-align:center;font-size:min(10px,2.35vw);letter-spacing:.02em;color:var(--muted);pointer-events:none;white-space:nowrap}
 .copy a{color:inherit;text-underline-offset:2px;pointer-events:auto}
 .step .top,.step .bot{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
 .step .bot{gap:12px;pointer-events:auto}
@@ -327,7 +327,7 @@ html.night #santa{color:#F6EFE9;opacity:.9}
   </section>
 </div>
 
-<p class="copy" id="copyright">© IN ZENITHS · มีปัญหาติดต่อ <a href="mailto:support@inzeniths.com">support@inzeniths.com</a> · <a href="/santa-box/privacy">นโยบายความเป็นส่วนตัว</a></p>
+<p class="copy" id="copyright">© IN ZENITHS · ติดต่อ <a href="mailto:support@inzeniths.com">support@inzeniths.com</a> · <a href="/santa-box/privacy">นโยบายความเป็นส่วนตัว</a></p>
 <div id="santa" aria-hidden="true">
   <svg viewBox="0 0 150 62" fill="currentColor">
     <path d="M44 30 C70 22 92 26 104 24" stroke="currentColor" stroke-width="1" fill="none" opacity=".6"/>
@@ -389,8 +389,8 @@ html.night #santa{color:#F6EFE9;opacity:.9}
   </div>
 </div>
 
-<script src="/santa-box/i18n.js?v=20261120c"></script>
-<script src="/santa-box/santa-api.js?v=20261120c"></script>
+<script src="/santa-box/i18n.js?v=20261121"></script>
+<script src="/santa-box/santa-api.js?v=20261121"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
