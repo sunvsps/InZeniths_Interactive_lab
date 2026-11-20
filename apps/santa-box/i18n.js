@@ -247,7 +247,6 @@ window.I18N = (function () {
     'ฉัน': 'me',
     '🎁 มีกล่องของขวัญจาก{from}ส่งมาให้ ข้างในมีการ์ดและเสียงอวยพรรออยู่ กดเปิดดูได้เลย': '🎁 A gift box from{from}is waiting for you, with a card and a voice message inside. Open it here:',
     'มีของขวัญดิจิทัลรออยู่ในกล่องนี้': 'There is a digital gift waiting in this box',
-    'การ์ดและเสียงอวยพรจากผู้ส่ง พร้อมของขวัญ 1 ชิ้น': 'A card and voice message from the sender, plus 1 gift',
     'เก็บลิงก์นี้ไว้ แล้วกลับมาเปิดตอนนับถอยหลังจบ': 'Keep this link and come back when the countdown ends',
     'มาหาคุณ': 'to you',
     'ชม.': 'hrs', 'นาที': 'min', 'วินาที': 'sec',
