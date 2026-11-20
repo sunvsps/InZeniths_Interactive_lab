@@ -385,7 +385,6 @@ a.btn{display:block;text-align:center;text-decoration:none}
         <span class="status" id="doneStatus"><i></i>จะเด้งถึงแม่ 25 ธ.ค. เวลา 00:00</span>
         <div class="link"><code id="linkText">play.inzeniths.com/santa-box/b/x7k2p9</code><button id="copyBtn">คัดลอก</button></div>
         <p class="note">ลิงก์นี้เป็นตัวอย่าง ส่งให้ผู้รับทาง LINE หรือแชตไหนก็ได้</p>
-        <button class="btn ghost" id="copyMsgBtn" type="button">คัดลอกพร้อมข้อความชวนเปิด</button>
         <div class="row"><button class="btn ghost" id="teaserBtn">แชร์ภาพทีเซอร์</button><button class="btn ghost" id="againBtn">ห่อกล่องใหม่</button></div>
         <a class="textlink" href="https://claude.ai/artifact/X9uGbmK1xed7jBV1Czep75" target="_blank" rel="noopener">ดูตัวอย่างตอนผู้รับเปิดกล่อง</a>
         <aside class="izp" aria-label="IN ZENITHS Interactive Lab">
@@ -480,7 +479,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
   </div>
 </div>
 
-<script src="i18n.js?v=20261121e"></script>
+<script src="i18n.js?v=20261121g"></script>
 <script src="santa-api.js?v=20261121"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -1083,13 +1082,10 @@ async function resumeSent(){
   setStatus(()=>t('ยังไม่ได้รับยืนยันการชำระเงิน ถ้าจ่ายแล้วจะได้อีเมลยืนยัน'));
 }
 $('copyBtn').onclick=async()=>{const t=$('linkText').dataset.full||'https://'+$('linkText').textContent;try{await navigator.clipboard.writeText(t);$('copyBtn').textContent='คัดลอกแล้ว'}catch(e){const r=document.createRange();r.selectNodeContents($('linkText'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('copyBtn').textContent='เลือกข้อความแล้ว'}setTimeout(()=>$('copyBtn').textContent='คัดลอก',1800)};
-/* link + a short line saying what it is, so the recipient doesn't wonder what this unknown link is */
-$('copyMsgBtn').onclick=async()=>{const link=$('linkText').dataset.full||'https://'+$('linkText').textContent,from=($('from').value||'').trim()||t('ฉัน'),
-  text=t('🎁 มีกล่องของขวัญจาก{from}ส่งมาให้ ข้างในมีการ์ดและเสียงอวยพรรออยู่ กดเปิดดูได้เลย',{from:I18N_SPACE(from)})+'\n'+link,b=$('copyMsgBtn'),old=b.textContent;
-  try{await navigator.clipboard.writeText(text);b.textContent=t('คัดลอกแล้ว')}catch(e){b.textContent=t('คัดลอกไม่สำเร็จ ลองคัดลอกลิงก์ด้านบนแทน')}setTimeout(()=>b.textContent=old,2200)};
 $('againBtn').onclick=()=>{go(0)};
 const PLAN_NAME={'0':'ส่งธรรมดา · ถึงใน 25 ชม.','25':'ส่งด่วน · เก็บไว้ 1 ปี','125':'ส่งด่วน · เก็บไว้ตลอดไป'};
-function emailHint(){const need=S.plan!=='0'||$('remind').checked;$('emailHint').textContent=need?'สำหรับใบเสร็จและกู้ลิงก์คืน':'ไม่บังคับ';return need}
+/* the email is optional: a paid box gets its receipt at the address typed on the payment page (Stripe asks for it there); only the next-Christmas reminder needs one here */
+function emailHint(){$('emailHint').textContent=S.plan!=='0'?'ไม่บังคับ · สำหรับใบเสร็จและกู้ลิงก์คืน':'ไม่บังคับ';return $('remind').checked}
 function openWho(){$('wTo').value=$('to').value;$('wFrom').value=$('from').value;$('sumPlan').textContent=PLAN_NAME[S.plan];renderSum();
   $('confirmBtn').textContent=payLabel();$('emailErr').hidden=true;emailHint();$('whoSheet').hidden=false}
 $('wTo').oninput=()=>{$('to').value=$('wTo').value;stepText();setEngrave(engraveText())};
@@ -1098,21 +1094,31 @@ $('remind').onchange=emailHint;
 /* discount code: checked with the API (Stripe) here, the new price shows at once, and the code is applied on the payment page */
 const PROMO_ERR={PROMO_INVALID:'โค้ดนี้ใช้ไม่ได้ หรือหมดอายุแล้ว',PROMO_MIN_AMOUNT:'โค้ดนี้ใช้กับยอดที่สูงกว่านี้',PROMO_TOO_SMALL_TOTAL:'ใช้โค้ดนี้แล้วยอดต่ำกว่า 10 บาท ซึ่งชำระไม่ได้',VALIDATION_ERROR:'รูปแบบโค้ดไม่ถูกต้อง'};
 $('code').addEventListener('input',()=>{if(S.promo){clearPromo();renderSum()}});
-$('codeBtn').onclick=async()=>{
+/** Checks the typed code and applies it to the price. Resolves true when the code is applied. */
+async function applyCode(){
   const code=$('code').value.trim(),msg=$('codeMsg');
-  if(!code)return toast(t('ใส่โค้ดก่อนกดใช้'));
-  if(!API)return toast(t('ตัวอย่าง: ยังไม่ได้เชื่อมระบบโค้ดส่วนลด'));
-  if(S.plan==='0'){msg.className='codeMsg bad';msg.textContent=t('ส่งธรรมดาฟรีอยู่แล้ว โค้ดใช้กับแบบ 25 / 125 บาท');msg.hidden=false;return}
+  if(!code){toast(t('ใส่โค้ดก่อนกดใช้'));return false}
+  if(!API){toast(t('ตัวอย่าง: ยังไม่ได้เชื่อมระบบโค้ดส่วนลด'));return false}
+  if(S.plan==='0'){msg.className='codeMsg bad';msg.textContent=t('ส่งธรรมดาฟรีอยู่แล้ว โค้ดใช้กับแบบ 25 / 125 บาท');msg.hidden=false;return false}
   const btn=$('codeBtn');btn.disabled=true;
   try{const r=await API.promo(code,S.plan==='125'?'FOREVER':'YEAR');
     S.promo={code:r.code,amountSatang:r.amountSatang,plan:S.plan};
     msg.className='codeMsg';msg.textContent=r.amountSatang===0?t('ใช้โค้ด {code} แล้ว · ฟรี',{code:r.code}):t('ใช้โค้ด {code} แล้ว · ลด {n} บาท',{code:r.code,n:r.discountSatang/100});msg.hidden=false}
   catch(e){clearPromo();msg.className='codeMsg bad';msg.textContent=t(PROMO_ERR[e.code]||'ตรวจโค้ดไม่สำเร็จ ลองใหม่อีกครั้ง');msg.hidden=false}
   finally{btn.disabled=false;renderSum()}
-};
-$('confirmBtn').onclick=()=>{const v=$('wEmail').value.trim(),ok=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
+  return !!S.promo;
+}
+$('codeBtn').onclick=applyCode;
+$('code').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyCode()}});
+$('confirmBtn').onclick=async()=>{const v=$('wEmail').value.trim(),ok=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
   if(!$('wTo').value.trim()){toast('ใส่ชื่อผู้รับก่อนนะ');$('wTo').focus();return}
   if((emailHint()&&!ok)||(v&&!ok)){$('emailErr').hidden=false;$('wEmail').focus();return}
+  // a code that was typed but not applied yet: apply it now, so it reaches the payment page whatever order the fields were filled in
+  const typed=$('code').value.trim();
+  if(typed&&API&&S.plan!=='0'&&!(S.promo&&S.promo.plan===S.plan&&S.promo.code.toLowerCase()===typed.toLowerCase())){
+    const b=$('confirmBtn');b.disabled=true;const applied=await applyCode();b.disabled=false;
+    if(!applied){$('code').focus();return}
+  }
   $('whoSheet').hidden=true;send()};
 document.querySelectorAll('.scrim').forEach(s=>s.addEventListener('click',e=>{if(e.target===s||e.target.hasAttribute('data-close'))s.hidden=true}));
 $('teaserBtn').onclick=async()=>{await makeTeaser();$('shareSheet').hidden=false};
