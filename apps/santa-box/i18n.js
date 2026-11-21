@@ -27,6 +27,7 @@ window.I18N = (function () {
     '© IN ZENITHS · มีปัญหาติดต่อ': '© IN ZENITHS · Need help? Contact',
     '© IN ZENITHS · ติดต่อ': '© IN ZENITHS · Contact',
     'ปิด': 'Close',
+    'ข้าม': 'Skip',
     'บาท': 'THB',
     'ฟรี': 'Free',
     'ดาวน์โหลดได้': 'Downloadable',

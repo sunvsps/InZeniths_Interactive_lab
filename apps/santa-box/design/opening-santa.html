@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Santa Box · ต้นแบบตอนเปิดกล่อง (ซานต้ามาส่ง)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600&family=IBM+Plex+Sans+Thai:wght@400;500&family=Noto+Serif+Thai:wght@500&display=swap">
+<style>
+/* Design prototype only (not linked from the live site): the recipient's opening, warm and story-like.
+   Santa and his reindeer fly in, sprinkle golden dust, the box glows and opens, the gift rises,
+   the card rises out of the box to read first while Santa waves goodbye across the moon (~10 s, tap to start);
+   "ดูของในกล่อง" then slides the card away and the gift rises. */
+[hidden]{display:none!important}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#FBF8F4;font-family:'IBM Plex Sans Thai',system-ui,sans-serif;color:#2A2420}
+.sky{position:fixed;inset:0;transition:none}
+#night{background:linear-gradient(180deg,#0F1733 0%,#1D2650 40%,#3F3C6E 62%,#7D6C8E 78%,#CDBFD2 100%);opacity:0}
+#scene,#fx{position:fixed;inset:0;width:100%;height:100%;display:block}
+#fx{pointer-events:none}
+.ui{position:fixed;left:0;right:0;z-index:5;text-align:center;pointer-events:none}
+.top{top:0;padding:16px 18px 0;display:flex;justify-content:space-between;align-items:center}
+.logo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:22px;color:#B3202E;transition:color 1.2s}
+.night .logo{color:#F4D9A6}
+.pill{pointer-events:auto;border:1px solid rgba(42,36,32,.18);background:rgba(255,255,255,.7);border-radius:999px;padding:6px 12px;font:500 12px/1 'IBM Plex Sans Thai';color:#5E5552;cursor:pointer}
+.night .pill{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#E9E2EE}
+.hint{bottom:calc(40px + env(safe-area-inset-bottom,0px));transition:opacity .5s}
+.hint b{display:block;font-family:'Noto Serif Thai',serif;font-weight:500;font-size:22px;margin-bottom:4px}
+.hint small{font-size:13px;color:#8A7B74}
+.chev{width:20px;height:20px;margin:0 auto 10px;border-left:1.5px solid #2A2420;border-top:1.5px solid #2A2420;transform:rotate(45deg);animation:chev 1.4s ease-in-out infinite}
+@keyframes chev{50%{transform:translateY(-6px) rotate(45deg)}}
+.end{bottom:calc(34px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;transition:opacity .8s}
+.end.on{opacity:1}
+.btn{pointer-events:auto;border:0;border-radius:999px;padding:14px 28px;min-width:220px;font:500 15px/1 'IBM Plex Sans Thai';background:#B3202E;color:#fff;cursor:pointer;box-shadow:0 10px 24px -12px rgba(179,32,46,.7)}
+.ghost{pointer-events:auto;border:0;background:none;color:#5E5870;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+/* reindeer legs gallop while flying */
+.leg{transform-box:fill-box;transform-origin:top center;animation:gallop .3s ease-in-out infinite alternate}
+.leg.b{animation-delay:-.15s}
+@keyframes gallop{from{transform:rotate(28deg)}to{transform:rotate(-24deg)}}
+.arm{transform-box:fill-box;transform-origin:bottom center}
+</style>
+</head>
+<body class="night">
+<div class="sky" id="night" style="opacity:1"></div>
+
+<svg id="scene" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-label="กล่องของขวัญ ซานต้ากับกวางเรนเดียร์บินมาส่ง">
+  <defs>
+    <radialGradient id="warm"><stop offset="0" stop-color="#FFE7A6" stop-opacity=".95"/><stop offset=".45" stop-color="#FFD27A" stop-opacity=".45"/><stop offset="1" stop-color="#FFC060" stop-opacity="0"/></radialGradient>
+    <radialGradient id="moonG" cx=".4" cy=".38"><stop offset="0" stop-color="#FFFBEA"/><stop offset=".7" stop-color="#F6E3AE"/><stop offset="1" stop-color="#EBD08E"/></radialGradient>
+    <linearGradient id="beam" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FFE9B0" stop-opacity=".75"/><stop offset="1" stop-color="#FFE9B0" stop-opacity="0"/></linearGradient>
+    <linearGradient id="boxShade" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".18"/><stop offset=".35" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
+    <linearGradient id="gold" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#F6D98A"/><stop offset=".55" stop-color="#D4AF5A"/><stop offset="1" stop-color="#B98F3A"/></linearGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="glowF" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+
+  <!-- moon and its halo (night) -->
+  <g id="moon" opacity="1"><circle cx="318" cy="128" r="66" fill="url(#warm)" opacity=".35"/><circle cx="318" cy="128" r="34" fill="url(#moonG)"/></g>
+
+  <!-- village silhouettes on the horizon; windows light up one by one after the box opens -->
+  <g id="village" opacity="1">
+    <rect x="0" y="470" width="400" height="40" fill="#2B2A47" opacity=".5"/>
+    <g fill="#34324F">
+      <rect x="-6" y="430" width="70" height="60"/><path d="M-12 430 L29 396 L70 430Z" fill="#5E2A36"/>
+      <rect x="70" y="448" width="48" height="44"/><path d="M64 448 L94 420 L124 448Z" fill="#2C4A42"/>
+      <rect x="286" y="440" width="56" height="52"/><path d="M280 440 L314 410 L348 440Z" fill="#2C4A42"/>
+      <rect x="344" y="426" width="66" height="66"/><path d="M338 426 L377 392 L416 426Z" fill="#5E2A36"/>
+      <path d="M128 492 l16 -52 16 52Z M262 492 l14 -46 14 46Z" fill="#203A33"/>
+    </g>
+    <g fill="#F4F1EC" opacity=".9"><path d="M6 420 L29 401 L52 420Z"/><path d="M80 440 L94 427 L108 440Z"/><path d="M296 432 L314 416 L332 432Z"/><path d="M354 416 L377 397 L400 416Z"/></g>
+    <g id="windows" fill="#FFC86B"></g>
+  </g>
+  <!-- snowy ground -->
+  <path id="ground" d="M-20 600 Q200 560 420 600 L420 820 L-20 820Z" fill="#D6D0E0"/>
+
+  <!-- warm light pouring up out of the open box -->
+  <g id="beams" opacity="0"><path d="M168 548 L60 140 L340 140 L232 548Z" fill="url(#beam)"/><path d="M182 548 L130 160 L270 160 L218 548Z" fill="url(#beam)" opacity=".8"/></g>
+
+  <!-- the gift (an ornament) rising out of the box -->
+  <g id="gift" opacity="0">
+    <circle cx="0" cy="0" r="64" fill="url(#warm)"/>
+    <circle cx="0" cy="0" r="30" fill="#C1121F"/>
+    <path d="M-30 4 Q0 14 30 4" stroke="#E7C26A" stroke-width="2" fill="none"/><path d="M-28 -9 Q0 0 28 -9" stroke="#E7C26A" stroke-width="1.4" fill="none" opacity=".8"/>
+    <rect x="-7" y="-37" width="14" height="9" rx="1.5" fill="url(#gold)"/><circle cx="0" cy="-41" r="4" fill="none" stroke="#D4AF5A" stroke-width="2"/>
+    <ellipse cx="-10" cy="-11" rx="7" ry="10" fill="#fff" opacity=".28" transform="rotate(-25 -10 -11)"/>
+  </g>
+
+  <!-- the box: body, inside glow, lid with ribbon and bow -->
+  <g id="box">
+    <ellipse cx="200" cy="628" rx="96" ry="14" fill="#2A2420" opacity=".14"/>
+    <ellipse id="halo" cx="200" cy="560" rx="150" ry="120" fill="url(#warm)" opacity="0"/>
+    <g id="boxBody">
+      <rect x="128" y="528" width="144" height="98" rx="5" fill="#A3202B"/>
+      <rect x="128" y="528" width="144" height="98" rx="5" fill="url(#boxShade)"/>
+      <rect x="191" y="528" width="18" height="98" fill="url(#gold)"/>
+      <rect id="seam" x="126" y="524" width="148" height="8" rx="4" fill="#FFE29A" opacity="0" filter="url(#soft)"/>
+      <ellipse id="opening" cx="200" cy="529" rx="70" ry="9" fill="#FFF1C4" opacity="0" filter="url(#glowF)"/>
+    </g>
+    <g id="lid">
+      <rect x="120" y="504" width="160" height="30" rx="5" fill="#B0242F"/>
+      <rect x="120" y="504" width="160" height="30" rx="5" fill="url(#boxShade)"/>
+      <rect x="190" y="504" width="20" height="30" fill="url(#gold)"/>
+      <g id="bow">
+        <path d="M200 500 C168 470 150 486 160 500 C166 508 186 506 200 500Z" fill="url(#gold)"/>
+        <path d="M200 500 C232 470 250 486 240 500 C234 508 214 506 200 500Z" fill="url(#gold)"/>
+        <circle cx="200" cy="500" r="7" fill="#C59A3C"/>
+        <g id="bells"><circle cx="186" cy="512" r="5" fill="#E7C26A"/><circle cx="214" cy="512" r="5" fill="#E7C26A"/></g>
+      </g>
+      <g id="tails"><path id="tailL" d="M196 506 C186 530 176 548 168 572" stroke="url(#gold)" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <path id="tailR" d="M204 506 C214 530 224 548 232 572" stroke="url(#gold)" stroke-width="8" fill="none" stroke-linecap="round"/></g>
+    </g>
+  </g>
+
+  <!-- Santa, sleigh and reindeer (same silhouette as the rest of the site, warm cream with a lit Rudolph nose) -->
+  <g id="sleigh" opacity="0">
+    <g transform="translate(-75 -31)" fill="#FBEFD8">
+      <path d="M44 30 C70 22 92 26 104 24" stroke="#FBEFD8" stroke-width="1" fill="none" opacity=".7"/>
+      <g class="leg"><rect x="100" y="34" width="2.6" height="16" rx="1.3"/></g><g class="leg b"><rect x="106" y="34" width="2.6" height="16" rx="1.3"/></g>
+      <g class="leg b"><rect x="119" y="33" width="2.6" height="16" rx="1.3"/></g><g class="leg"><rect x="125" y="33" width="2.6" height="16" rx="1.3"/></g>
+      <ellipse cx="113" cy="30" rx="17" ry="8"/><path d="M124 27 L131 14 L137 18 L130 30 Z"/><ellipse cx="136" cy="14" rx="7" ry="5"/>
+      <path d="M131 10 l-3 -8 M130 6 l-5 -1 M134 9 l1 -8 M134.5 4 l4 -2" stroke="#FBEFD8" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+      <circle cx="143" cy="15" r="5.5" fill="#FF5A4A" opacity=".45" filter="url(#soft)"/><circle cx="143" cy="15" r="2.8" fill="#FF6B5A"/>
+      <path d="M96 28 q-6 -2 -7 2" stroke="#FBEFD8" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <circle cx="20" cy="22" r="9"/><circle cx="34" cy="21" r="9.5"/><circle cx="39" cy="10" r="5"/><path d="M33 8 q6 -9 13 -1 q-6 -2 -13 1z"/>
+      <rect class="arm" id="arm" x="41" y="0" width="3.2" height="13" rx="1.6" transform="rotate(-20 42 13)"/>
+      <path d="M6 26 h44 q8 0 6 10 q-2 6 -10 6 H16 Q6 42 6 32 Z"/><path d="M2 48 H50 q8 0 10 -6" stroke="#FBEFD8" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M14 42 v6 M44 42 v6" stroke="#FBEFD8" stroke-width="2"/>
+    </g>
+  </g>
+  <!-- "Ho ho ho!" bubble that follows Santa on the way out -->
+  <g id="bubble" opacity="0"><rect x="-44" y="-16" width="88" height="28" rx="14" fill="#FBF8F4"/><path d="M-22 12 l-8 10 16 -10z" fill="#FBF8F4"/>
+    <text x="0" y="4" text-anchor="middle" font-family="Cormorant Garamond,serif" font-style="italic" font-weight="600" font-size="17" fill="#B3202E">Ho ho ho!</text></g>
+
+  <!-- the letter arrives in an envelope: it rises out of the box, magic swirls round it, the wax seal pops,
+       the flap opens by itself, the letter slides out and unfolds, then the words appear line by line -->
+  <g id="envBack" opacity="0">
+    <rect x="-120" y="-75" width="240" height="150" rx="4" fill="#E8D7BD"/>
+    <path id="flapOpen" d="M-120 -75 L0 18 L120 -75Z" fill="#F1E2CB" stroke="#E1CFB3" transform="scale(1 0)"/>
+  </g>
+  <g id="card" opacity="0">
+    <rect x="-142" y="-96" width="284" height="196" rx="4" fill="#FBF7F0"/>
+    <rect x="-132" y="-86" width="264" height="176" rx="2" fill="none" stroke="#E6DACB"/>
+    <text class="ln" x="-116" y="-56" font-family="Noto Serif Thai,serif" font-size="15" fill="#8A7B74">ถึง แม่</text>
+    <text class="ln" x="-116" y="-28" font-family="Noto Serif Thai,serif" font-size="15" fill="#2A2420">ปีนี้เหนื่อยมาเยอะ ขอบคุณที่อยู่</text>
+    <text class="ln" x="-116" y="-5" font-family="Noto Serif Thai,serif" font-size="15" fill="#2A2420">ข้างกันเสมอนะ คริสต์มาสนี้ขอให้</text>
+    <text class="ln" x="-116" y="18" font-family="Noto Serif Thai,serif" font-size="15" fill="#2A2420">แม่ได้พักบ้าง</text>
+    <text class="ln" x="116" y="44" text-anchor="end" font-family="Noto Serif Thai,serif" font-size="14" fill="#2A2420">— ลูกคนเล็ก</text>
+    <g class="ln"><circle cx="-100" cy="72" r="14" fill="#B3202E"/><path d="M-104 65 L-93 72 L-104 79Z" fill="#fff"/>
+    <g fill="#B3202E" opacity=".45" id="wave"></g>
+    <text x="118" y="77" text-anchor="end" font-family="IBM Plex Sans Thai,sans-serif" font-size="12" fill="#8A7B74">0:18</text></g>
+  </g>
+  <g id="envFront" opacity="0">
+    <path d="M-120 -75 L0 12 L120 -75 L120 71 Q120 75 116 75 L-116 75 Q-120 75 -120 71Z" fill="#F8ECDA" stroke="#E3D2B8"/>
+    <path d="M-118 73 L-14 6 M118 73 L14 6" stroke="#E6D5BB" stroke-width="1.2" fill="none"/>
+    <path id="flapClosed" d="M-120 -75 L0 18 L120 -75Z" fill="#F4E5CF" stroke="#E1CFB3"/>
+    <g id="seal" transform="translate(0 18)">
+      <circle r="34" fill="url(#warm)" id="sealGlow" opacity="0"/>
+      <path d="M0 -17 C9 -17 17 -9 17 0 C17 9 9 17 0 17 C-9 17 -17 9 -17 0 C-17 -9 -9 -17 0 -17Z M-19 2 l3 -3 M18 -4 l2 3 M4 18 l-2 2" fill="#B3202E" stroke="#B3202E" stroke-width="2"/>
+      <circle r="11.5" fill="none" stroke="#8E1622" stroke-width="1.4"/>
+      <path d="M0 -8 L1.6 -1.6 L8 0 L1.6 1.6 L0 8 L-1.6 1.6 L-8 0 L-1.6 -1.6Z M-5 -5 L5 5 M5 -5 L-5 5" fill="#E7C26A" stroke="#E7C26A" stroke-width="1"/>
+    </g>
+  </g>
+
+
+</svg>
+<canvas id="fx"></canvas>
+
+<div class="ui top"><span class="logo">Santa Box</span><button class="pill" id="skip" hidden>ข้าม</button></div>
+<div class="ui hint" id="hint"><div class="chev"></div><b>แกะริบบิ้น</b><small>สไลด์ขึ้นหรือแตะที่กล่องเพื่อเปิด</small></div>
+<div class="ui end" id="end"><button class="btn" id="openGift">ดูของในกล่อง</button><button class="btn" id="again" hidden>ดูอีกครั้ง</button><button class="ghost" id="sound">เสียง: เปิด</button></div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const seg=(t,a,b)=>clamp((t-a)/(b-a));                 // 0..1 progress of t through [a,b]
+const eio=p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;        // ease in-out
+const eout=p=>1-Math.pow(1-p,3);
+const eback=p=>{const c=1.5;return 1+(c+1)*Math.pow(p-1,3)+c*Math.pow(p-1,2)};
+const lerp=(a,b,p)=>a+(b-a)*p;
+const bez=(p0,p1,p2,p3,t)=>{const u=1-t;return[u*u*u*p0[0]+3*u*u*t*p1[0]+3*u*t*t*p2[0]+t*t*t*p3[0],u*u*u*p0[1]+3*u*u*t*p1[1]+3*u*t*t*p2[1]+t*t*t*p3[1]]};
+
+/* ---- the story, in seconds ---- */
+// about 10 s from the swipe to the letter ready to read (the scene is already night: no sky change)
+const T={untie:[0,.9],fly:[.6,2.2],swoop:[2.2,3.5],glow:[2.6,3.8],squash:[3.7,3.9],lid:[3.9,5.2],lights:[4,5.6],
+  env:[4.8,6],swirl:[5.8,6.9],seal:[6.8,7.15],flap:[7.1,7.7],slide:[7.6,8.5],unfold:[8.4,9.3],back:[8.2,10],end:10};
+const T2={cardAway:[0,.7],gift:[.45,2.5],end:2.7};   // after "ดูของในกล่อง"
+let p2=null;   // when "ดูของในกล่อง" was pressed
+
+for(let i=0;i<22;i++){const h=6+Math.abs(Math.sin(i*1.7))*16,r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x',-74+i*6.4);r.setAttribute('y',72-h/2);r.setAttribute('width',3.2);r.setAttribute('height',h);r.setAttribute('rx',1.6);$('wave').append(r)}
+/* village windows */
+const WIN=[[10,442],[44,442],[10,466],[78,460],[100,460],[296,452],[326,452],[354,438],[390,438],[372,466],[296,474]];
+WIN.forEach(([x,y],i)=>{const r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',10);r.setAttribute('height',12);r.setAttribute('rx',1.5);r.style.opacity=0;r.dataset.i=i;$('windows').append(r)});
+
+/* ---- canvas particles in the same 400x800 space as the SVG (slice-fitted) ---- */
+const cv=$('fx'),g=cv.getContext('2d');let W,H,S,OX,OY,DPR;
+function fit(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;S=Math.max(W/400,H/800);OX=(W-400*S)/2;OY=(H-800*S)/2}
+addEventListener('resize',fit);fit();
+const P=[];   // {x,y,vx,vy,life,max,size,kind,col}
+let seed=7;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
+const STARS=Array.from({length:90},()=>({x:rnd()*400,y:rnd()*430,r:rnd()*1.3+.4,ph:rnd()*6.28,sp:.8+rnd()*2}));
+function emit(x,y,n,o){for(let i=0;i<n;i++)P.push(Object.assign({x,y,vx:(Math.random()-.5)*20,vy:(Math.random()-.5)*20,life:0,max:1+Math.random()*.8,size:1.5+Math.random()*2.2,kind:'spark',col:'255,224,150'},typeof o==='function'?o():o))}
+function star4(x,y,r,a,col){g.globalAlpha=a;g.fillStyle=`rgb(${col})`;g.beginPath();g.moveTo(x,y-r*2);g.lineTo(x+r*.45,y-r*.45);g.lineTo(x+r*2,y);g.lineTo(x+r*.45,y+r*.45);g.lineTo(x,y+r*2);g.lineTo(x-r*.45,y+r*.45);g.lineTo(x-r*2,y);g.lineTo(x-r*.45,y-r*.45);g.closePath();g.fill();
+  const gr=g.createRadialGradient(x,y,0,x,y,r*3.4);gr.addColorStop(0,`rgba(${col},${.55*a})`);gr.addColorStop(1,`rgba(${col},0)`);g.globalAlpha=1;g.fillStyle=gr;g.fillRect(x-r*3.4,y-r*3.4,r*6.8,r*6.8)}
+function drawFx(t,dt,night){
+  g.setTransform(DPR,0,0,DPR,0,0);g.clearRect(0,0,W,H);g.setTransform(DPR*S,0,0,DPR*S,DPR*OX,DPR*OY);
+  // stars twinkle in as night falls
+  if(night>0)STARS.forEach(s=>{g.globalAlpha=night*(.45+.55*Math.abs(Math.sin(now/1000*s.sp+s.ph)));g.fillStyle='#fff';g.beginPath();g.arc(s.x,s.y,s.r,0,6.283);g.fill()});
+  g.globalAlpha=1;
+  for(let i=P.length-1;i>=0;i--){const p=P[i];p.life+=dt;if(p.life>p.max){P.splice(i,1);continue}
+    p.vy+=(p.g||0)*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.sway)p.x+=Math.sin(p.life*3+p.sway)*.3;
+    const k=p.life/p.max,a=(k<.15?k/.15:1-(k-.15)/.85)*(p.alpha||1);
+    if(p.kind==='snow'){g.globalAlpha=a*.9;g.fillStyle='#fff';g.beginPath();g.arc(p.x,p.y,p.size,0,6.283);g.fill()}
+    else star4(p.x,p.y,p.size*(.6+.4*Math.sin(p.life*14+i)),a,p.col)}
+  g.globalAlpha=1}
+
+/* ---- gentle sounds made on the fly (no files): bells, sleigh jingle, a warm chime ---- */
+let AC=null,soundOn=true;
+function bell(freq,when=0,vol=.08,dur=1.4){if(!soundOn)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const t0=AC.currentTime+when;
+  [1,2.76,5.4].forEach((m,i)=>{const o=AC.createOscillator(),v=AC.createGain();o.type='sine';o.frequency.value=freq*m;v.gain.setValueAtTime(0,t0);v.gain.linearRampToValueAtTime(vol/(i+1),t0+.01);v.gain.exponentialRampToValueAtTime(.0001,t0+dur/(i+1));o.connect(v).connect(AC.destination);o.start(t0);o.stop(t0+dur)})}catch(e){}}
+function jingle(len){for(let i=0;i<len*9;i++)bell(1900+Math.random()*700,i/9+Math.random()*.04,.025,.35)}
+function chime(){[523.25,659.25,783.99,1046.5].forEach((f,i)=>bell(f,i*.12,.07,2.2))}
+
+/* ---- timeline ---- */
+let state='idle',t0=0,now=0,last=performance.now(),played={};
+const once=(k,fn)=>{if(!played[k]){played[k]=1;fn()}};
+const SLEIGH_IN=[[-90,330],[60,80],[250,60],[330,200]];          // enters left, arcs up past the moon
+const SLEIGH_SWOOP=[[330,220],[420,420],[300,470],[140,450]];     // swings round, low over the box, right to left
+const SLEIGH_OUT=[[-80,190],[90,150],[230,70],[490,100]];        // comes back above the card, waves, flies off across the moon
+function setSleigh(x,y,dir,sc,rot,op){$('sleigh').setAttribute('transform',`translate(${x} ${y}) scale(${dir*sc} ${sc}) rotate(${rot})`);$('sleigh').setAttribute('opacity',op)}
+// review aid: ?t=<seconds> plays up to that moment and holds it there
+const HOLD=(location.search.match(/[?&]t=([\d.]+)/)||[])[1];
+function frame(ts){const dt=Math.min(.05,(ts-last)/1000);last=ts;now=ts;
+  let t=state==='play'?(ts-t0)/1000:state==='done'?T.end:0;
+  if(HOLD!=null&&state==='play'&&t>=+HOLD){t0=ts-(+HOLD)*1000;t=+HOLD}
+  // sky: day -> warm dusk -> night
+  const nightK=1;   // night from the first frame: village, moon and stars are already there
+  $('moon').setAttribute('opacity',nightK);$('moon').setAttribute('transform',`translate(0 ${(1-nightK)*40})`);
+  
+  // 1. untie: bow loosens, tails slide off, bells ring
+  const u=seg(t,T.untie[0],T.untie[1]);
+  if(state==='play')once('bell',()=>{bell(1320,0,.07);bell(1580,.18,.06)});
+  $('bow').setAttribute('transform',`translate(200 500) scale(${1-.9*eio(u)}) rotate(${u*40}) translate(-200 -500)`);$('bow').setAttribute('opacity',1-u);
+  $('tails').setAttribute('opacity',1-seg(t,.4,1));$('tailL').setAttribute('transform',`translate(${-u*30} ${u*40}) rotate(${-u*20} 196 506)`);$('tailR').setAttribute('transform',`translate(${u*30} ${u*40}) rotate(${u*20} 204 506)`);
+  // 2-3. Santa flies in past the moon, then swoops low over the box sprinkling golden dust
+  let sx=0,sy=0,dir=1,sc=.5,op=0;
+  if(t>=T.fly[0]&&t<T.fly[1]){const p=eio(seg(t,T.fly[0],T.fly[1]));[sx,sy]=bez(...SLEIGH_IN,p);dir=1;sc=lerp(.45,.85,p);op=seg(t,T.fly[0],T.fly[0]+.3);once('jingle1',()=>jingle(1.6))}
+  else if(t>=T.swoop[0]&&t<T.swoop[1]){const p=eio(seg(t,T.swoop[0],T.swoop[1]));[sx,sy]=bez(...SLEIGH_SWOOP,p);dir=p<.28?1:-1;sc=lerp(.85,1.1,Math.sin(p*Math.PI));op=1-seg(t,T.swoop[1]-.35,T.swoop[1]);once('jingle2',()=>jingle(1.3))}
+  else if(t>=T.back[0]&&t<T.back[1]){const p=seg(t,T.back[0],T.back[1]);[sx,sy]=bez(...SLEIGH_OUT,eio(p));dir=1;sc=lerp(.9,.42,p);op=seg(t,T.back[0],T.back[0]+.3)*(1-seg(t,T.back[1]-.4,T.back[1]));once('jingle3',()=>jingle(2))}
+  setSleigh(sx,sy,dir,sc,Math.sin(t*3)*3,op);
+  $('arm').setAttribute('transform',t>=T.back[0]?`rotate(${-20+Math.sin(t*9)*30} 42 13)`:'rotate(-20 42 13)');
+  if(op>.2&&state==='play'){emit(sx-dir*62*sc,sy+6*sc,2,()=>({vx:-dir*(10+Math.random()*16),vy:4+Math.random()*10,g:6,max:1.2+Math.random()*.8,size:1.2+Math.random()*1.8,sway:Math.random()*6}));
+    // golden dust falls onto the box during the low pass
+    if(t>=T.swoop[0]&&t<T.swoop[1]&&Math.abs(sx-200)<110)emit(sx,sy+10,3,()=>({vx:(200-sx)*.4+(Math.random()-.5)*20,vy:30+Math.random()*30,g:60,max:1.4,size:1.3+Math.random()*1.6}))}
+  // the box glows from inside, then squashes a little and the lid pops
+  const glow=eio(seg(t,T.glow[0],T.glow[1]));$('seam').setAttribute('opacity',glow*(.8+.2*Math.sin(t*10)));
+  $('halo').setAttribute('opacity',glow*(.55+.15*Math.sin(t*4))*(1-seg(t,T.lid[0]+.4,T.lid[1]+.6)*.5));
+  const sq=seg(t,T.squash[0],T.squash[1]),sqK=Math.sin(sq*Math.PI)*.05;
+  const L=seg(t,T.lid[0],T.lid[1]);
+  $('boxBody').setAttribute('transform',`translate(200 626) scale(${1+sqK} ${1-sqK*1.4}) translate(-200 -626)`);
+  if(L>0){once('chime',chime);once('burst',()=>{for(let i=0;i<70;i++)emit(200+(Math.random()-.5)*120,520,1,()=>({vx:(Math.random()-.5)*90,vy:-60-Math.random()*120,g:40,max:1.6+Math.random()*1.4,size:1.2+Math.random()*2.4,col:['255,224,150','255,246,220','255,205,120'][i%3]}))})}
+  const up=eout(seg(L,0,.45)),down=eio(seg(L,.45,1));
+  // final pose: leaning against the box's left side, like the 3D page
+  const lx=-135*down,ly=-110*up+(110+50)*down,lr=-14*up+(14-40)*down;
+  $('lid').setAttribute('transform',`translate(${lx} ${ly}) rotate(${lr} 200 520)`);
+  $('opening').setAttribute('opacity',seg(t,T.lid[0],T.lid[0]+.4));
+  $('beams').setAttribute('opacity',eio(seg(t,T.lid[0],T.lid[0]+.8))*(.75+.25*Math.sin(t*1.7)));
+  // village windows light one by one
+  [...$('windows').children].forEach((w,i)=>{w.style.opacity=seg(t,T.lights[0]+i*.13,T.lights[0]+i*.13+.25)});
+  // the letter: envelope rises out of the box, magic swirls, the seal pops, the flap opens, the letter slides out and unfolds
+  const t2=p2==null?0:(ts-p2)/1000,away=eio(seg(t2,T2.cardAway[0],T2.cardAway[1]));
+  const E=eout(seg(t,T.env[0],T.env[1])),U=eio(seg(t,T.unfold[0],T.unfold[1]));
+  const ex=200,ey=lerp(560,400,E)+Math.sin(t*2.2)*4*E+U*280,es=lerp(.3,1,E),er=(1-E)*-8+Math.sin(t*1.7)*2*E*(1-U);
+  const envT=`translate(${ex} ${ey}) rotate(${er}) scale(${es})`,envOp=seg(t,T.env[0],T.env[0]+.3)*(1-U);
+  ['envBack','envFront'].forEach(id=>{$(id).setAttribute('transform',envT);$(id).setAttribute('opacity',envOp)});
+  // magic: golden sparkles spiral in around the envelope, then the seal glows and pops
+  const sw=seg(t,T.swirl[0],T.swirl[1]);
+  if(sw>0&&sw<1&&state==='play')for(let k=0;k<2;k++){const a=t*7+k*Math.PI,r=lerp(150,70,sw);emit(ex+Math.cos(a)*r,ey+Math.sin(a)*r*.55,1,{vx:-Math.sin(a)*30,vy:Math.cos(a)*16-6,max:.9,size:1.3+Math.random()*1.2})}
+  const sg=seg(t,T.seal[0],T.seal[0]+.25),pop=seg(t,T.seal[0]+.2,T.seal[1]);
+  $('sealGlow').setAttribute('opacity',sg*(1-pop));
+  $('seal').setAttribute('transform',`translate(0 18) scale(${1+pop*.7})`);$('seal').setAttribute('opacity',1-pop);
+  if(pop>0){once('sealPop',()=>{bell(1568,0,.06,1.2);bell(2093,.08,.04,1);for(let i=0;i<26;i++)emit(ex,ey+18*es,1,()=>({vx:(Math.random()-.5)*140,vy:(Math.random()-.5)*120,max:.9+Math.random()*.6,size:1.2+Math.random()*1.6}))})}
+  // the flap folds back: the front half closes up, the back half opens upward behind the letter
+  const f1=seg(t,T.flap[0],(T.flap[0]+T.flap[1])/2),f2=seg(t,(T.flap[0]+T.flap[1])/2,T.flap[1]);
+  $('flapClosed').setAttribute('transform',`translate(0 -75) scale(1 ${1-eio(f1)}) translate(0 75)`);$('flapClosed').setAttribute('opacity',f1<1?1:0);
+  $('flapOpen').setAttribute('transform',`translate(0 -75) scale(1 ${-eio(f2)}) translate(0 75)`);
+  // the letter slides up out of the envelope, then floats free to the middle and grows to full size
+  const SL=eio(seg(t,T.slide[0],T.slide[1]));
+  const inX=ex,inY=ey+lerp(30,-95,SL)*es,inS=.78*es;
+  const cx=lerp(inX,200,U),cy=lerp(inY,410,U)+away*300+Math.sin(t*1.3)*2*U,cs=lerp(inS,1,eback(U)),cr=lerp(er,0,U)+Math.sin(t*.9)*.6*U;
+  $('card').setAttribute('opacity',(t>=T.flap[0]+.3?1:0)*(1-away));
+  $('card').setAttribute('transform',`translate(${cx} ${cy}) rotate(${cr}) scale(${cs})`);
+  if(U>0&&U<1&&state==='play'&&Math.random()<.5)emit(cx+(Math.random()-.5)*200,cy+(Math.random()-.5)*120,1,{vy:-14,max:.8,size:1});
+  const G=eio(seg(t2,T2.gift[0],T2.gift[1]));$('gift').setAttribute('opacity',seg(t2,T2.gift[0],T2.gift[0]+.4));
+  $('gift').setAttribute('transform',`translate(200 ${lerp(540,400,G)+Math.sin(t*1.6)*4*G}) rotate(${Math.sin(t*1.1)*6}) scale(${lerp(.4,1.15,G)})`);
+  if(G>0&&G<1&&Math.random()<.5)emit(200+(Math.random()-.5)*50,lerp(540,400,G)+30,1,{vy:-20,vx:(Math.random()-.5)*16,max:1,size:1.2});
+  // Santa waves goodbye: "Ho ho ho!"
+  const bb=seg(t,T.back[0]+.6,T.back[0]+.9)*(1-seg(t,T.back[1]-1.2,T.back[1]-.8));$('bubble').setAttribute('opacity',bb);
+  $('bubble').setAttribute('transform',`translate(${sx+30} ${sy-46*sc})`);
+  // gentle snow once it's night
+  if(nightK>.6&&Math.random()<.35)P.push({x:Math.random()*400,y:-10,vx:(Math.random()-.5)*6,vy:18+Math.random()*16,life:0,max:30,size:.8+Math.random()*1.5,kind:'snow',sway:Math.random()*6,alpha:.8});
+  drawFx(t,dt,nightK);
+  if(state==='play'&&t>=T.end){state='done';$('openGift').hidden=false;$('again').hidden=true;$('end').classList.add('on');$('skip').hidden=true}
+  if(p2!=null&&t2>=T2.end&&$('again').hidden){$('again').hidden=false;$('end').classList.add('on')}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+/* ---- start: swipe up or tap the box; skip; replay ---- */
+function start(){if(state!=='idle')return;played={};P.length=0;state='play';t0=performance.now();$('hint').style.opacity=0;setTimeout(()=>{if(state!=='idle')$('hint').hidden=true},500);$('skip').hidden=false;
+  if(reduce){t0=performance.now()-T.end*1000}}
+let y0=null;
+addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;y0=e.clientY});
+addEventListener('pointerup',e=>{if(y0==null)return;const dy=y0-e.clientY;y0=null;if(dy>30||Math.abs(dy)<8)start()});
+$('skip').onclick=()=>{t0=performance.now()-T.end*1000;soundOn&&AC&&AC.suspend&&AC.suspend().then(()=>AC.resume())};
+$('openGift').onclick=()=>{if(p2!=null)return;p2=performance.now();$('openGift').hidden=true;$('end').classList.remove('on');bell(1046.5,0,.06,1.6);bell(1318.5,.15,.05,1.6)};
+$('again').onclick=()=>{p2=null;$('again').hidden=true;state='idle';$('end').classList.remove('on');$('hint').hidden=false;$('hint').style.opacity=1;setTimeout(start,250)};
+$('sound').onclick=()=>{soundOn=!soundOn;$('sound').textContent=soundOn?'เสียง: เปิด':'เสียง: ปิด'};
+// ?autoplay=1 starts on its own (for previews)
+if(/[?&](autoplay=1|t=)/.test(location.search))setTimeout(start,300);
+})();
+</script>
+</body>
+</html>
