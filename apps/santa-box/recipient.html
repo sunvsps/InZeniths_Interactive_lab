@@ -501,9 +501,7 @@ catch(e){const n=document.createElement('p');n.className='nogl';n.textContent='�
 const C=h=>new THREE.Color(h).convertSRGBToLinear();
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(32,1,.1,100);
-const A={untie:0,bowGone:0,ribbonDrop:0,lidOpen:0,glow:0,orn:0,cam:0,tails:0,card3:0,view:0,night:1,village:1,lights:0,snow:0};
-// the scene is night from the first frame (village, moon, stars); the opening never changes the sky
-const NIGHT_KEYS=['night','village'];
+const A={untie:0,bowGone:0,ribbonDrop:0,lidOpen:0,glow:0,orn:0,cam:0,tails:0,card3:0,view:0,night:0,village:0,lights:0,snow:0};
 // gift close-up: the camera moves onto the gift; the viewer turns it (ry, rx) and zooms (1 = fits the screen, up to 2.8)
 const VIEW={on:false,ry:0,rx:0,zoom:1};
 // camera fit: the box is framed inside the empty band between this step's top text and bottom controls
@@ -928,9 +926,13 @@ addEventListener('pointerup',()=>{spin=null});addEventListener('pointercancel',(
 function untie(){
   if(untied)return;untied=true;chime();
   if(SLUG&&BOX&&!BOX.openedAt)API.open(SLUG).then(v=>{BOX=v;renderExpire()}).catch(()=>{});
-  // the ribbon unties and its tails drop; the rest of the opening (delivery, lid, envelope, letter) is OPENING.play()
+  // untie → tails drop → lid pops and rests against the box → warm glow → evening falls, the village grows;
+  // then the letter arrives in an envelope and Santa waves goodbye (OPENING)
   buzz(12);
   tw('untie',1,.3);tw('bowGone',1,.45,.25);tw('tails',1,.75,.3,eland);
+  tw('lidOpen',1,1.15,.85);setTimeout(()=>{pop();buzz(18)},reduce?0:900);
+  tw('glow',1,.9,1.45);setTimeout(()=>{emitting=true;setTimeout(()=>{emitting=false},1400)},reduce?0:1550);
+  tw('night',1,1.6,1.9);tw('village',1,1.7,2.0);tw('lights',1,.9,3.0);tw('snow',1,2.6,1.8);
   OPENING.play();
 }
 
@@ -950,7 +952,7 @@ $('playBtn').onclick=()=>{
 };
 
 $('giftBtn').onclick=()=>{stopVoice();go('gift');tw('cam',0,1);tw('glow',.55,1.2);tw('orn',1,1.6,.1,eback);setTimeout(()=>{emitting=false},2500)};
-$('replayBtn').onclick=()=>{OPENING.stop();untied=false;emitting=false;Object.keys(A).forEach(k=>tw(k,NIGHT_KEYS.includes(k)?1:0,.6));go('land')};
+$('replayBtn').onclick=()=>{OPENING.stop();untied=false;emitting=false;Object.keys(A).forEach(k=>tw(k,0,.6));go('land')};
 const SENDER_PAGE='/santa-box/wrap'; // the wrapping page (play.inzeniths.com/santa-box/wrap; /santa-box/ is the tree)
 const sendBack=()=>{location.href=SENDER_PAGE+(BOX&&BOX.senderName?'?to='+encodeURIComponent(BOX.senderName):'')};
 $('backBtn').onclick=()=>SLUG?sendBack():toast('เว็บจริงจะพาไปหน้าห่อกล่อง โดยใส่ "ลูกคนเล็ก" เป็นผู้รับไว้ให้แล้ว');
@@ -1149,11 +1151,10 @@ if(SLUG){
   });
 }
 
-/* ================= opening: the letter arrives in an envelope (every occasion) + seasonal delivery (Christmas: Santa) =================
-   ~10 s from untying to the letter ready to read:
-   untie → [theme: Santa flies past the moon, swoops low and sprinkles golden dust] → the box glows → the lid pops →
+/* ================= opening: the letter arrives in an envelope (every occasion) + seasonal touch (Christmas: Santa) =================
+   After untie() has popped the lid and evening has fallen (as before), ~7 s from untying to "ดูของในกล่อง":
    an envelope rises out of the box → golden magic swirls round it → the wax seal pops → the flap opens →
-   the letter slides out and becomes the real card (message + voice) → [theme: Santa waves goodbye] → "ดูของในกล่อง". */
+   the letter slides out and becomes the real card (message + voice) → [theme: Santa flies by and waves goodbye]. */
 const OPENING=(function(){
   const svg=$('fxSvg'),cv=$('fxCv'),g2=cv.getContext('2d'),app=$('app');
   const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v)),seg=(t,a,b)=>clamp((t-a)/(b-a)),lerp=(a,b,p)=>a+(b-a)*p;
@@ -1181,7 +1182,7 @@ const OPENING=(function(){
   /* ---- the seasonal delivery: Christmas = Santa and his reindeer (another occasion can supply its own) ---- */
   const THEMES={
     christmas:{
-      at:{fly:[.6,2.2],swoop:[2.2,3.5],back:[8.6,10.4]},
+      at:{fly:[0,0],swoop:[0,0],back:[5.4,7.6]},   // fly-in and dust swoop are off; only the goodbye
       frame(t,dt,state){
         const T=this.at,[bx,by]=boxAt(),[mx,my]=moonAt(),u=Math.min(W,H)/400;
         const IN=[[-90*u,H*.42],[W*.15,my-80*u],[mx-60*u,my-50*u],[W*.82,H*.3]],SWOOP=[[W*.82,H*.3],[W*1.05,by-20*u],[bx+90*u,by-70*u],[bx-140*u,by-60*u]],OUT=[[-80*u,H*.24],[W*.2,H*.18],[W*.55,my-70*u],[W+120*u,my-30*u]];
@@ -1200,7 +1201,7 @@ const OPENING=(function(){
   const THEME=THEMES.christmas;   // this season
 
   /* ---- the core timeline (seconds after untying) ---- */
-  const T={glow:[2.6,3.9],lid:3.9,env:[4.8,6],swirl:[5.8,6.9],seal:[6.8,7.15],flap:[7.1,7.7],slide:[7.6,8.4],card:8.3,sink:[8.3,9.1],giftBtn:9.6,end:10.6};
+  const T={env:[2,3.2],swirl:[3,4.1],seal:[4,4.35],flap:[4.3,4.9],slide:[4.8,5.6],card:5.5,sink:[5.5,6.3],giftBtn:6.8,end:8};
   let t0=0,run=false,raf=0,last=0,timers=[],played={};
   const state={live:false,once:(k,fn)=>{if(!played[k]){played[k]=1;fn()}}};
   const later=(s,fn)=>timers.push(setTimeout(fn,s*1000));
@@ -1209,8 +1210,6 @@ const OPENING=(function(){
   function frame(ts){if(!run)return;const dt=Math.min(.05,(ts-last)/1000);last=ts;const t=(ts-t0)/1000;
     THEME.frame(t,dt,state);
     const [bx,by]=boxAt(),u=Math.min(W,H)/400;
-    // the box glows from inside while the dust settles
-    const gl=eio(seg(t,...T.glow))*(1-seg(t,T.lid+.3,T.lid+1.2)*.7);set('fxHalo',{cx:bx,cy:by+30*u,rx:150*u,ry:120*u,opacity:gl*(.6+.15*Math.sin(t*4))});
     // envelope: rises out of the box to the upper middle, floats, fades away after the letter is out
     const E=eout(seg(t,...T.env)),S=eio(seg(t,...T.sink)),ex=W/2,ey=lerp(by,H*.4,E)+Math.sin(t*2.2)*4*u*E+S*H*.45,es=lerp(.3,1,E)*Math.min(1.15,W/330),er=(1-E)*-8+Math.sin(t*1.7)*2*E;
     const envT=`translate(${ex} ${ey}) rotate(${er}) scale(${es})`,envOp=seg(t,T.env[0],T.env[0]+.3)*(1-S);
@@ -1237,17 +1236,13 @@ const OPENING=(function(){
 
   function play(){
     stop();reset();played={};
-    if(reduce){tw('lidOpen',1,.01);tw('glow',1,.01);tw('lights',1,.01);handOver();return}
+    if(reduce){handOver();return}
     document.documentElement.classList.add('opening');$('skipOpen').hidden=false;
-    // the 3D box: lid pops after the delivery, light and sparkles from inside, windows light, snow
-    later(T.lid,()=>{tw('lidOpen',1,1.15);setTimeout(()=>{pop();buzz(18)},500)});
-    later(T.lid+.5,()=>{tw('glow',1,.9);emitting=true;setTimeout(()=>{emitting=false},1400)});
-    later(T.lid+.1,()=>{tw('lights',1,1.4);tw('snow',1,2.6)});
     later(T.card,handOver);
     state.live=true;t0=last=performance.now();run=true;raf=requestAnimationFrame(frame);
   }
   /** jump straight to the open box and the letter */
-  function skip(){if(!run)return;stop();reset();tw('lidOpen',1,.35);tw('glow',1,.4);tw('lights',1,.4);tw('snow',1,.6);handOver()}
+  function skip(){if(!run)return;stop();reset();tw('lidOpen',1,.35);tw('glow',1,.4);tw('night',1,.4);tw('village',1,.5);tw('lights',1,.4);tw('snow',1,.6);handOver()}
   $('skipOpen').onclick=skip;
   return {play,skip,stop:()=>{stop();reset()}};
 })();
