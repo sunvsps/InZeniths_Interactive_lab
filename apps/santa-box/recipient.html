@@ -264,6 +264,8 @@ html.night #santa{color:#F6EFE9;opacity:.9}
     <defs>
       <radialGradient id="fxWarm"><stop offset="0" stop-color="#FFE7A6" stop-opacity=".95"/><stop offset=".45" stop-color="#FFD27A" stop-opacity=".45"/><stop offset="1" stop-color="#FFC060" stop-opacity="0"/></radialGradient>
       <filter id="fxSoft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
+      <!-- the letter is only seen inside the envelope (and above its open top), never below or beside it -->
+      <clipPath id="fxEnvClip"><rect x="-118" y="-600" width="236" height="673"/></clipPath>
     </defs>
     <ellipse id="fxHalo" rx="1" ry="1" fill="url(#fxWarm)" opacity="0"/>
     <g id="fxSleigh" opacity="0"><g transform="translate(-75 -31)" fill="#FBEFD8">
@@ -284,8 +286,8 @@ html.night #santa{color:#F6EFE9;opacity:.9}
     <!-- envelope: back (and the flap once open) / the letter peeking out / front pocket, closed flap, wax seal -->
     <g id="fxEnvBack" opacity="0"><rect x="-120" y="-75" width="240" height="150" rx="4" fill="#E8D7BD"/>
       <path id="fxFlapOpen" d="M-120 -75 L0 18 L120 -75Z" fill="#F1E2CB" stroke="#E1CFB3" transform="scale(1 0)"/></g>
-    <g id="fxPaper" opacity="0"><rect x="-108" y="-66" width="216" height="140" rx="3" fill="#FBF7F0" stroke="#E6DACB"/>
-      <rect x="-90" y="-46" width="110" height="7" rx="3.5" fill="#E9DFD1"/><rect x="-90" y="-28" width="170" height="7" rx="3.5" fill="#EFE6DA"/><rect x="-90" y="-12" width="150" height="7" rx="3.5" fill="#EFE6DA"/></g>
+    <g id="fxPaper" opacity="0"><g clip-path="url(#fxEnvClip)"><g id="fxPaperIn"><rect x="-106" y="-66" width="212" height="134" rx="3" fill="#FBF7F0" stroke="#E6DACB"/>
+      <rect x="-90" y="-46" width="110" height="7" rx="3.5" fill="#E9DFD1"/><rect x="-90" y="-28" width="170" height="7" rx="3.5" fill="#EFE6DA"/><rect x="-90" y="-12" width="150" height="7" rx="3.5" fill="#EFE6DA"/></g></g></g>
     <g id="fxEnvFront" opacity="0">
       <path d="M-120 -75 L0 12 L120 -75 L120 71 Q120 75 116 75 L-116 75 Q-120 75 -120 71Z" fill="#F8ECDA" stroke="#E3D2B8"/>
       <path d="M-118 73 L-14 6 M118 73 L14 6" stroke="#E6D5BB" stroke-width="1.2" fill="none"/>
@@ -1201,8 +1203,8 @@ const OPENING=(function(){
   const THEME=THEMES.christmas;   // this season
 
   /* ---- the core timeline (seconds after untying) ---- */
-  const T={env:[2,3.2],swirl:[3,4.1],seal:[4,4.35],flap:[4.3,4.9],slide:[4.8,5.6],card:5.5,sink:[5.5,6.3],giftBtn:6.8,end:8};
-  let t0=0,run=false,raf=0,last=0,timers=[],played={};
+  const T={env:[2,3.2],swirl:[3,4.1],seal:[4,4.35],flap:[4.3,4.9],slide:[4.8,5.7],card:5.75,sink:[5.75,6.5],giftBtn:7,end:8.2};
+  let t0=0,run=false,raf=0,last=0,timers=[],played={},PAPER=null;
   const state={live:false,once:(k,fn)=>{if(!played[k]){played[k]=1;fn()}}};
   const later=(s,fn)=>timers.push(setTimeout(fn,s*1000));
   function reset(){['fxSleigh','fxBubble','fxEnvBack','fxEnvFront','fxPaper','fxHalo'].forEach(id=>set(id,{opacity:0}));P.length=0;drawFx(0)}
@@ -1221,7 +1223,9 @@ const OPENING=(function(){
     const f1=seg(t,T.flap[0],(T.flap[0]+T.flap[1])/2),f2=seg(t,(T.flap[0]+T.flap[1])/2,T.flap[1]);
     set('fxFlap',{transform:`translate(0 -75) scale(1 ${1-eio(f1)}) translate(0 75)`,opacity:f1<1?1:0});set('fxFlapOpen',{transform:`translate(0 -75) scale(1 ${-eio(f2)}) translate(0 75)`});
     // the letter slides up out of the envelope (then the real card takes over)
-    const SL=eio(seg(t,...T.slide));set('fxPaper',{opacity:t>=T.flap[0]+.3&&t<T.card+.05?envOp:0,transform:`translate(${ex} ${ey+lerp(28,-80,SL)*es}) rotate(${er}) scale(${es})`});
+    const SL=eio(seg(t,...T.slide));set('fxPaper',{opacity:t>=T.flap[0]+.3&&t<T.card+.05?envOp:0,transform:envT});// slides until the whole sheet is above the envelope's top edge
+    set('fxPaperIn',{transform:`translate(0 ${lerp(4,-150,SL)})`});
+    PAPER={x:ex,y:ey+(lerp(4,-150,SL)+1)*es,w:212*es};
     drawFx(dt);
     if(t>T.end){stop();return}
     raf=requestAnimationFrame(frame)}
@@ -1230,7 +1234,8 @@ const OPENING=(function(){
   function handOver(){
     stopVoice();go('card');const c=$('cardEl'),b=$('giftBtn');
     requestAnimationFrame(()=>{const r=c.getBoundingClientRect(),a=app.getBoundingClientRect(),u=Math.min(W,H)/400,es=Math.min(1.15,W/330);
-      const px=a.left+W/2,py=a.top+H*.4-80*es,s=Math.min(1,216*es/r.width);
+      // start as the paper (same place, same width) above the envelope, then settle into place
+      const pp=PAPER||{x:W/2,y:H*.4-149*es,w:212*es},px=a.left+pp.x,py=a.top+pp.y,s=Math.min(1,pp.w/r.width);
       c.animate([{transform:`translate(${px-(r.left+r.width/2)}px,${py-(r.top+r.height/2)}px) scale(${s})`,opacity:.9},{transform:'none',opacity:1}],{duration:reduce?1:1100,easing:'cubic-bezier(.2,.9,.3,1)'});
       b.animate([{opacity:0},{opacity:0,offset:.6},{opacity:1}],{duration:reduce?1:(T.giftBtn-T.card)*1000+400,easing:'ease-out'})})}
 
