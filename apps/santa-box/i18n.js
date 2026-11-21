@@ -116,6 +116,7 @@ window.I18N = (function () {
     'สัญญาว่าจะ… เช่น พาไปกินข้าวร้านโปรด 1 มื้อ': 'I promise to… e.g. take you to your favourite restaurant',
     'ข้อความคูปอง': 'Coupon text',
     'รูปความทรงจำ': 'Memory photo',
+    'แตะเพื่อดูรูปเต็ม': 'Tap to see it full size',
     'ไม่บังคับ ถ้าไม่ใส่รูป ผู้รับจะไม่เห็นช่องนี้': "Optional. Without a photo, they won't see this.",
     'เลือกรูป': 'Choose photo',
     'ยังไม่ได้เลือกรูป': 'No photo yet',

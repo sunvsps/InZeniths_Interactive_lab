@@ -479,7 +479,7 @@ a.btn{display:block;text-align:center;text-decoration:none}
   </div>
 </div>
 
-<script src="i18n.js?v=20261121h"></script>
+<script src="i18n.js?v=20261121i"></script>
 <script src="santa-api.js?v=20261121"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -783,7 +783,9 @@ function frame(now){
     camera.position.set(GV_T.x,GV_T.y+d*Math.sin(pp),GV_T.z+d*Math.cos(pp));camera.lookAt(GV_T);
     if(!drag){spinY+=spinV;spinV*=.94;pitch+=(0-pitch)*.04}
     root.rotation.y=spinY+(reduce||touched?0:Math.sin(T*.35)*.25);
-    const H=1.1*A.hover*(1-A.drop);lid.position.set(.85*A.lift,.6*A.lift+H,-1.25*A.lift);lid.rotation.set(-.55*A.lift,0,-.12*A.lift);
+    // the lifted lid always goes behind the box as seen from the camera, however far the box has been spun
+    const H=1.1*A.hover*(1-A.drop),ry=root.rotation.y,yaw=-Math.atan2(Math.sin(ry),Math.cos(ry))*A.lift,cy=Math.cos(yaw),sy=Math.sin(yaw),lx=.85*A.lift,lz=-1.25*A.lift;
+    lid.position.set(lx*cy+lz*sy,.6*A.lift+H,-lx*sy+lz*cy);lid.rotation.set(-.55*A.lift,yaw,-.12*A.lift,'YXZ');
     const pl=1+Math.sin(Math.min(1,A.pulse)*Math.PI)*.25;bow.scale.setScalar(Math.max(.001,A.bowIn)*pl);
     orn.visible=A.orn>.01;orn.position.y=1.1+A.orn*.75;orn.scale.setScalar(.15+.55*A.orn);orn.rotation.y=-root.rotation.y+Math.sin(T*.6)*.35*(1-A.view)+VIEW.ry*A.view;orn.rotation.x=VIEW.rx*A.view;
     const p=pts.geometry.attributes.position.array;

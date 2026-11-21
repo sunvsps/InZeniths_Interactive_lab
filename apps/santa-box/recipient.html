@@ -147,6 +147,11 @@ html.night .counter{color:#D6CDD9}
 .meaning{font-family:var(--f-serif);font-size:14px;line-height:1.5;margin:2px 0 0;max-width:32ch;text-wrap:balance}
 .keeps{display:flex;align-items:center;gap:12px;width:100%}
 .keeps .ticket{flex:1;min-width:0}
+.keeps.solo{justify-content:center;gap:16px}
+.keeps.solo .memo{width:78px}
+.memoCap{border:0;background:none;padding:0;text-align:left;color:var(--ink);cursor:zoom-in}
+.memoCap small{display:block;font-size:9.5px;letter-spacing:.22em;color:var(--accent);font-weight:500}
+.memoCap span{display:block;font-family:var(--f-serif);font-size:15px;margin-top:2px}
 /* candy-cane frame: red and white stripes around a white polaroid */
 .memo{flex:none;width:66px;padding:4px;border:0;border-radius:3px;background:repeating-linear-gradient(45deg,#C8202F 0 5px,#fff 5px 10px);box-shadow:0 6px 14px -8px rgba(60,40,20,.5);transform:rotate(-3deg);cursor:zoom-in}
 .memo img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border:3px solid #fff;border-bottom-width:9px;background:#fff}
@@ -329,8 +334,10 @@ html.night #santa{color:#F6EFE9;opacity:.9}
     </div>
     <div class="bot">
       <!-- keepsakes: a small photo you can open, beside the promise coupon -->
-      <div class="keeps">
+      <div class="keeps" id="keeps">
         <button class="memo" id="memoBtn" type="button" aria-label="ดูรูปความทรงจำ" hidden><img id="memoImg" alt="รูปความทรงจำจากผู้ส่ง"></button>
+        <!-- photo without a coupon: a caption beside it, so the photo isn't left alone at the edge -->
+        <button class="memoCap" id="memoCap" type="button" tabindex="-1" aria-hidden="true" hidden><small>รูปความทรงจำ</small><span>แตะเพื่อดูรูปเต็ม</span></button>
         <div class="ticket" id="ticket"><span class="k">IOU</span><div><small>คูปองสัญญา</small><p data-no-i18n>พาไปกินข้าวร้านโปรด 1 มื้อ</p></div></div>
       </div>
       <div class="row">
@@ -405,7 +412,7 @@ html.night #santa{color:#F6EFE9;opacity:.9}
   </div>
 </div>
 
-<script src="/santa-box/i18n.js?v=20261121h"></script>
+<script src="/santa-box/i18n.js?v=20261121i"></script>
 <script src="/santa-box/santa-api.js?v=20261121"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -862,7 +869,7 @@ function closeView(){if(!VIEW.on)return;VIEW.on=false;$('giftView').hidden=true;
 $('gvClose').onclick=closeView;$('zoomHint').onclick=openView;
 addEventListener('keydown',e=>{if(e.key==='Escape'){closeView();$('photoBox').hidden=true}});
 // photo pop-up
-$('memoBtn').onclick=()=>{$('photoBig').src=$('memoImg').src;$('photoBox').hidden=false};
+$('memoBtn').onclick=$('memoCap').onclick=()=>{$('photoBig').src=$('memoImg').src;$('photoBox').hidden=false};
 $('gl').addEventListener('pointermove',e=>{if(!spin||spin.view)return;const ny=spin.y0+(e.clientX-spin.x)*.012;spinV=Math.max(-.2,Math.min(.2,ny-spinY));spinY=ny;pitch=Math.min(.7,Math.max(-.25,spin.p0+(e.clientY-spin.y)*.006))});
 addEventListener('pointerup',()=>{spin=null});addEventListener('pointercancel',()=>{spin=null});
 
@@ -1031,6 +1038,7 @@ function showBox(v){
   if(typeof showGift==='function')showGift(d.id);
   $('ticket').hidden=!P.gift.coupon;if(P.gift.coupon)$('ticket').querySelector('p').textContent=P.gift.coupon;
   $('memoBtn').hidden=!v.photoUrl;if(v.photoUrl)$('memoImg').src=v.photoUrl;
+  const solo=!!v.photoUrl&&!P.gift.coupon;$('memoCap').hidden=!solo;$('keeps').classList.toggle('solo',solo);
   $('voice').hidden=!v.voice;if(v.voice){const n=v.voice.playableSeconds||0;setText('#voice .vmeta span',`${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`)}
   SONG_ID=P.music;$('musicBtn').hidden=!SONGS[SONG_ID];if(SONGS[SONG_ID])$('musicBtn').querySelector('.nm').textContent=SONGS[SONG_ID].n;
   renderExpire();
