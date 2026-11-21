@@ -191,9 +191,18 @@ html.night .counter{color:#D6CDD9}
     linear-gradient(180deg,#121A33 0%,#1F2B4D 28%,#4A4D72 48%,rgba(160,150,170,.35) 60%,rgba(251,248,244,0) 70%)}
 #sky .moon{position:absolute;top:13%;right:14%;width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 38% 36%,#FFFBEA,#F3E2B0 70%);box-shadow:0 0 30px 10px rgba(255,236,180,.35)}
 #gl{position:relative;z-index:1}
+/* opening overlay: above the 3D box, under the step text and header */
+#fxSvg,#fxCv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;display:block}
+#fxSvg{overflow:visible}
+#fxSvg .leg{transform-box:fill-box;transform-origin:top center;animation:gallop .3s ease-in-out infinite alternate}
+#fxSvg .leg.b{animation-delay:-.15s}
+#skipOpen{position:absolute;z-index:6;top:calc(62px + env(safe-area-inset-top,0px));right:max(14px,env(safe-area-inset-right,0px))}
+html.opening #santa{display:none}
+html.opening #s-untie .top,html.opening #s-untie .bot{opacity:0;transition:opacity .4s}
 /* text above the evening sky turns light */
 html.night .logo{color:#F4D9A6}
 html.night .step .top{color:#F6EFE9}
+html.night .step .top .sub b{color:#F6EFE9}
 html.night .step .top .eyebrow,html.night .step .top .sub,html.night .step .top .caption,html.night .zoomhint{color:#D6CDD9}
 html.night #giftView .gv-top{color:#F6EFE9}html.night #giftView .eyebrow{color:#D6CDD9}
 html.night #santa{color:#F6EFE9;opacity:.9}
@@ -250,6 +259,49 @@ html.night #santa{color:#F6EFE9;opacity:.9}
   <!-- scene C: evening falls over the top of the screen once the box is open -->
   <div id="sky" aria-hidden="true"><i class="moon"></i></div>
   <canvas id="gl" aria-label="กล่องของขวัญสามมิติ"></canvas>
+  <!-- opening overlay: the letter's envelope (every occasion) and the seasonal delivery (Christmas: Santa's sleigh) -->
+  <svg id="fxSvg" aria-hidden="true">
+    <defs>
+      <radialGradient id="fxWarm"><stop offset="0" stop-color="#FFE7A6" stop-opacity=".95"/><stop offset=".45" stop-color="#FFD27A" stop-opacity=".45"/><stop offset="1" stop-color="#FFC060" stop-opacity="0"/></radialGradient>
+      <filter id="fxSoft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
+      <!-- the letter is only seen inside the envelope (and above its open top), never below or beside it -->
+      <clipPath id="fxEnvClip"><rect x="-118" y="-600" width="236" height="673"/></clipPath>
+    </defs>
+    <ellipse id="fxHalo" rx="1" ry="1" fill="url(#fxWarm)" opacity="0"/>
+    <g id="fxSleigh" opacity="0"><g transform="translate(-75 -31)" fill="#FBEFD8">
+      <path d="M44 30 C70 22 92 26 104 24" stroke="#FBEFD8" stroke-width="1" fill="none" opacity=".7"/>
+      <g class="leg"><rect x="100" y="34" width="2.6" height="16" rx="1.3"/></g><g class="leg b"><rect x="106" y="34" width="2.6" height="16" rx="1.3"/></g>
+      <g class="leg b"><rect x="119" y="33" width="2.6" height="16" rx="1.3"/></g><g class="leg"><rect x="125" y="33" width="2.6" height="16" rx="1.3"/></g>
+      <ellipse cx="113" cy="30" rx="17" ry="8"/><path d="M124 27 L131 14 L137 18 L130 30 Z"/><ellipse cx="136" cy="14" rx="7" ry="5"/>
+      <path d="M131 10 l-3 -8 M130 6 l-5 -1 M134 9 l1 -8 M134.5 4 l4 -2" stroke="#FBEFD8" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+      <circle cx="143" cy="15" r="5.5" fill="#FF5A4A" opacity=".45" filter="url(#fxSoft)"/><circle cx="143" cy="15" r="2.8" fill="#FF6B5A"/>
+      <path d="M96 28 q-6 -2 -7 2" stroke="#FBEFD8" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <circle cx="20" cy="22" r="9"/><circle cx="34" cy="21" r="9.5"/><circle cx="39" cy="10" r="5"/><path d="M33 8 q6 -9 13 -1 q-6 -2 -13 1z"/>
+      <rect id="fxArm" x="41" y="0" width="3.2" height="13" rx="1.6" transform="rotate(-20 42 13)"/>
+      <path d="M6 26 h44 q8 0 6 10 q-2 6 -10 6 H16 Q6 42 6 32 Z"/><path d="M2 48 H50 q8 0 10 -6" stroke="#FBEFD8" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M14 42 v6 M44 42 v6" stroke="#FBEFD8" stroke-width="2"/>
+    </g></g>
+    <g id="fxBubble" opacity="0"><rect x="-44" y="-16" width="88" height="28" rx="14" fill="#FBF8F4"/><path d="M-22 12 l-8 10 16 -10z" fill="#FBF8F4"/>
+      <text x="0" y="4" text-anchor="middle" font-family="Cormorant Garamond,serif" font-style="italic" font-weight="600" font-size="17" fill="#B3202E">Ho ho ho!</text></g>
+    <!-- envelope: back (and the flap once open) / the letter peeking out / front pocket, closed flap, wax seal -->
+    <g id="fxEnvBack" opacity="0"><rect x="-120" y="-75" width="240" height="150" rx="4" fill="#E8D7BD"/>
+      <path id="fxFlapOpen" d="M-120 -75 L0 18 L120 -75Z" fill="#F1E2CB" stroke="#E1CFB3" transform="scale(1 0)"/></g>
+    <g id="fxPaper" opacity="0"><g clip-path="url(#fxEnvClip)"><g id="fxPaperIn"><rect x="-106" y="-66" width="212" height="134" rx="3" fill="#FBF7F0" stroke="#E6DACB"/>
+      <rect x="-90" y="-46" width="110" height="7" rx="3.5" fill="#E9DFD1"/><rect x="-90" y="-28" width="170" height="7" rx="3.5" fill="#EFE6DA"/><rect x="-90" y="-12" width="150" height="7" rx="3.5" fill="#EFE6DA"/></g></g></g>
+    <g id="fxEnvFront" opacity="0">
+      <path d="M-120 -75 L0 12 L120 -75 L120 71 Q120 75 116 75 L-116 75 Q-120 75 -120 71Z" fill="#F8ECDA" stroke="#E3D2B8"/>
+      <path d="M-118 73 L-14 6 M118 73 L14 6" stroke="#E6D5BB" stroke-width="1.2" fill="none"/>
+      <path id="fxFlap" d="M-120 -75 L0 18 L120 -75Z" fill="#F4E5CF" stroke="#E1CFB3"/>
+      <g id="fxSeal" transform="translate(0 18)">
+        <circle r="34" fill="url(#fxWarm)" id="fxSealGlow" opacity="0"/>
+        <path d="M0 -17 C9 -17 17 -9 17 0 C17 9 9 17 0 17 C-9 17 -17 9 -17 0 C-17 -9 -9 -17 0 -17Z M-19 2 l3 -3 M18 -4 l2 3 M4 18 l-2 2" fill="#B3202E" stroke="#B3202E" stroke-width="2"/>
+        <circle r="11.5" fill="none" stroke="#8E1622" stroke-width="1.4"/>
+        <path d="M0 -8 L1.6 -1.6 L8 0 L1.6 1.6 L0 8 L-1.6 1.6 L-8 0 L-1.6 -1.6Z M-5 -5 L5 5 M5 -5 L-5 5" fill="#E7C26A" stroke="#E7C26A" stroke-width="1"/>
+      </g>
+    </g>
+  </svg>
+  <canvas id="fxCv" aria-hidden="true"></canvas>
+  <button class="pill" id="skipOpen" hidden>ข้าม</button>
 
   <header class="hdr">
     <span class="brand"><span class="logo">Santa Box</span><span class="brand-sub"><span class="sample" id="sampleTag">ตัวอย่าง</span><span class="counter" id="boxCount" hidden></span></span></span>
@@ -412,7 +464,7 @@ html.night #santa{color:#F6EFE9;opacity:.9}
   </div>
 </div>
 
-<script src="/santa-box/i18n.js?v=20261121i"></script>
+<script src="/santa-box/i18n.js?v=20261121j"></script>
 <script src="/santa-box/santa-api.js?v=20261121"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -829,7 +881,7 @@ requestAnimationFrame(frame);
 
 /* ================= steps ================= */
 let step='land',untied=false;
-function go(s){step=s;['transit','land','untie','card','gift'].forEach(k=>$('s-'+k).hidden=k!==s);fitView();setTimeout(fitView,120);setTimeout(fitView,1100)}
+function go(s){step=s;if(s==='card')tw('cam',1,1);['transit','land','untie','card','gift'].forEach(k=>$('s-'+k).hidden=k!==s);fitView();setTimeout(fitView,120);setTimeout(fitView,1100)}
 if(document.fonts)document.fonts.ready.then(()=>setTimeout(fitView,0));
 
 // colourways
@@ -876,15 +928,14 @@ addEventListener('pointerup',()=>{spin=null});addEventListener('pointercancel',(
 function untie(){
   if(untied)return;untied=true;chime();
   if(SLUG&&BOX&&!BOX.openedAt)API.open(SLUG).then(v=>{BOX=v;renderExpire()}).catch(()=>{});
-  // design A: untie → tails drop → lid pops and rests against the box → warm glow → card rises out (≈3 s)
+  // untie → tails drop → lid pops and rests against the box → warm glow → evening falls, the village grows;
+  // then the letter arrives in an envelope and Santa waves goodbye (OPENING)
   buzz(12);
   tw('untie',1,.3);tw('bowGone',1,.45,.25);tw('tails',1,.75,.3,eland);
   tw('lidOpen',1,1.15,.85);setTimeout(()=>{pop();buzz(18)},reduce?0:900);
   tw('glow',1,.9,1.45);setTimeout(()=>{emitting=true;setTimeout(()=>{emitting=false},1400)},reduce?0:1550);
-  tw('card3',1,1.05,2.05);
-  // scene C: evening falls, the village grows, windows light, snow rises from the box and stays in the air
   tw('night',1,1.6,1.9);tw('village',1,1.7,2.0);tw('lights',1,.9,3.0);tw('snow',1,2.6,1.8);
-  setTimeout(()=>{tw('cam',1,1);go('card')},reduce?300:2950);
+  OPENING.play();
 }
 
 // voice (demo with speech synthesis)
@@ -903,7 +954,7 @@ $('playBtn').onclick=()=>{
 };
 
 $('giftBtn').onclick=()=>{stopVoice();go('gift');tw('cam',0,1);tw('glow',.55,1.2);tw('orn',1,1.6,.1,eback);setTimeout(()=>{emitting=false},2500)};
-$('replayBtn').onclick=()=>{untied=false;emitting=false;Object.keys(A).forEach(k=>tw(k,0,.6));go('land')};
+$('replayBtn').onclick=()=>{OPENING.stop();untied=false;emitting=false;Object.keys(A).forEach(k=>tw(k,0,.6));go('land')};
 const SENDER_PAGE='/santa-box/wrap'; // the wrapping page (play.inzeniths.com/santa-box/wrap; /santa-box/ is the tree)
 const sendBack=()=>{location.href=SENDER_PAGE+(BOX&&BOX.senderName?'?to='+encodeURIComponent(BOX.senderName):'')};
 $('backBtn').onclick=()=>SLUG?sendBack():toast('เว็บจริงจะพาไปหน้าห่อกล่อง โดยใส่ "ลูกคนเล็ก" เป็นผู้รับไว้ให้แล้ว');
@@ -1101,6 +1152,105 @@ if(SLUG){
     toast('ยังไม่ได้รับยืนยันการชำระเงิน ถ้าจ่ายแล้วจะอัปเดตภายในไม่กี่นาที');
   });
 }
+
+/* ================= opening: the letter arrives in an envelope (every occasion) + seasonal touch (Christmas: Santa) =================
+   After untie() has popped the lid and evening has fallen (as before), ~7 s from untying to "ดูของในกล่อง":
+   an envelope rises out of the box → golden magic swirls round it → the wax seal pops → the flap opens →
+   the letter slides out and becomes the real card (message + voice) → [theme: Santa flies by and waves goodbye]. */
+const OPENING=(function(){
+  const svg=$('fxSvg'),cv=$('fxCv'),g2=cv.getContext('2d'),app=$('app');
+  const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v)),seg=(t,a,b)=>clamp((t-a)/(b-a)),lerp=(a,b,p)=>a+(b-a)*p;
+  const eout=p=>1-Math.pow(1-p,3),bez=(p,t)=>{const u=1-t;return[0,1].map(i=>u*u*u*p[0][i]+3*u*u*t*p[1][i]+3*u*t*t*p[2][i]+t*t*t*p[3][i])};
+  let W=0,H=0,DPR=1;function fit(){W=app.clientWidth;H=app.clientHeight;DPR=Math.min(devicePixelRatio||1,2);cv.width=W*DPR;cv.height=H*DPR;svg.setAttribute('viewBox',`0 0 ${W} ${H}`)}
+  addEventListener('resize',fit);fit();
+  const set=(id,a)=>{const e=$(id);for(const k in a)e.setAttribute(k,a[k])};
+  /** where the top of the 3D box is on screen */
+  const V=new THREE.Vector3();function boxAt(y=1.45){V.set(0,y,0).project(camera);return[(V.x+1)/2*W,(1-V.y)/2*H]}
+  function moonAt(){const m=document.querySelector('#sky .moon'),r=m&&m.getBoundingClientRect(),a=app.getBoundingClientRect();return r&&r.width?[r.left-a.left+r.width/2,r.top-a.top+r.height/2]:[W*.78,H*.16]}
+
+  /* ---- golden sparkles (canvas) ---- */
+  const P=[];
+  function emit(x,y,n,o){for(let i=0;i<n;i++)P.push(Object.assign({x,y,vx:(Math.random()-.5)*20,vy:(Math.random()-.5)*20,life:0,max:1+Math.random()*.8,size:1.5+Math.random()*2,g:0,col:'255,224,150'},typeof o==='function'?o():o))}
+  function star4(x,y,r,a,col){g2.globalAlpha=a;g2.fillStyle=`rgb(${col})`;g2.beginPath();g2.moveTo(x,y-r*2);g2.lineTo(x+r*.45,y-r*.45);g2.lineTo(x+r*2,y);g2.lineTo(x+r*.45,y+r*.45);g2.lineTo(x,y+r*2);g2.lineTo(x-r*.45,y+r*.45);g2.lineTo(x-r*2,y);g2.lineTo(x-r*.45,y-r*.45);g2.closePath();g2.fill();
+    const gr=g2.createRadialGradient(x,y,0,x,y,r*3.4);gr.addColorStop(0,`rgba(${col},${.5*a})`);gr.addColorStop(1,`rgba(${col},0)`);g2.globalAlpha=1;g2.fillStyle=gr;g2.fillRect(x-r*3.4,y-r*3.4,r*6.8,r*6.8)}
+  function drawFx(dt){g2.setTransform(DPR,0,0,DPR,0,0);g2.clearRect(0,0,W,H);
+    for(let i=P.length-1;i>=0;i--){const p=P[i];p.life+=dt;if(p.life>p.max){P.splice(i,1);continue}p.vy+=p.g*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;
+      const k=p.life/p.max;star4(p.x,p.y,p.size*(.6+.4*Math.sin(p.life*14+i)),k<.15?k/.15:1-(k-.15)/.85,p.col)}g2.globalAlpha=1}
+
+  /* ---- sounds on top of the page's own bells ---- */
+  function ring(f,when,vol,dur){if(!ac())return;const o=ctx.createGain();o.gain.value=vol;o.connect(ctx.destination);bell(o,f,ctx.currentTime+when,dur,1)}
+  const jingle=len=>{for(let i=0;i<len*9;i++)ring(1900+Math.random()*700,i/9+Math.random()*.04,.03,.2)};
+
+  /* ---- the seasonal delivery: Christmas = Santa and his reindeer (another occasion can supply its own) ---- */
+  const THEMES={
+    christmas:{
+      at:{fly:[0,0],swoop:[0,0],back:[5.4,7.6]},   // fly-in and dust swoop are off; only the goodbye
+      frame(t,dt,state){
+        const T=this.at,[bx,by]=boxAt(),[mx,my]=moonAt(),u=Math.min(W,H)/400;
+        const IN=[[-90*u,H*.42],[W*.15,my-80*u],[mx-60*u,my-50*u],[W*.82,H*.3]],SWOOP=[[W*.82,H*.3],[W*1.05,by-20*u],[bx+90*u,by-70*u],[bx-140*u,by-60*u]],OUT=[[-80*u,H*.24],[W*.2,H*.18],[W*.55,my-70*u],[W+120*u,my-30*u]];
+        let x=0,y=0,dir=1,sc=.5,op=0;
+        if(t>=T.fly[0]&&t<T.fly[1]){const p=eio(seg(t,...T.fly));[x,y]=bez(IN,p);sc=lerp(.45,.8,p);op=seg(t,T.fly[0],T.fly[0]+.3);state.once('j1',()=>jingle(1.5))}
+        else if(t>=T.swoop[0]&&t<T.swoop[1]){const p=eio(seg(t,...T.swoop));[x,y]=bez(SWOOP,p);dir=p<.3?1:-1;sc=lerp(.8,1.05,Math.sin(p*Math.PI));op=1-seg(t,T.swoop[1]-.35,T.swoop[1]);state.once('j2',()=>jingle(1.2))}
+        else if(t>=T.back[0]&&t<T.back[1]){const p=seg(t,...T.back);[x,y]=bez(OUT,eio(p));sc=lerp(.85,.45,p);op=seg(t,T.back[0],T.back[0]+.3)*(1-seg(t,T.back[1]-.4,T.back[1]));state.once('j3',()=>jingle(1.8))}
+        sc*=u;set('fxSleigh',{opacity:op,transform:`translate(${x} ${y}) scale(${dir*sc} ${sc}) rotate(${Math.sin(t*3)*3})`});
+        set('fxArm',{transform:t>=T.back[0]?`rotate(${-20+Math.sin(t*9)*30} 42 13)`:'rotate(-20 42 13)'});
+        const bb=seg(t,T.back[0]+.5,T.back[0]+.8)*(1-seg(t,T.back[1]-1.2,T.back[1]-.8));set('fxBubble',{opacity:bb,transform:`translate(${x+30*sc} ${y-46*sc}) scale(${u})`});
+        if(op>.2&&state.live){emit(x-dir*62*sc,y+6*sc,2,()=>({vx:-dir*(10+Math.random()*16),vy:4+Math.random()*10,g:6,max:1.1+Math.random()*.7,size:1.2+Math.random()*1.6}));
+          if(t>=T.swoop[0]&&t<T.swoop[1]&&Math.abs(x-bx)<120*u)emit(x,y+10*sc,3,()=>({vx:(bx-x)*.5+(Math.random()-.5)*20,vy:30+Math.random()*30,g:70,max:1.3,size:1.2+Math.random()*1.5}))}
+      }
+    }
+  };
+  const THEME=THEMES.christmas;   // this season
+
+  /* ---- the core timeline (seconds after untying) ---- */
+  const T={env:[2,3.2],swirl:[3,4.1],seal:[4,4.35],flap:[4.3,4.9],slide:[4.8,5.7],card:5.75,sink:[5.75,6.5],giftBtn:7,end:8.2};
+  let t0=0,run=false,raf=0,last=0,timers=[],played={},PAPER=null;
+  const state={live:false,once:(k,fn)=>{if(!played[k]){played[k]=1;fn()}}};
+  const later=(s,fn)=>timers.push(setTimeout(fn,s*1000));
+  function reset(){['fxSleigh','fxBubble','fxEnvBack','fxEnvFront','fxPaper','fxHalo'].forEach(id=>set(id,{opacity:0}));P.length=0;drawFx(0)}
+  function stop(){run=false;state.live=false;cancelAnimationFrame(raf);timers.forEach(clearTimeout);timers=[];$('skipOpen').hidden=true;document.documentElement.classList.remove('opening')}
+  function frame(ts){if(!run)return;const dt=Math.min(.05,(ts-last)/1000);last=ts;const t=(ts-t0)/1000;
+    THEME.frame(t,dt,state);
+    const [bx,by]=boxAt(),u=Math.min(W,H)/400;
+    // envelope: rises out of the box to the upper middle, floats, fades away after the letter is out
+    const E=eout(seg(t,...T.env)),S=eio(seg(t,...T.sink)),ex=W/2,ey=lerp(by,H*.4,E)+Math.sin(t*2.2)*4*u*E+S*H*.45,es=lerp(.3,1,E)*Math.min(1.15,W/330),er=(1-E)*-8+Math.sin(t*1.7)*2*E;
+    const envT=`translate(${ex} ${ey}) rotate(${er}) scale(${es})`,envOp=seg(t,T.env[0],T.env[0]+.3)*(1-S);
+    set('fxEnvBack',{transform:envT,opacity:envOp});set('fxEnvFront',{transform:envT,opacity:envOp});
+    const sw=seg(t,...T.swirl);if(sw>0&&sw<1&&state.live)for(let k=0;k<2;k++){const a=t*7+k*Math.PI,r=lerp(150,70,sw)*es;emit(ex+Math.cos(a)*r,ey+Math.sin(a)*r*.55,1,{vx:-Math.sin(a)*30,vy:Math.cos(a)*16-6,max:.9,size:1.3+Math.random()*1.2})}
+    const sg=seg(t,T.seal[0],T.seal[0]+.2),pop2=seg(t,T.seal[0]+.18,T.seal[1]);
+    set('fxSealGlow',{opacity:sg*(1-pop2)});set('fxSeal',{transform:`translate(0 18) scale(${1+pop2*.7})`,opacity:1-pop2});
+    if(pop2>0)state.once('seal',()=>{ring(1568,0,.1,1);ring(2093,.08,.07,.9);for(let i=0;i<24;i++)emit(ex,ey+18*es,1,()=>({vx:(Math.random()-.5)*140,vy:(Math.random()-.5)*120,max:.8+Math.random()*.6,size:1.2+Math.random()*1.5}))});
+    const f1=seg(t,T.flap[0],(T.flap[0]+T.flap[1])/2),f2=seg(t,(T.flap[0]+T.flap[1])/2,T.flap[1]);
+    set('fxFlap',{transform:`translate(0 -75) scale(1 ${1-eio(f1)}) translate(0 75)`,opacity:f1<1?1:0});set('fxFlapOpen',{transform:`translate(0 -75) scale(1 ${-eio(f2)}) translate(0 75)`});
+    // the letter slides up out of the envelope (then the real card takes over)
+    const SL=eio(seg(t,...T.slide));set('fxPaper',{opacity:t>=T.flap[0]+.3&&t<T.card+.05?envOp:0,transform:envT});// slides until the whole sheet is above the envelope's top edge
+    set('fxPaperIn',{transform:`translate(0 ${lerp(4,-150,SL)})`});
+    PAPER={x:ex,y:ey+(lerp(4,-150,SL)+1)*es,w:212*es};
+    drawFx(dt);
+    if(t>T.end){stop();return}
+    raf=requestAnimationFrame(frame)}
+
+  /** hand the letter over to the real card: it starts where the paper is and settles into place */
+  function handOver(){
+    stopVoice();go('card');const c=$('cardEl'),b=$('giftBtn');
+    requestAnimationFrame(()=>{const r=c.getBoundingClientRect(),a=app.getBoundingClientRect(),u=Math.min(W,H)/400,es=Math.min(1.15,W/330);
+      // start as the paper (same place, same width) above the envelope, then settle into place
+      const pp=PAPER||{x:W/2,y:H*.4-149*es,w:212*es},px=a.left+pp.x,py=a.top+pp.y,s=Math.min(1,pp.w/r.width);
+      c.animate([{transform:`translate(${px-(r.left+r.width/2)}px,${py-(r.top+r.height/2)}px) scale(${s})`,opacity:.9},{transform:'none',opacity:1}],{duration:reduce?1:1100,easing:'cubic-bezier(.2,.9,.3,1)'});
+      b.animate([{opacity:0},{opacity:0,offset:.6},{opacity:1}],{duration:reduce?1:(T.giftBtn-T.card)*1000+400,easing:'ease-out'})})}
+
+  function play(){
+    stop();reset();played={};
+    if(reduce){handOver();return}
+    document.documentElement.classList.add('opening');$('skipOpen').hidden=false;
+    later(T.card,handOver);
+    state.live=true;t0=last=performance.now();run=true;raf=requestAnimationFrame(frame);
+  }
+  /** jump straight to the open box and the letter */
+  function skip(){if(!run)return;stop();reset();tw('lidOpen',1,.35);tw('glow',1,.4);tw('night',1,.4);tw('village',1,.5);tw('lights',1,.4);tw('snow',1,.6);handOver()}
+  $('skipOpen').onclick=skip;
+  return {play,skip,stop:()=>{stop();reset()}};
+})();
 
 /* ================= sound ================= */
 let ctx=null,master=null,mTimer=null,musicOn=false;
