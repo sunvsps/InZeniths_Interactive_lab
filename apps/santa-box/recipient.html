@@ -52,10 +52,11 @@ button,input{font:inherit;color:inherit}
 button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
-#app{position:relative;height:100%;max-width:480px;margin:0 auto;overflow:hidden}
+/* full-bleed scene on phones, tablets and desktops; words and the card stay in a readable centre column */
+#app{position:relative;height:100%;overflow:hidden}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 
-.hdr{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;
+.hdr{position:absolute;top:0;left:0;right:0;z-index:5;max-width:1200px;margin-inline:auto;display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));padding-block:14px}
 .logo{font-family:var(--f-lat);font-style:italic;font-weight:600;font-size:22px;letter-spacing:.01em;color:var(--accent)}
 .hdr-r{display:flex;gap:5px;align-items:center}
@@ -85,7 +86,7 @@ html.night .counter{color:#D6CDD9}
   padding-left:max(22px,env(safe-area-inset-left,0px));padding-right:max(22px,env(safe-area-inset-right,0px));padding-block:66px calc(34px + env(safe-area-inset-bottom,0px))}
 .copy{position:absolute;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:3;margin:0;text-align:center;font-size:min(10px,2.35vw);letter-spacing:.02em;color:var(--muted);pointer-events:none;white-space:nowrap}
 .copy a{color:inherit;text-underline-offset:2px;pointer-events:auto}
-.step .top,.step .bot{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
+.step .top,.step .bot{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;width:100%;max-width:520px;margin-inline:auto}
 .step .bot{gap:12px;pointer-events:auto}
 .step .top{animation:fadeUp .9s ease both}
 .eyebrow{font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:500}
@@ -170,6 +171,7 @@ html.night .counter{color:#D6CDD9}
   padding:70px max(22px,env(safe-area-inset-left,0px)) calc(34px + env(safe-area-inset-bottom,0px));animation:fadeUp .5s ease both}
 #giftView h2{font-family:var(--f-serif);font-weight:500;font-size:24px;margin:2px 0 0}
 #giftView .gv-bot{display:flex;flex-direction:column;align-items:center;gap:10px}
+#giftView .gv-top,#giftView .gv-bot{width:100%;max-width:520px}
 #giftView .btn{pointer-events:auto;min-width:140px}
 @media (prefers-reduced-motion:reduce){.lightbox .polaroid,#giftView{animation:none}}
 .ticket{width:100%;display:flex;align-items:center;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 14px;text-align:left;
@@ -520,7 +522,9 @@ function fitView(){
   const t=Math.tan(camera.fov*Math.PI/360),band=(bottom-top)/H;
   // once open, the lid rests beside the box and the ribbon tails lie either side: frame a wider scene
   const wide=(step==='card'||step==='gift')?5.6:4.2;
-  const d=Math.max(ext*1.4/(band*2*t),wide/(2*t*camera.aspect),6);
+  // tablets and desktops: keep the box to about a third of the screen height (phones keep the width-filling box)
+  const big=Math.min(innerWidth,innerHeight)>=700;
+  const d=Math.max(ext*1.4/(band*2*t),wide/(2*t*camera.aspect)*(big?1.25:1),ext/((big?.36:.45)*2*t),6);
   const visH=2*t*d,f=((top+bottom)/2-H/2)/H;
   FIT={d,ty:cy+f*visH};if(!cur)cur={...FIT};
 }
@@ -635,13 +639,16 @@ if(renderer){
     const chim=new THREE.Mesh(new THREE.BoxGeometry(.18,.5,.18),wall);chim.position.set(.38,1.75,0);shop.add(chim);
     house(-2.3,-4.4,1,.85,.35,roofG,.1);house(2.4,-4.5,1.05,.9,-.3,roofR,.4);house(-4,-3.6,.9,.75,.6,roofR,.55);house(4.1,-3.7,.9,.8,-.55,roofG,.7);
     tree(-1.2,-4.6,.75,.2);tree(1.25,-4.7,.8,.35);tree(-3.2,-3.9,.7,.5);tree(3.3,-4,.75,.6);tree(-5,-2.9,.65,.75);tree(5,-3,.65,.8);
+    // further out for tablets and desktops (off-screen on phones)
+    house(-6.4,-3.4,1,.85,.75,roofG,.8);house(6.5,-3.5,1.05,.9,-.7,roofR,.85);house(-8.6,-2.6,.95,.8,.9,roofR,.9);house(8.7,-2.7,.9,.8,-.85,roofG,.95);
+    tree(-7.4,-2.4,.7,.85);tree(7.5,-2.5,.7,.9);tree(-9.8,-1.6,.6,.95);tree(9.9,-1.7,.65,1);tree(-11,-.8,.55,1);tree(11,-.9,.55,1);
   }
   /* ---- scene C: snow that rises out of the open box and stays hanging in the air ---- */
-  {const N=110,pos=new Float32Array(N*3).fill(-50),g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  {const N=170,pos=new Float32Array(N*3).fill(-50),g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));
     const flake=canvasTex(64,64,(c)=>{const gr=c.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.45,'rgba(255,255,255,.75)');gr.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=gr;c.fillRect(0,0,64,64)});
     snowPts=new THREE.Points(g,new THREE.PointsMaterial({size:.13,map:flake,color:0xffffff,transparent:true,opacity:0,depthWrite:false}));scene.add(snowPts);
     // each flake: a resting spot in the air around the box, a delay, and its own slow sway
-    snowData=Array.from({length:N},(_,i)=>{const a=i*2.399,r=.6+((i*37)%100)/100*3.4;return {tx:Math.cos(a)*r,ty:1.3+((i*53)%100)/100*3.6,tz:Math.sin(a)*r*.55-.4,d:((i*29)%100)/100*.45,ph:i*.7}});
+    snowData=Array.from({length:N},(_,i)=>{const a=i*2.399,r=.6+((i*37)%100)/100*(i%3?3.4:7.5);return {tx:Math.cos(a)*r,ty:1.3+((i*53)%100)/100*3.6,tz:Math.sin(a)*r*.55-.4,d:((i*29)%100)/100*.45,ph:i*.7}});
   }
 
   // gift inside: engraved glass bauble
@@ -1018,7 +1025,8 @@ async function makeShot(){
   const W=1080,H=1920,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
   const bg=g.createRadialGradient(W/2,H*.38,50,W/2,H*.45,H*.75);bg.addColorStop(0,'#FFFFFF');bg.addColorStop(.6,'#FBF6F2');bg.addColorStop(1,'#F1E2DD');g.fillStyle=bg;g.fillRect(0,0,W,H);
   const withMsg=$('incMsg').checked;
-  if(renderer){renderer.render(scene,camera);const src=renderer.domElement,s=(W*1.25)/src.width,dh=src.height*s;g.drawImage(src,(W-W*1.25)/2,(withMsg?900:1120)-dh*.42,W*1.25,dh)}
+  // take the middle of the 3D view at phone proportions, so the image looks the same from a phone, tablet or desktop
+  if(renderer){renderer.render(scene,camera);const src=renderer.domElement,sw=Math.min(src.width,src.height*.62),sx=(src.width-sw)/2,dw=W*1.25,dh=src.height*dw/sw;g.drawImage(src,sx,0,sw,src.height,(W-dw)/2,(withMsg?900:1120)-dh*.42,dw,dh)}
   g.fillStyle='#8C8176';g.textAlign='center';g.font='500 30px "IBM Plex Sans Thai"';
   g.save();g.letterSpacing='12px';g.fillText('A GIFT FOR',W/2+6,210);g.restore();
   g.fillStyle='#2A2420';const dy=drawFit(g,String(DATA.to).trim(),{font:'500 {s}px "Noto Serif Thai"',size:120,min:64,maxW:W-140,x:W/2,y:350});
@@ -1186,7 +1194,7 @@ const OPENING=(function(){
     christmas:{
       at:{fly:[0,0],swoop:[0,0],back:[5.4,7.6]},   // fly-in and dust swoop are off; only the goodbye
       frame(t,dt,state){
-        const T=this.at,[bx,by]=boxAt(),[mx,my]=moonAt(),u=Math.min(W,H)/400;
+        const T=this.at,[bx,by]=boxAt(),[mx,my]=moonAt(),u=Math.min(1.35,Math.min(W,H)/400);
         const IN=[[-90*u,H*.42],[W*.15,my-80*u],[mx-60*u,my-50*u],[W*.82,H*.3]],SWOOP=[[W*.82,H*.3],[W*1.05,by-20*u],[bx+90*u,by-70*u],[bx-140*u,by-60*u]],OUT=[[-80*u,H*.24],[W*.2,H*.18],[W*.55,my-70*u],[W+120*u,my-30*u]];
         let x=0,y=0,dir=1,sc=.5,op=0;
         if(t>=T.fly[0]&&t<T.fly[1]){const p=eio(seg(t,...T.fly));[x,y]=bez(IN,p);sc=lerp(.45,.8,p);op=seg(t,T.fly[0],T.fly[0]+.3);state.once('j1',()=>jingle(1.5))}
@@ -1211,7 +1219,7 @@ const OPENING=(function(){
   function stop(){run=false;state.live=false;cancelAnimationFrame(raf);timers.forEach(clearTimeout);timers=[];$('skipOpen').hidden=true;document.documentElement.classList.remove('opening')}
   function frame(ts){if(!run)return;const dt=Math.min(.05,(ts-last)/1000);last=ts;const t=(ts-t0)/1000;
     THEME.frame(t,dt,state);
-    const [bx,by]=boxAt(),u=Math.min(W,H)/400;
+    const [bx,by]=boxAt(),u=Math.min(1.35,Math.min(W,H)/400);
     // envelope: rises out of the box to the upper middle, floats, fades away after the letter is out
     const E=eout(seg(t,...T.env)),S=eio(seg(t,...T.sink)),ex=W/2,ey=lerp(by,H*.4,E)+Math.sin(t*2.2)*4*u*E+S*H*.45,es=lerp(.3,1,E)*Math.min(1.15,W/330),er=(1-E)*-8+Math.sin(t*1.7)*2*E;
     const envT=`translate(${ex} ${ey}) rotate(${er}) scale(${es})`,envOp=seg(t,T.env[0],T.env[0]+.3)*(1-S);
@@ -1233,7 +1241,7 @@ const OPENING=(function(){
   /** hand the letter over to the real card: it starts where the paper is and settles into place */
   function handOver(){
     stopVoice();go('card');const c=$('cardEl'),b=$('giftBtn');
-    requestAnimationFrame(()=>{const r=c.getBoundingClientRect(),a=app.getBoundingClientRect(),u=Math.min(W,H)/400,es=Math.min(1.15,W/330);
+    requestAnimationFrame(()=>{const r=c.getBoundingClientRect(),a=app.getBoundingClientRect(),u=Math.min(1.35,Math.min(W,H)/400),es=Math.min(1.15,W/330);
       // start as the paper (same place, same width) above the envelope, then settle into place
       const pp=PAPER||{x:W/2,y:H*.4-149*es,w:212*es},px=a.left+pp.x,py=a.top+pp.y,s=Math.min(1,pp.w/r.width);
       c.animate([{transform:`translate(${px-(r.left+r.width/2)}px,${py-(r.top+r.height/2)}px) scale(${s})`,opacity:.9},{transform:'none',opacity:1}],{duration:reduce?1:1100,easing:'cubic-bezier(.2,.9,.3,1)'});
