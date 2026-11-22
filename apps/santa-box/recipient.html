@@ -1186,6 +1186,9 @@ const OPENING=(function(){
       const k=p.life/p.max;star4(p.x,p.y,p.size*(.6+.4*Math.sin(p.life*14+i)),k<.15?k/.15:1-(k-.15)/.85,p.col)}g2.globalAlpha=1}
 
 
+  /* ---- the bell when the wax seal pops ---- */
+  function ring(f,when,vol,dur){if(!ac())return;const o=ctx.createGain();o.gain.value=vol;o.connect(ctx.destination);bell(o,f,ctx.currentTime+when,dur,1)}
+
   /* ---- the seasonal delivery: Christmas = Santa and his reindeer (another occasion can supply its own) ---- */
   const THEMES={
     christmas:{
@@ -1224,7 +1227,7 @@ const OPENING=(function(){
     const sw=seg(t,...T.swirl);if(sw>0&&sw<1&&state.live)for(let k=0;k<2;k++){const a=t*7+k*Math.PI,r=lerp(150,70,sw)*es;emit(ex+Math.cos(a)*r,ey+Math.sin(a)*r*.55,1,{vx:-Math.sin(a)*30,vy:Math.cos(a)*16-6,max:.9,size:1.3+Math.random()*1.2})}
     const sg=seg(t,T.seal[0],T.seal[0]+.2),pop2=seg(t,T.seal[0]+.18,T.seal[1]);
     set('fxSealGlow',{opacity:sg*(1-pop2)});set('fxSeal',{transform:`translate(0 18) scale(${1+pop2*.7})`,opacity:1-pop2});
-    if(pop2>0)state.once('seal',()=>{for(let i=0;i<24;i++)emit(ex,ey+18*es,1,()=>({vx:(Math.random()-.5)*140,vy:(Math.random()-.5)*120,max:.8+Math.random()*.6,size:1.2+Math.random()*1.5}))});
+    if(pop2>0)state.once('seal',()=>{ring(1568,0,.1,1);ring(2093,.08,.07,.9);for(let i=0;i<24;i++)emit(ex,ey+18*es,1,()=>({vx:(Math.random()-.5)*140,vy:(Math.random()-.5)*120,max:.8+Math.random()*.6,size:1.2+Math.random()*1.5}))});
     const f1=seg(t,T.flap[0],(T.flap[0]+T.flap[1])/2),f2=seg(t,(T.flap[0]+T.flap[1])/2,T.flap[1]);
     set('fxFlap',{transform:`translate(0 -75) scale(1 ${1-eio(f1)}) translate(0 75)`,opacity:f1<1?1:0});set('fxFlapOpen',{transform:`translate(0 -75) scale(1 ${-eio(f2)}) translate(0 75)`});
     // the letter slides up out of the envelope (then the real card takes over)
