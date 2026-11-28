@@ -10,10 +10,10 @@
 <meta property="og:site_name" content="Santa Box">
 <meta property="og:title" content="Santa Box · ห่อการ์ดและเสียงอวยพรใส่กล่องของขวัญ">
 <meta property="og:description" content="ห่อการ์ด เสียงอวยพร และของขวัญใส่กล่อง 3D แล้วส่งลิงก์ให้คนที่คุณรัก ดูกล่องจากทุกคนใต้ต้นคริสต์มาสรวม · IN ZENITHS">
-<meta property="og:image" content="https://play.inzeniths.com/santa-box/og.png">
+<meta property="og:image" content="https://inzeniths.com/santa/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:url" content="https://play.inzeniths.com/santa-box/">
+<meta property="og:url" content="https://inzeniths.com/santa">
 <meta name="twitter:card" content="summary_large_image">
 <title>Santa Box · ห่อกล่องของขวัญให้คนที่คุณรัก</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -102,7 +102,7 @@ a{color:inherit}
 <canvas id="gl" aria-label="ต้นคริสต์มาสสามมิติ มีกล่องของขวัญวางอยู่ใต้ต้น"></canvas>
 
 <header class="hdr">
-  <a class="logo" href="/santa-box/">Santa Box</a>
+  <a class="logo" href="/santa">Santa Box</a>
   <div class="lang" data-lang-switch></div>
 </header>
 
@@ -115,17 +115,17 @@ a{color:inherit}
 
 <div class="bot">
   <span class="hint" id="hint">↻ ลากเพื่อหมุนรอบต้นไม้ · แตะกล่องเพื่อดูใกล้ๆ</span>
-  <a class="btn" href="/santa-box/wrap">ห่อกล่องของคุณ</a>
-  <p class="copy">© IN ZENITHS · <a href="/santa-box/privacy">นโยบายความเป็นส่วนตัว</a></p>
+  <a class="btn" href="/santa/wrap">ห่อกล่องของคุณ</a>
+  <p class="copy">© IN ZENITHS · <a href="/santa/privacy">นโยบายความเป็นส่วนตัว</a></p>
 </div>
 
-<script src="/santa-box/i18n.js?v=20261121j"></script>
-<script src="/santa-box/santa-api.js?v=20261121"></script>
+<script src="/santa/i18n.js?v=20261128a"></script>
+<script src="/santa/santa-api.js?v=20261128a"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
-// /santa-box/ used to be the wrapping page: links back from payment (?sent=, ?paid=) or "send one back" (?to=) go there
-if(/[?&](sent|paid|to)=/.test(location.search)){location.replace('/santa-box/wrap'+location.search+location.hash);return}
+// the home page used to be the wrapping page: links back from payment (?sent=, ?paid=) or "send one back" (?to=) go there
+if(/[?&](sent|paid|to)=/.test(location.search)){location.replace('/santa/wrap'+location.search+location.hash);return}
 const $=id=>document.getElementById(id);
 const t=(window.I18N&&I18N.t)||((s,v)=>s.replace(/\{(\w+)\}/g,(_,k)=>v&&v[k]!=null?v[k]:''));
 const API=window.SantaAPI&&SantaAPI.enabled?SantaAPI:null;

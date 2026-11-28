@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { AppError, badRequest, conflict, forbidden, notFound } from '../../lib/errors.js';
 import { randomSlug, randomToken, sameHash, sha256 } from '../../lib/tokens.js';
 import { asLang, checkoutTitle } from './emails.js';
+import { ALIAS_MAX, ALIAS_MIN, aliasName, appHome, giftLink, newAlias } from './links.js';
 import { CAMPAIGN, createGiftBody, santaPayload, type SantaPayload } from './schema.js';
 import { applyPromo, newGiftTiming, onOpened, phaseOf, playableVoiceSeconds, quote, RULES, type QuoteError } from './rules.js';
 
@@ -31,13 +32,6 @@ const PROMO_MESSAGES = {
   PROMO_TOO_SMALL_TOTAL: 'After this code the total would be under 10 THB, which cannot be charged',
 } as const;
 
-/**
- * SANTA_APP_URL may include a path (https://play.inzeniths.com/santa-box), so links are joined onto it
- * rather than resolved from the site root.
- */
-export const appHome = (appUrl: string) => appUrl.replace(/\/+$/, '') + '/';
-export const giftLink = (appUrl: string, slug: string) => `${appHome(appUrl)}b/${slug}`;
-
 /** Where the payer lands after checkout: a page inside the Santa Box app, or its home page. */
 function backTo(appUrl: string, path: string | undefined): URL {
   const home = new URL(appHome(appUrl));
@@ -58,8 +52,9 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
   const db = app.prisma;
   const createLimit = { rateLimit: { max: app.env.CREATE_RATE_LIMIT_PER_MINUTE, timeWindow: '1 minute' } };
 
-  async function findGift(slug: string) {
-    const gift = await db.gift.findUnique({ where: { slug } });
+  /** `ref` is what the link carries: the box's slug, or the name its sender chose (only those contain "-"). */
+  async function findGift(ref: string) {
+    const gift = await db.gift.findUnique({ where: ref.includes('-') ? { alias: ref.toLowerCase() } : { slug: ref } });
     if (!gift || gift.campaign !== CAMPAIGN) throw notFound('Box not found');
     return gift;
   }
@@ -205,7 +200,7 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
     return reply.status(201).send({
       slug: gift.slug,
       number: gift.number,
-      link: giftLink(app.env.SANTA_APP_URL, gift.slug),
+      link: giftLink(app.env.SANTA_APP_URL, gift),
       /** Keep this on the sender's device: it is needed to pay for delivery and to see the box's status. */
       senderToken,
       deliverAt: gift.deliverAt.toISOString(),
@@ -235,7 +230,8 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
     return {
       phase: phaseOf(gift, new Date()),
       number: gift.number,
-      link: giftLink(app.env.SANTA_APP_URL, gift.slug),
+      link: giftLink(app.env.SANTA_APP_URL, gift),
+      alias: gift.alias,
       plan: gift.plan,
       deliverAt: gift.deliverAt.toISOString(),
       openedAt: gift.openedAt?.toISOString() ?? null,
@@ -244,7 +240,36 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
     };
   });
 
-  // 6. Pay: the sender (deliver now or on a date, keep longer) or the recipient (keep longer, after it arrives).
+  // 6. Paid boxes: the sender names the link, once. The ordinary link keeps working.
+  r.post(
+    '/gifts/:slug/alias',
+    { config: createLimit, schema: { params: slugParams, body: z.object({ name: z.string().max(60) }) } },
+    async (request) => {
+      const gift = await findGift(request.params.slug);
+      requireSender(gift, request);
+      if (phaseOf(gift, new Date()) === 'expired') throw conflict('EXPIRED', QUOTE_MESSAGES.EXPIRED);
+      if (gift.plan === 'FREE') throw conflict('ALIAS_NEEDS_PLAN', 'Naming the link comes with the paid plans');
+      if (gift.alias) throw conflict('ALIAS_ALREADY_SET', 'This box already has a link name');
+      const name = aliasName(request.body.name);
+      if (!name) throw badRequest('BAD_ALIAS', `Use ${ALIAS_MIN}-${ALIAS_MAX} letters a-z, digits or "-", not starting with "box-"`);
+
+      // The random ending makes a clash very unlikely; try another one if it happens.
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const alias = newAlias(name);
+        try {
+          // `alias: null`: of two requests at once, only the first one names the box.
+          const set = await db.gift.updateMany({ where: { id: gift.id, alias: null }, data: { alias } });
+          if (!set.count) throw conflict('ALIAS_ALREADY_SET', 'This box already has a link name');
+          return { alias, link: giftLink(app.env.SANTA_APP_URL, { slug: gift.slug, alias }) };
+        } catch (e) {
+          if ((e as { code?: string }).code !== 'P2002') throw e;
+        }
+      }
+      throw conflict('ALIAS_TAKEN', 'Please try another name');
+    },
+  );
+
+  // 7. Pay: the sender (deliver now or on a date, keep longer) or the recipient (keep longer, after it arrives).
   r.post(
     '/gifts/:slug/checkout',
     {
@@ -313,7 +338,7 @@ export default async function santaBoxRoutes(app: FastifyInstance) {
     },
   );
 
-  // 7. "Keep forever" boxes: download the voice note and photo.
+  // 8. "Keep forever" boxes: download the voice note and photo.
   r.get('/gifts/:slug/download', { schema: { params: slugParams } }, async (request) => {
     const gift = await findGift(request.params.slug);
     if (phaseOf(gift, new Date()) !== 'ready') throw conflict('NOT_READY', 'This box cannot be opened right now');

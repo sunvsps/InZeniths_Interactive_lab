@@ -33,6 +33,7 @@ npm test                # ทดสอบทั้งหมด
 |---|---|
 | `POST /uploads` `{kind: VOICE\|PHOTO, contentType, bytes}` | ขอช่องอัปโหลด ได้ `key` กับลิงก์ `PUT` ให้เบราว์เซอร์ส่งไฟล์ตรงไป R2 (เสียง ≤ 1.5 MB, รูป ≤ 2 MB) |
 | `POST /gifts` | ส่งกล่อง (ฟรีเสมอตอนสร้าง: ถึงใน 25 ชม.) ได้ `slug`, `link`, `number`, `senderToken` |
+| `POST /gifts/:slug/alias` `{name}` | กล่องที่จ่ายแล้ว: ผู้ส่งตั้งชื่อลิงก์ได้ครั้งเดียว (ต้องมี `X-Sender-Token`) ได้ `alias` (ชื่อ + รหัส 4 ตัว) กับ `link` · ทุกคำสั่ง `/gifts/:slug...` ใช้ `alias` แทน `slug` ได้ |
 | `GET /gifts/:slug` | หน้าผู้รับ: `in_transit` (นับถอยหลัง) / `ready` (การ์ด ของ เสียง รูป) / `expired` |
 | `POST /gifts/:slug/open` | ผู้รับเปิดกล่อง (กล่องฟรีเริ่มนับ 7 วัน) |
 | `GET /gifts/:slug/manage` | ผู้ส่งดูสถานะ (ต้องมี header `X-Sender-Token`) |
@@ -62,7 +63,7 @@ npm test                # ทดสอบทั้งหมด
    | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
    | `REAL_IP_HEADER` | `x-real-ip` |
    | `CORS_ORIGINS` | `https://play.inzeniths.com,https://inzeniths.com` |
-   | `SANTA_APP_URL` | `https://play.inzeniths.com/santa-box` (ลิงก์กล่องจะเป็น `/santa-box/b/<id>`) |
+   | `SANTA_APP_URL` | `https://inzeniths.com/santa` (ลิงก์กล่องจะเป็น `/santa/box-<id>` หรือ `/santa/<ชื่อ>-<รหัส>`) |
    | `STORAGE_DRIVER` | `r2` + `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` |
    | `PAYMENT_DRIVER` | `stripe` + `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
    | `MAIL_DRIVER` | `brevo` + `BREVO_API_KEY`, `MAIL_FROM` (ยังไม่พร้อมใช้ `console` ไปก่อนได้: ระบบทำงานครบแต่ไม่ส่งอีเมลจริง) |

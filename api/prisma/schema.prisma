@@ -38,6 +38,8 @@ model Gift {
   number        Int       @default(autoincrement())
   /// Public, unguessable id used in the share link.
   slug          String    @unique
+  /// Link name a paying sender chose, with a random ending (sun-to-mom-k7p2). The slug link keeps working too.
+  alias         String?   @unique
   campaign      String
   /// SHA-256 of the sender's secret token (the token itself is only ever shown to the sender once).
   senderTokenHash String

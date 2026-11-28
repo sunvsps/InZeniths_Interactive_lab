@@ -5,6 +5,7 @@ Interactive campaigns by IN ZENITHS. Each campaign is its own front end under `a
 ```
 interactive/
   apps/_redirects   routes for play.inzeniths.com (one Cloudflare Pages project for every campaign)
+  functions/        routing that needs code: inzeniths.com/santa... (passed on by the company site) and old links
   apps/santa-box/   Santa Box (Christmas 2026): sender + recipient pages
   apps/<next>/      next campaign = a new folder + lines in apps/_redirects
   api/              one back end + one database for all campaigns (Railway)
@@ -30,19 +31,19 @@ The back end uses the same stack as the event registration system (Node + Fastif
 
 ## Deploy (order matters: the pages need the API)
 
-1. **R2** (Cloudflare → R2): bucket `santa-box`, CORS for `https://play.inzeniths.com` (GET, PUT, header `Content-Type`), API token with Object Read & Write on that bucket
+1. **R2** (Cloudflare → R2): bucket `santa-box`, CORS for `https://inzeniths.com` and `https://play.inzeniths.com` (GET, PUT, header `Content-Type`), API token with Object Read & Write on that bucket
 2. **Stripe** (Individual, Test mode first): turn on PromptPay, copy the secret key
 3. **Brevo**: verify `inzeniths.com` (DNS records in Cloudflare), create an API key. Optional at first: `MAIL_DRIVER=console`
 4. **Railway**: deploy this repo with Root Directory `api`, add PostgreSQL, set the variables, custom domain `api.inzeniths.com` (CNAME in Cloudflare, DNS only), then the Stripe webhook. Full list: [`api/README.md`](api/README.md)
 5. **Turn the pages live**: set `<meta name="santa-api" content="https://api.inzeniths.com">` in `apps/santa-box/sender.html` and `recipient.html`, push
 6. **Cloudflare Pages**: connect this repo, framework None, no build command, output directory `apps`, custom domain `play.inzeniths.com`
 
-Check: `https://api.inzeniths.com/v1/health` → `{"ok":true}`, then send a box from `https://play.inzeniths.com/santa-box/` on a real phone.
+Check: `https://api.inzeniths.com/v1/health` → `{"ok":true}`, then send a box from `https://inzeniths.com/santa` on a real phone.
 
 ## Conventions
 - Brand: IN ZENITHS is the owner; each app is a campaign. Payments and receipts are issued as IN ZENITHS, with the campaign name on the line item.
 - Database: one shared `Gift` table with a `campaign` column (e.g. `santa-box`) and the campaign's own content as JSON, so a new campaign needs no schema change.
-- Domain: `inzeniths.com` (bought at Cloudflare, 19 Nov 2026). Company site at the root; campaigns at `play.inzeniths.com/<campaign>/`; API at `api.inzeniths.com`. `play.inzeniths.com/` redirects to `inzeniths.com/interactive`.
+- Domain: `inzeniths.com` (bought at Cloudflare, 19 Nov 2026). Company site at the root; Santa Box at `inzeniths.com/santa` (files on `play.inzeniths.com`, passed on by the company site; see [`apps/santa-box/README.md`](apps/santa-box/README.md)); other campaigns at `play.inzeniths.com/<campaign>/`; API at `api.inzeniths.com`. `play.inzeniths.com/` redirects to `inzeniths.com/interactive`.
 - Secrets (Stripe, R2, Brevo keys) live only in Railway variables or a local `.env`, never in git.
 
 ## Status (19 Nov 2026)

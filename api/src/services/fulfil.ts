@@ -1,7 +1,7 @@
 // A payment cleared: mark it paid and upgrade the gift, exactly once, however many times the provider retries.
 import type { FastifyInstance } from 'fastify';
 import { onPaid } from '../campaigns/santa-box/rules.js';
-import { giftLink } from '../campaigns/santa-box/routes.js';
+import { giftLink } from '../campaigns/santa-box/links.js';
 import { asLang, paymentEmail } from '../campaigns/santa-box/emails.js';
 
 export async function markPaid(app: FastifyInstance, ref: { paymentId: string | null; providerRef: string }, email: string | null, now = new Date()) {
@@ -29,7 +29,7 @@ export async function markPaid(app: FastifyInstance, ref: { paymentId: string | 
       lang: asLang(payment.lang),
       payer: payment.payer,
       recipientName: gift.recipientName,
-      link: giftLink(app.env.SANTA_APP_URL, gift.slug),
+      link: giftLink(app.env.SANTA_APP_URL, gift),
       deliverAt: gift.deliverAt,
       plan: gift.plan,
       expiresAt: gift.expiresAt,

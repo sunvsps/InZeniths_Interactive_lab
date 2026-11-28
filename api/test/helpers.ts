@@ -14,7 +14,7 @@ export async function testApp(extraEnv: Record<string, string> = {}) {
     DATABASE_URL: url,
     LOG_LEVEL: 'silent',
     NODE_ENV: 'test',
-    SANTA_APP_URL: 'https://play.example.com/santa-box',
+    SANTA_APP_URL: 'https://example.com/santa',
     RATE_LIMIT_PER_MINUTE: '10000',
     CREATE_RATE_LIMIT_PER_MINUTE: '10000',
     ...extraEnv,
