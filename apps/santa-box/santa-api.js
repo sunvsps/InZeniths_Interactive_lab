@@ -50,10 +50,11 @@ window.SantaAPI = (function () {
     try { return JSON.parse(localStorage.getItem(SENT) || '{}')[slug] || null; } catch (e) { return null; }
   }
 
-  /** The box id in the recipient's link: /b/<slug> or ?b=<slug>. */
+  /** The box in the recipient's link: /santa/box-<slug>, a chosen name /santa/<name>-<code>, or ?b=<slug>.
+   *  The API accepts the slug and the chosen name alike. */
   function slugFromUrl() {
-    var m = location.pathname.match(/\/b\/([a-z0-9]{6,40})\/?$/);
-    if (m) return m[1];
+    var m = location.pathname.match(/\/santa\/(?:box-([a-z0-9]{6,40})|((?!box-)[a-z0-9]+(?:-[a-z0-9]+)*-[a-z2-9]{4}))\/?$/i);
+    if (m) return (m[1] || m[2]).toLowerCase();
     try { return new URLSearchParams(location.search).get('b'); } catch (e) { return null; }
   }
 
@@ -72,6 +73,8 @@ window.SantaAPI = (function () {
     download: function (slug) { return call('GET', '/gifts/' + slug + '/download'); },
     /** Check a discount code for a plan; returns the price after it. */
     promo: function (code, plan) { return call('POST', '/promo', { code: code, plan: plan }); },
+    /** Paid boxes: the sender names the link (once). Returns the new link. */
+    alias: function (slug, name, token) { return call('POST', '/gifts/' + slug + '/alias', { name: name }, { 'X-Sender-Token': token }); },
     remember: remember,
     recall: recall,
     slugFromUrl: slugFromUrl,

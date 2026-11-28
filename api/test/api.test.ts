@@ -16,7 +16,7 @@ const arrive = (slug: string) => ctx.prisma.gift.update({ where: { slug }, data:
 describe('sending a box', () => {
   it('creates a free box that travels 25 h and hides its content until then', async () => {
     const box = await sendBox(ctx.app);
-    expect(box.link).toBe(`https://play.example.com/santa-box/b/${box.slug}`);
+    expect(box.link).toBe(`https://example.com/santa/box-${box.slug}`);
     expect(new Date(box.deliverAt).getTime() - Date.now()).toBeGreaterThan(24.9 * 3_600_000);
 
     const view = (await ctx.app.inject({ url: `/v1/santa-box/gifts/${box.slug}` })).json();
@@ -67,12 +67,12 @@ describe('paying', () => {
       method: 'POST',
       url: `/v1/santa-box/gifts/${box.slug}/checkout`,
       headers: { 'x-sender-token': box.senderToken },
-      payload: { plan: 'YEAR', payer: 'SENDER', returnPath: '/santa-box/?sent=' + box.slug },
+      payload: { plan: 'YEAR', payer: 'SENDER', returnPath: '/santa/wrap?sent=' + box.slug },
     });
     expect(res.statusCode).toBe(200);
     const { paymentId, amountSatang, checkoutUrl } = res.json();
     expect(amountSatang).toBe(2_500);
-    expect(decodeURIComponent(checkoutUrl)).toContain(`https://play.example.com/santa-box/?sent=${box.slug}&paid=`);
+    expect(decodeURIComponent(checkoutUrl)).toContain(`https://example.com/santa/wrap?sent=${box.slug}&paid=`);
 
     expect((await webhookPaid(ctx.app, paymentId)).statusCode).toBe(200);
     await webhookPaid(ctx.app, paymentId); // providers retry: must not apply twice
@@ -109,9 +109,9 @@ describe('paying', () => {
     const pay = (returnPath?: string) =>
       ctx.app.inject({ method: 'POST', url: `/v1/santa-box/gifts/${box.slug}/checkout`, headers: { 'x-sender-token': box.senderToken }, payload: { plan: 'YEAR', payer: 'SENDER', returnPath } });
     const home = decodeURIComponent((await pay()).json().checkoutUrl);
-    expect(home).toContain('next=https://play.example.com/santa-box/?paid=');
+    expect(home).toContain('next=https://example.com/santa/?paid=');
     const outside = decodeURIComponent((await pay('/other-campaign/')).json().checkoutUrl);
-    expect(outside).toContain('next=https://play.example.com/santa-box/?paid=');
+    expect(outside).toContain('next=https://example.com/santa/?paid=');
   });
 
   it('English sender: English checkout and email; Thai stays the default', async () => {
@@ -169,6 +169,66 @@ describe('paying', () => {
       payload: { plan: 'YEAR', payer: 'SENDER', returnPath: '//evil.example.com' },
     });
     expect(res.statusCode).toBe(422);
+  });
+});
+
+describe('naming the link', () => {
+  const name = (ref: string, value: string, token?: string) =>
+    ctx.app.inject({ method: 'POST', url: `/v1/santa-box/gifts/${ref}/alias`, headers: token ? { 'x-sender-token': token } : {}, payload: { name: value } });
+  const paidBox = async () => {
+    const box = await sendBox(ctx.app);
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: `/v1/santa-box/gifts/${box.slug}/checkout`,
+      headers: { 'x-sender-token': box.senderToken },
+      payload: { plan: 'YEAR', payer: 'SENDER' },
+    });
+    await webhookPaid(ctx.app, res.json().paymentId);
+    return box;
+  };
+
+  it('is for the sender of a paid box only', async () => {
+    const free = await sendBox(ctx.app);
+    expect((await name(free.slug, 'sun-to-mom', free.senderToken)).json().error.code).toBe('ALIAS_NEEDS_PLAN');
+    const box = await paidBox();
+    expect((await name(box.slug, 'sun-to-mom')).statusCode).toBe(403);
+    expect((await name(box.slug, 'sun-to-mom', free.senderToken)).statusCode).toBe(403);
+  });
+
+  it('adds a random ending, and both links open the box', async () => {
+    const box = await paidBox();
+    const res = await name(box.slug, '  Sun to  Mom ', box.senderToken);
+    expect(res.statusCode).toBe(200);
+    const { alias, link } = res.json();
+    expect(alias).toMatch(/^sun-to-mom-[a-z2-9]{4}$/);
+    expect(link).toBe(`https://example.com/santa/${alias}`);
+
+    for (const ref of [alias, alias.toUpperCase(), box.slug]) {
+      const view = (await ctx.app.inject({ url: `/v1/santa-box/gifts/${ref}` })).json();
+      expect(view).toMatchObject({ phase: 'ready', number: box.number });
+    }
+    const manage = (await ctx.app.inject({ url: `/v1/santa-box/gifts/${box.slug}/manage`, headers: { 'x-sender-token': box.senderToken } })).json();
+    expect(manage).toMatchObject({ alias, link });
+    const opened = await ctx.app.inject({ method: 'POST', url: `/v1/santa-box/gifts/${alias}/open` });
+    expect(opened.json().openedAt).not.toBeNull();
+
+    // two people may pick the same name: each gets their own ending
+    const other = await paidBox();
+    expect((await name(other.slug, 'sun-to-mom', other.senderToken)).json().alias).not.toBe(alias);
+  });
+
+  it('can be done once, even by two requests at once', async () => {
+    const box = await paidBox();
+    const both = await Promise.all([name(box.slug, 'first-name', box.senderToken), name(box.slug, 'second-name', box.senderToken)]);
+    expect(both.map((r) => r.statusCode).sort()).toEqual([200, 409]);
+    expect((await name(box.slug, 'third-name', box.senderToken)).json().error.code).toBe('ALIAS_ALREADY_SET');
+  });
+
+  it('refuses names that do not fit in a link', async () => {
+    const box = await paidBox();
+    for (const bad of ['ab', 'a'.repeat(31), 'แม่', 'mom/dad', 'box', 'box-abc', '---', 'sun.to.mom']) {
+      expect((await name(box.slug, bad, box.senderToken)).json().error?.code, bad).toBe('BAD_ALIAS');
+    }
   });
 });
 

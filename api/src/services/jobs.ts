@@ -1,7 +1,7 @@
 // Housekeeping that runs inside the API every JOB_INTERVAL_MINUTES (one instance only).
 import type { FastifyInstance } from 'fastify';
 import { reminderYear } from '../campaigns/santa-box/rules.js';
-import { appHome } from '../campaigns/santa-box/routes.js';
+import { appHome } from '../campaigns/santa-box/links.js';
 import { asLang, reminderEmail } from '../campaigns/santa-box/emails.js';
 
 const BATCH = 200;
